@@ -8,8 +8,8 @@ using namespace _2dfm;
 
 std::string ColorBgra::toString() {
     return std::format("0x{:2X}{:2X}{:2X}{:2X}",
-                       channel.red,
-                       channel.green,
-                       channel.blue,
-                       channel.alpha ? 255 : 0);
+        (int) channel.red,
+        (int) channel.green,
+        (int) channel.blue,
+        channel.alpha == static_cast<byte>(0) ? 0 : 255);
 }

@@ -1,7 +1,7 @@
 //
 // Created by 厉猛 on 2024-07-16.
 //
-#include "SDL2/SDL.h"
+#include <SDL.h>
 #include "Renderer.hpp"
 
 bool Renderer::initialize(const char *title, int width, int height) {

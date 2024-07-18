@@ -10,6 +10,9 @@ using namespace std;
 
 std::string gb2312ToUtf8(const char *gb2312) {
     auto len = strlen(gb2312);
+    if (len == 0) {
+        return "";
+    }
     std::vector<char> utf8(len * 4); // 分配足够大的空间，防止溢出
     char* inbuf = const_cast<char *>(gb2312);
     size_t inbytesleft = len;
@@ -17,7 +20,7 @@ std::string gb2312ToUtf8(const char *gb2312) {
     size_t outbytesleft = utf8.size();
 
     iconv_t cd = iconv_open("UTF-8", "GB2312");
-    if (cd == (iconv_t)-1) {
+    if (cd == (iconv_t) - 1) {
         throw std::runtime_error("iconv_open failed");
     }
 
@@ -31,12 +34,12 @@ std::string gb2312ToUtf8(const char *gb2312) {
     return { utf8.begin(), utf8.end() };
 }
 
-const char *kgtFile = "/Volumes/HP_P800/Gamaker/dong_dong_never_die_170804/GAME/GAME.kgt";
+const char *kgtFile = "D:\\Games\\dong_dong_never_die_170804\\GAME\\GAME.kgt";
 
 int main() {
     long offset = 0;
     _2dfm::KgtFileHeader header;
-    auto file = fopen(kgtFile, "r");
+    auto file = fopen(kgtFile, "rb");
     if (!file) {
         return -1;
     }
@@ -57,14 +60,19 @@ int main() {
     _2dfm::ScriptPart sp;
     sp.scriptCount = intBuffer;
     sp.scripts = static_cast<_2dfm::Script *>(malloc(scriptSize * sp.scriptCount));
-    fread(sp.scripts, scriptSize, sp.scriptCount, file);
+    if (!sp.scripts) {
+        return -1;
+    }
+    auto rc = fread(sp.scripts, scriptSize, sp.scriptCount, file);
+    cout << "rc = " << rc << endl;
     offset = ftell(file);
 
-    cout << "脚本项共" << sp.scriptCount << "个。" << endl;
+    cout << "Script count: " << sp.scriptCount << endl;
     _2dfm::Script *p;
     for (int i = 0; i < sp.scriptCount; ++i) {
         p = reinterpret_cast<_2dfm::Script *>(reinterpret_cast<byte *>(sp.scripts) + i * scriptSize);
-        cout << i << '\t' << p->scriptIndex << '\t' << gb2312ToUtf8(p->scriptName) << endl;
+        // cout << i << '\t' << p->scriptIndex << '\t' << gb2312ToUtf8(p->scriptName) << endl;
+        cout << i << '\t' << p->scriptIndex << '\t' << p->scriptName << endl;
     }
 
     free(sp.scripts);

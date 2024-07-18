@@ -5,7 +5,7 @@
 #ifndef INC_2DFM_PLAYER_GAME_HPP
 #define INC_2DFM_PLAYER_GAME_HPP
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 class Game {
 public:
