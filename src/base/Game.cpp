@@ -2,13 +2,14 @@
 // Created by 厉猛 on 2024-07-16.
 //
 
-// include <SDL_image.h>
-// #include <SDL_mixer.h>
+#include <SDL_image.h>
+#include <SDL_mixer.h>
 #include "Game.hpp"
 #include "Renderer.hpp"
 
 const char *title = "Game";
 Game *Game::INSTANCE = nullptr;
+constexpr int winWidth = 640, winHeight = 480;
 
 bool Game::initialize() {
     if (SDL_Init(SDL_INIT_VIDEO
@@ -17,18 +18,18 @@ bool Game::initialize() {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return false;
     }
-    //if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == 0) {
-    //    SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
-    //    return false;
-    //}
-    //if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-    //    printf("Sdl_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
-    //    SDL_Quit();
-    //    return -1;
-    //}
+    if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == 0) {
+        SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
+        return false;
+    }
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        SDL_Log("Sdl_mixer could not initialize! SDL_mixer Error: %s", Mix_GetError());
+        SDL_Quit();
+        return -1;
+    }
 
     renderer = new Renderer();
-    renderer->initialize(nullptr, 0, 0);
+    renderer->initialize(nullptr, winWidth, winHeight);
 
     loadData();
 
@@ -38,7 +39,7 @@ bool Game::initialize() {
 }
 
 void Game::cleanup() {
-    //Mix_CloseAudio();
+    Mix_CloseAudio();
     renderer->cleanUp();
     delete renderer;
     SDL_Quit();

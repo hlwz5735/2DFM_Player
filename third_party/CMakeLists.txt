@@ -1,5 +1,5 @@
 add_subdirectory(rapidjson)
 add_subdirectory(libiconv)
 add_subdirectory(sdl2)
-#add_subdirectory(SDL_image)
-#add_subdirectory(SDL_mixer)
+add_subdirectory(SDL2_image)
+add_subdirectory(SDL2_mixer)
