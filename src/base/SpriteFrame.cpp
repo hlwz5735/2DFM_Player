@@ -3,25 +3,6 @@
 #include "SpriteFrame.hpp"
 #include "Renderer.hpp"
 
-SDL_Surface *manuallyBuildIndexedPicSurface(int width, int height, SDL_Palette *palette, const void *picData) {
-    if (const auto surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 32, 0, 0, 0, 0)) {
-        if (SDL_LockSurface(surface) != 0) {
-            SDL_FreeSurface(surface);
-            return nullptr;
-        }
-        const auto pixels = static_cast<SDL_Color *>(surface->pixels);
-        const auto rawData = static_cast<const byte *>(picData);
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                pixels[y * width + x] = palette->colors[static_cast<unsigned char>(rawData[y * width + x])];
-            }
-        }
-        SDL_UnlockSurface(surface);
-        return surface;
-    }
-    return nullptr;
-}
-
 SDL_Surface *buildIndexSurfaceBySDL(int width, int height, SDL_Palette *palette, const void *picData) {
     if (const auto surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 8, 0, 0, 0, 0)) {
         if (SDL_LockSurface(surface) != 0) {
@@ -68,10 +49,8 @@ SDL_Texture *SpriteFrame::getTexture(Renderer *renderer, int paletteNo) const {
             throw std::runtime_error("当前精灵帧既没有专用调色盘，也没有指定调色盘！");
         }
     }
-
-    //auto surface = manuallyBuildIndexedPicSurface(width, height, palette, rawData.data());
-    auto surface = buildIndexSurfaceBySDL(width, height, palette, rawData);
-    if (surface) {
+    
+    if (auto surface = buildIndexSurfaceBySDL(width, height, palette, rawData)) {
         auto tex = SDL_CreateTextureFromSurface(renderer->getSdlRenderer(), surface);
         SDL_FreeSurface(surface);
         return tex;
