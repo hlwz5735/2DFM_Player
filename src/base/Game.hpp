@@ -6,17 +6,33 @@
 #define INC_2DFM_PLAYER_GAME_HPP
 
 #include <SDL.h>
+#include "../2dfm/KgtGame.hpp"
+#include <vector>
+
+class Node;
+class Renderer;
+class AudioSystem;
+class InputSystem;
 
 class Game {
 public:
+    friend class Renderer;
+
+    Game();
+
     bool initialize();
     void cleanup();
+    void runLoop();
 
     void loadData();
 
-    void runLoop();
-
     static Game *getInstance();
+    Renderer *getRenderer() const { return renderer; }
+    AudioSystem *getAudioSystem() const { return audioSystem; }
+    InputSystem *getInputSystem() const { return inputSystem; }
+
+    void addGameObject(Node *obj);
+    void removeGameObject(Node *obj);
 protected:
     void processInput();
     void updateGame();
@@ -25,11 +41,17 @@ private:
     static Game *INSTANCE;
 
     bool isRunning = true;
-    class Renderer *renderer;
-    class AudioSystem *audioSystem;
-    class InputSystem *inputSystem;
-
     Uint64 ticksCount;
+
+    Renderer *renderer = nullptr;
+    AudioSystem *audioSystem = nullptr;
+    InputSystem *inputSystem = nullptr;
+
+    std::vector<Node *> gameObjects;
+    std::vector<Node *> pendingObjects;
+    bool updatingGameObjects = false;
+
+    KgtGame kgt;
 };
 
 #endif //INC_2DFM_PLAYER_GAME_HPP

@@ -8,10 +8,12 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>
+#include <SDL.h>
 
 using std::byte;
 
 namespace _2dfm {
+    constexpr int SCRIPT_SIZE = 39;
     struct Script {
         char scriptName[32];
         std::uint16_t scriptIndex;
@@ -19,23 +21,28 @@ namespace _2dfm {
         int flags;
     };
 
+    constexpr int SCRIPT_ITEM_SIZE = 16;
     struct ScriptItem {
         int type: 1;
         byte bytes[15];
     };
 
-    struct SpriteFrameHeader {
-        int unknownFlag1;
-        int width;
-        int height;
-        int hasPrivatePalette;
-        int size;
+    constexpr int PICTUR_HEADER_SIZE = 20;
+    struct PictureHeader {
+        int unknownFlag1; // 0-3
+        int width; // 4-7
+        int height; // 8-11
+        int hasPrivatePalette; // 12-15
+        int size; // 16-19
     };
-    struct SpriteFrame {
-        SpriteFrameHeader header;
+
+    struct Picture {
+        PictureHeader header;
         byte *content;
     };
 
+    constexpr int COLOR_SIZE = 4;
+    constexpr int PALETTE_SIZE = COLOR_SIZE * 256;
     union ColorBgra {
         struct {
             byte blue;
@@ -48,28 +55,26 @@ namespace _2dfm {
         std::string toString();
     };
 
-    struct Palette {
-        ColorBgra colors[256];
-        int gap[8];
-    };
-
     enum SoundType {
         WAVE = 1,
         MIDI,
         CDDA
     };
 
+    constexpr int SOUND_ITEM_HEADER_SIZE = 42;
     struct SoundItemHeader {
-        int unknown;
-        char name[32];
-        int size;
-        SoundType soundType: 1;
-        int track: 1;
+        int unknown; // 0-3
+        char name[32]; // 4-35
+        int size; // 36-39
+        SoundType soundType: 1; // 40
+        int track: 1; // 41
     };
     struct Sound {
         SoundItemHeader header;
         byte *content;
     };
+
+    byte *decompress(byte *compressed, int compressedSize, int destSize);
 }
 
 #endif //INC_2DFM_PLAYER_2DFMCOMMON_HPP

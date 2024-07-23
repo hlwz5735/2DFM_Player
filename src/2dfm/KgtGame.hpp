@@ -9,6 +9,7 @@
 #include <vector>
 #include "../math/Vector.hpp"
 #include "2dfmFile.hpp"
+#include "../base/SpriteFrame.hpp"
 
 struct Reaction {
     std::string name;
@@ -19,8 +20,12 @@ struct KgtGame {
     std::string projectName;
     // 脚本信息
     // 精灵帧信息
+    std::vector<SpriteFrame> spriteFrames;
     // 调色盘信息
+    std::vector<SDL_Palette *> sharedPalettes;
     // 声音信息
+    std::vector<_2dfm::Sound *> sounds;
+    // 角色名信息
     std::vector<std::string> playerNames;
     /// 受击反应列表
     std::vector<Reaction> reactions;

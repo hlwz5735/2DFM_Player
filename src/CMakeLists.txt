@@ -10,18 +10,23 @@ aux_source_directory(. sources)
 include(base/CMakeLists.txt)
 include(2dfm/CMakeLists.txt)
 include(math/CMakeLists.txt)
+include(game/CMakeLists.txt)
+
+message(${2dfm_sources})
 
 add_executable(${target_name}
     ${sources}
     ${math_sources}
     ${2dfm_sources}
     ${base_sources}
+    ${game_sources}
 )
 
 target_link_libraries(${target_name}
         sdl2
         SDL2_image
         SDL2_mixer
+        iconv
         rapidjson)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")

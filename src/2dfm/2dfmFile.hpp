@@ -30,12 +30,12 @@ namespace _2dfm {
         Script *scripts;
         int scriptItemCount;
         ScriptItem *scriptItems;
-        int spriteCount;
+        int pictureCount;
         // 精灵帧信息是变长的
-        std::vector<SpriteFrame *> spriteFrames;
-        Palette sharedPalette[8];
+        std::vector<Picture *> pictures;
+        std::vector<ColorBgra *> sharedPalettes;
         int soundCount;
-
+        std::vector<Sound *> sounds;
     };
 
     struct KgtFileHeader {
