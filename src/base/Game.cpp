@@ -2,17 +2,15 @@
 // Created by 厉猛 on 2024-07-16.
 //
 
-
 #include "Game.hpp"
+#include "../game/GameConfig.hpp"
 #include "InputSystem.hpp"
 #include "Node.hpp"
 #include "Renderer.hpp"
 #include "Texture.hpp"
 #include "../2dfm/2dfmFileReader.hpp"
 #include "../game/TestComponent.hpp"
-#include <SDL_image.h>
-#include <SDL_mixer.h>
-
+#include "AudioSystem.hpp"
 #include "SpriteComponent.hpp"
 
 const char *title = "Game";
@@ -23,28 +21,14 @@ Game::Game()
 {}
 
 bool Game::initialize() {
-    if (SDL_Init(SDL_INIT_VIDEO
-                 | SDL_INIT_AUDIO
-                 | SDL_INIT_GAMECONTROLLER) != 0) {
-        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-        return false;
-    }
-    if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == 0) {
-        SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
-        return false;
-    }
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        SDL_Log("Sdl_mixer could not initialize! SDL_mixer Error: %s", Mix_GetError());
-        SDL_Quit();
-        return false;
-    }
-
     INSTANCE = this;
 
     renderer = new Renderer(this);
-    renderer->initialize(nullptr, winWidth, winHeight);
+    renderer->initialize("2DFM Player", winWidth, winHeight);
     inputSystem = new InputSystem();
     inputSystem->initialize();
+    audioSystem = new AudioSystem(this);
+    audioSystem->initialize();
 
     loadData();
 
@@ -52,8 +36,9 @@ bool Game::initialize() {
     return true;
 }
 
-void Game::cleanup() {
-    Mix_CloseAudio();
+void Game::cleanUp() {
+    audioSystem->cleanUp();
+    delete audioSystem;
 
     renderer->cleanUp();
     delete renderer;
@@ -73,8 +58,7 @@ void Game::runLoop() {
 }
 
 void Game::loadData() {
-    kgt = readKgtFile("D:\\Games\\dong_dong_never_die_170804\\GAME\\GAME.kgt");
-
+    kgt = readKgtFile(gameConfig.gameBasePath + '/' + gameConfig.kgtFileName);
     for (auto &sf : kgt.spriteFrames) {
         const auto t = new Texture(renderer, &sf);
         renderer->addTexture(t);
@@ -86,10 +70,8 @@ void Game::loadData() {
     auto tc = new TestComponent(root);
     tc->setKgtGame(&kgt);
 
-    auto &sound = kgt.sounds[1];
-    SDL_RWops *wavData = SDL_RWFromMem(sound->content, sound->header.size);
-    auto chunk = Mix_LoadWAV_RW(wavData, false);
-    Mix_PlayChannel(-1, chunk, 5);
+    auto sound = kgt.sounds[1];
+    audioSystem->playClip(sound);
 }
 
 void Game::addGameObject(Node *obj) {

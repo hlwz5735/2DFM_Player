@@ -5,36 +5,47 @@
 #ifndef INC_2DFM_PLAYER_KGTGAME_HPP
 #define INC_2DFM_PLAYER_KGTGAME_HPP
 
+#include "2dfmFile.hpp"
+#include "../math/Vector.hpp"
+#include "CommonResource.hpp"
 #include <string>
 #include <vector>
-#include "../math/Vector.hpp"
-#include "2dfmFile.hpp"
-#include "../base/SpriteFrame.hpp"
+
+class SoundClip;
 
 struct Reaction {
     std::string name;
     bool isHurtAction;
 };
 
-struct KgtGame {
+struct KgtGame : CommonResource {
     std::string projectName;
-    // 脚本信息
-    // 精灵帧信息
-    std::vector<SpriteFrame> spriteFrames;
-    // 调色盘信息
-    std::vector<SDL_Palette *> sharedPalettes;
-    // 声音信息
-    std::vector<_2dfm::Sound *> sounds;
-    // 角色名信息
+    /// 角色名称列表
     std::vector<std::string> playerNames;
     /// 受击反应列表
     std::vector<Reaction> reactions;
+    /// 硬直时间配置
+    _2dfm::RecoverTimeConfig recoverTimeConfig;
     /// 投掷反应列表
     std::vector<std::string> throwReactions;
+    /// 场景列表
     std::vector<std::string> stageNames;
+    /// 影片列表
     std::vector<std::string> demoNames;
     /// 影片配置信息
-    _2dfm::DemoConfig demoConfig;
+    _2dfm::GameDemoConfig demoConfig;
+
+    /// 游戏基础设置
+    struct {
+        bool encryptGame;
+        bool allowClash;
+        bool enableStoryMode;
+        bool enable1V1Mode;
+        bool enableTeamMode;
+        bool showHpAfterHpBar;
+        bool pressToStart;
+    } projectBaseConfig;
+
     /// 角色选择界面配置
     struct {
         Vector2 selectBoxStartPos;

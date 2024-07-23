@@ -1,7 +1,8 @@
-#include <stdexcept>
-#include <iconv.h>
 #include "2dfmFileReader.hpp"
 #include "2dfmCommon.hpp"
+#include "../base/SoundClip.hpp"
+#include <iconv.h>
+#include <stdexcept>
 
 std::string gb2312ToUtf8(const char* gb2312) {
     auto len = strlen(gb2312);
@@ -19,7 +20,7 @@ std::string gb2312ToUtf8(const char* gb2312) {
         throw std::runtime_error("iconv_open failed");
     }
 
-    if (iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft) == (size_t) - 1) {
+    if (iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft) == static_cast<size_t>(-1)) {
         iconv_close(cd);
         throw std::runtime_error("iconv failed");
     }
@@ -27,6 +28,24 @@ std::string gb2312ToUtf8(const char* gb2312) {
     iconv_close(cd);
     utf8.resize(utf8.size() - outbytesleft); // 调整大小以去除未使用的空间
     return { utf8.begin(), utf8.end() };
+}
+
+void setCommonResource(CommonResource &result, const _2dfm::CommonResourcePart &commonResource) {
+    result.sharedPalettes.reserve(8);
+    for (int i = 0; i < 8; ++i) {
+        result.sharedPalettes.emplace_back(createSdlPalette(commonResource.sharedPalettes[i]));
+    }
+    result.spriteFrames.reserve(commonResource.pictureCount);
+    for (auto &picture : commonResource.pictures) {
+        auto &sfi = result.spriteFrames.emplace_back();
+        sfi.setFrom2dfmPicture(picture);
+        sfi.setSharedPalettes(result.sharedPalettes.data());
+    }
+    // 声音片段
+    result.sounds.reserve(commonResource.soundCount);
+    for (auto s : commonResource.sounds) {
+        result.sounds.emplace_back(SoundClip::from2dfmSound(s));
+    }
 }
 
 KgtGame readKgtFile(const std::string& filepath) {
@@ -37,105 +56,219 @@ KgtGame readKgtFile(const std::string& filepath) {
         throw std::runtime_error("open kgt file failed");
     }
     // 读入文件头
-    fread(&header, sizeof(_2dfm::KgtFileHeader), 1, file);
+    fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
+    long offset = ftell(file);
+
+    // 读入公共资源部分
+    auto commonResource = readCommonResourcePart(&offset, file);
+
+    // 读入玩家名称信息
+    fseek(file, offset + 4, SEEK_SET);
+    _2dfm::NameInfo *playerNames = static_cast<_2dfm::NameInfo *>(malloc(sizeof(_2dfm::NameInfo) * _2dfm::maxPlayerNum));
+    fread(playerNames, sizeof(_2dfm::NameInfo), _2dfm::maxPlayerNum, file);
+
+    // 读入受击反应信息
+    _2dfm::ReactionItem *reactionItems = static_cast<_2dfm::ReactionItem *>(malloc(sizeof(_2dfm::ReactionItem) * _2dfm::maxReactionNum));
+    fread(reactionItems, sizeof(_2dfm::ReactionItem), _2dfm::maxReactionNum, file);
+
+    // 读入硬直时间信息
+    fseek(file, 4, SEEK_CUR);
+    _2dfm::RecoverTimeConfig recoverTimeConfig;
+    fread(&recoverTimeConfig, sizeof(_2dfm::RecoverTimeConfig), 1, file);
+
+    // 读入场景信息
+    _2dfm::NameInfo *stageNames = static_cast<_2dfm::NameInfo *>(malloc(sizeof(_2dfm::NameInfo) * _2dfm::maxStageNum));
+    fread(stageNames, sizeof(_2dfm::NameInfo), _2dfm::maxStageNum, file);
+
+    // 读入影片信息
+    _2dfm::NameInfo *demoNames = static_cast<_2dfm::NameInfo *>(malloc(sizeof(_2dfm::NameInfo) * _2dfm::maxDemoNum));
+    fread(demoNames, sizeof(_2dfm::NameInfo), _2dfm::maxDemoNum, file);
+
+    // 读入影片信息
+    _2dfm::GameDemoConfig demoConfig;
+    fread(&demoConfig, _2dfm::DEMO_CONFIG_SIZE, 1, file);
+
+    // 读入项目通常设置
+    _2dfm::ProjectBaseConfig pbc;
+    fread(&pbc, 4, 1, file);
+
+    // 读入投掷反应列表
+    _2dfm::ThrowReaction *throwReactions = static_cast<_2dfm::ThrowReaction *>(malloc(sizeof(_2dfm::ThrowReaction) * _2dfm::maxThrowReactionNum));
+    fread(throwReactions, sizeof(_2dfm::ThrowReaction), _2dfm::maxThrowReactionNum, file);
+
+    // 跳过位置数据
+    fseek(file, 264, SEEK_CUR);
+    _2dfm::CharSelectConfig csc;
+    fread(&csc, sizeof(_2dfm::CharSelectConfig), 1, file);
+
+    // 拼装数据
+    KgtGame result;
+    result.projectName = header.name.name;
+    setCommonResource(result, commonResource);
+
+    result.playerNames.reserve(_2dfm::maxPlayerNum);
+    for (auto playerName = playerNames; playerName != playerNames + _2dfm::maxPlayerNum; ++playerName) {
+        result.playerNames.emplace_back(gb2312ToUtf8(playerName->name));
+    }
+    result.stageNames.reserve(_2dfm::maxStageNum);
+    for (auto stageName = stageNames; stageName != stageNames + _2dfm::maxStageNum; ++stageName) {
+        result.stageNames.emplace_back(gb2312ToUtf8(stageName->name));
+    }
+    result.demoNames.reserve(_2dfm::maxDemoNum);
+    for (auto demoName = demoNames; demoName != demoNames + _2dfm::maxDemoNum; ++demoName) {
+        result.demoNames.emplace_back(gb2312ToUtf8(demoName->name));
+    }
+    result.reactions.reserve(_2dfm::maxReactionNum);
+    for (auto reactionItem = reactionItems; reactionItem != reactionItems + _2dfm::maxReactionNum; ++reactionItem) {
+        Reaction r;
+        r.name = gb2312ToUtf8(reactionItem->reactionName);
+        r.isHurtAction = static_cast<bool>(reactionItem->isHurtAction);
+        result.reactions.emplace_back(r);
+    }
+    result.throwReactions.reserve(_2dfm::maxThrowReactionNum);
+    for (auto reaction = throwReactions; reaction != throwReactions + _2dfm::maxThrowReactionNum; ++reaction) {
+        result.throwReactions.emplace_back(gb2312ToUtf8(reaction->name));
+    }
+    result.recoverTimeConfig = recoverTimeConfig;
+    result.demoConfig = demoConfig;
+
+    // 游戏基础设置
+    result.projectBaseConfig.encryptGame = pbc.value.encryptGame;
+    result.projectBaseConfig.allowClash = pbc.value.allowClash;
+    result.projectBaseConfig.enableStoryMode = pbc.value.enableStoryMode;
+    result.projectBaseConfig.enable1V1Mode = pbc.value.enable1V1Mode;
+    result.projectBaseConfig.enableTeamMode = pbc.value.enableTeamMode;
+    result.projectBaseConfig.showHpAfterHpBar = pbc.value.showHpAfterHpBar;
+    result.projectBaseConfig.pressToStart = pbc.value.pressToStart;
+
+    // 角色选择画面设置
+    result.charSelectConfig.selectBoxStartPos = Vector2(csc.selectBoxStartX, csc.selectBoxStartY);
+    result.charSelectConfig.playerAvatarIconSize = Vector2(csc.iconWidth, csc.iconHeight);
+    result.charSelectConfig.rowCount = csc.rowNum;
+    result.charSelectConfig.columnCount = csc.columnNum;
+    result.charSelectConfig.player1PortraitPos = Vector2(csc.player1PortraitX, csc.player1PortraitY);
+    result.charSelectConfig.player1PortraitOffset = Vector2(csc.player1PortraitTeamOffsetX, csc.player1PortraitTeamOffsetY);
+    result.charSelectConfig.player2PortraitPos = Vector2(csc.player2PortraitX, csc.player2PortraitY);
+    result.charSelectConfig.player2PortraitOffset = Vector2(csc.player2PortraitTeamOffsetX, csc.player2PortraitTeamOffsetY);
+
+    // 资源清理
+    fclose(file);
+    free(playerNames);
+    free(stageNames);
+    free(demoNames);
+    free(reactionItems);
+    free(throwReactions);
+    freeCommonResourcePart(&commonResource);
+
+    return result;
+}
+
+KgtDemo readDemoFile(const std::string &filepath) {
+    _2dfm::KgtFileHeader header;
+    // 打开文件
+    auto file = fopen(filepath.c_str(), "rb");
+    if (!file) {
+        throw std::runtime_error("open demo file failed");
+    }
+    // 读入文件头
+    fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
+    long offset = ftell(file);
+
+    // 读入公共资源部分
+    auto commonResource = readCommonResourcePart(&offset, file);
+    fseek(file, offset + 4, SEEK_SET);
+
+    // 读入DEMO配置信息
+    _2dfm::KgtDemoConfig config;
+    fread(&config, sizeof(_2dfm::KgtDemoConfig), 1, file);
+
+    KgtDemo result;
+    // 资源拼接部分
+    result.demoName = header.name.name;
+    setCommonResource(result, commonResource);
+    result.config = config;
+
+    // 资源清理
+    fclose(file);
+    freeCommonResourcePart(&commonResource);
+
+    return result;
+}
+
+_2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
+    fseek(file, *offset, SEEK_SET);
+
     // 读入脚本项列表
     int intBuffer;
     fread(&intBuffer, sizeof(int), 1, file);
-    _2dfm::ScriptPart sp;
-    sp.scriptCount = intBuffer;
-    sp.scripts = static_cast<_2dfm::Script *>(malloc(_2dfm::SCRIPT_SIZE * sp.scriptCount));
-    if (!sp.scripts) {
+    _2dfm::CommonResourcePart crp;
+    crp.scriptCount = intBuffer;
+    crp.scripts = static_cast<_2dfm::Script *>(malloc(_2dfm::SCRIPT_SIZE * crp.scriptCount));
+    if (!crp.scripts) {
         throw std::runtime_error("there is no enough memory space!");
     }
-    fread(sp.scripts, _2dfm::SCRIPT_SIZE, sp.scriptCount, file);
-    //_2dfm::Script *p;
-    //for (int i = 0; i < sp.scriptCount; ++i) {
-    //    p = reinterpret_cast<_2dfm::Script *>(
-    //        reinterpret_cast<byte *>(sp.scripts) + i * _2dfm::scriptSize
-    //    );
-    //}
+    fread(crp.scripts, _2dfm::SCRIPT_SIZE, crp.scriptCount, file);
 
     // 读入脚本格子列表
     fread(&intBuffer, sizeof(int), 1, file);
-    sp.scriptItemCount = intBuffer;
-    sp.scriptItems = static_cast<_2dfm::ScriptItem *>(malloc(_2dfm::SCRIPT_ITEM_SIZE * sp.scriptItemCount));
-    if (!sp.scriptItems) {
+    crp.scriptItemCount = intBuffer;
+    crp.scriptItems = static_cast<_2dfm::ScriptItem *>(malloc(_2dfm::SCRIPT_ITEM_SIZE * crp.scriptItemCount));
+    if (!crp.scriptItems) {
         throw std::runtime_error("there is no enough memory space!");
     }
-    fread(sp.scriptItems, _2dfm::SCRIPT_ITEM_SIZE, sp.scriptItemCount, file);
+    fread(crp.scriptItems, _2dfm::SCRIPT_ITEM_SIZE, crp.scriptItemCount, file);
 
     // 读入精灵帧信息
     fread(&intBuffer, sizeof(int), 1, file);
-    sp.pictureCount = intBuffer;
-    sp.pictures.reserve(sp.pictureCount);
-    for (int i = 0; i < sp.pictureCount; ++i) {
-        auto sf = new _2dfm::Picture();
+    crp.pictureCount = intBuffer;
+    crp.pictures.reserve(crp.pictureCount);
+    for (int i = 0; i < crp.pictureCount; ++i) {
+        auto sf = static_cast<_2dfm::Picture *>(malloc(sizeof(_2dfm::Picture)));
         fread(&sf->header, _2dfm::PICTUR_HEADER_SIZE, 1, file);
         auto sz = get2dfmPictureSize(&sf->header);
         byte *pSpriteContent = static_cast<byte *>(malloc(sz));
         fread(pSpriteContent, sz, 1, file);
         sf->content = pSpriteContent;
-        sp.pictures.emplace_back(sf);
+        crp.pictures.emplace_back(sf);
     }
 
     // 读入调色盘信息
-    for (int i = 0; i < 8; ++i) {
+    for (auto &sharedPalette : crp.sharedPalettes) {
         _2dfm::ColorBgra *pPalette = static_cast<_2dfm::ColorBgra *>(malloc(_2dfm::PALETTE_SIZE));
         fread(pPalette, _2dfm::PALETTE_SIZE, 1, file);
-        sp.sharedPalettes.emplace_back(pPalette);
+        sharedPalette = pPalette;
         fseek(file, sizeof(int) * 8, SEEK_CUR);
     }
 
     // 读入声音信息
     fread(&intBuffer, sizeof(int), 1, file);
-    sp.soundCount = intBuffer;
-    sp.sounds.reserve(sp.soundCount);
-    for (int i = 0; i < sp.soundCount; ++i) {
-        auto s = new _2dfm::Sound();
-        fread(&s->header, _2dfm::SOUND_ITEM_HEADER_SIZE, 1, file);
+    crp.soundCount = intBuffer;
+    crp.sounds.reserve(crp.soundCount);
+    for (int i = 0; i < crp.soundCount; ++i) {
+        auto s = static_cast<_2dfm::Sound *>(malloc(sizeof(_2dfm::Sound)));
+        fread(&(s->header), _2dfm::SOUND_ITEM_HEADER_SIZE, 1, file);
         if (s->header.size > 0) {
             s->content = static_cast<byte *>(malloc(s->header.size));
             fread(s->content, s->header.size, 1, file);
         }
-        sp.sounds.emplace_back(s);
+        crp.sounds.emplace_back(s);
     }
 
-    
-    // 资源清理
-    // TODO: destroySp(&sp);
-    // free(sp.scripts);
-    // free(sp.scriptItems);
-    fclose(file);
-
-    // 拼装数据
-    KgtGame result;
-    result.projectName = header.projectName.name;
-    result.sharedPalettes.reserve(8);
-    for (int i = 0; i < 8; ++i) {
-        result.sharedPalettes.emplace_back(createSdlPalette(sp.sharedPalettes[i]));
-    }
-    result.spriteFrames.reserve(sp.pictureCount);
-    for (auto pi = sp.pictures.begin(); pi != sp.pictures.end(); ++pi) {
-        auto &sfi = result.spriteFrames.emplace_back();
-        sfi.setFrom2dfmPicture(*pi);
-        sfi.setSharedPalettes(result.sharedPalettes.data());
-    }
-
-    result.sounds = sp.sounds;
-
-    return result;
+    *offset = ftell(file);
+    return crp;
 }
 
 SDL_Palette *createSdlPalette(_2dfm::ColorBgra *originPalette) {
     auto palette = SDL_AllocPalette(256);
 
     for (int i = 0; i < 256; ++i) {
-        (palette->colors)[i].r = static_cast<Uint8>(originPalette[i].channel.red);
-        (palette->colors)[i].g = static_cast<Uint8>(originPalette[i].channel.green);
-        (palette->colors)[i].b = static_cast<Uint8>(originPalette[i].channel.blue);
-        (palette->colors)[i].a = static_cast<Uint8>(static_cast<unsigned char>(originPalette[i].channel.alpha) == 0 ? 0 : 255);
-        if ((palette->colors)[i].r == 0 && (palette->colors)[i].g == 0 && (palette->colors)[i].b == 0) {
-            (palette->colors)[i].a = 0;
+        auto &color = (palette->colors)[i];
+        color.r = static_cast<Uint8>(originPalette[i].channel.red);
+        color.g = static_cast<Uint8>(originPalette[i].channel.green);
+        color.b = static_cast<Uint8>(originPalette[i].channel.blue);
+        color.a = static_cast<Uint8>(static_cast<unsigned char>(originPalette[i].channel.alpha) == 0 ? 255 : 0);
+        if (color.r == 0 && color.g == 0 && color.b == 0) {
+            color.a = 0;
         }
     }
 

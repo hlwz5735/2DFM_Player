@@ -12,7 +12,7 @@ int main() {
     if (game->initialize()) {
         game->runLoop();
     }
-    game->cleanup();
+    game->cleanUp();
     delete game;
     return 0;
 }

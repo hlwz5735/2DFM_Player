@@ -75,6 +75,12 @@ namespace _2dfm {
     };
 
     byte *decompress(byte *compressed, int compressedSize, int destSize);
+
+    constexpr int maxPlayerNum = 50;
+    constexpr int maxStageNum = 50;
+    constexpr int maxDemoNum = 100;
+    constexpr int maxReactionNum = 200;
+    constexpr int maxThrowReactionNum = 200;
 }
 
 #endif //INC_2DFM_PLAYER_2DFMCOMMON_HPP

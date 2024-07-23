@@ -7,6 +7,7 @@
 
 #include <SDL.h>
 #include "../2dfm/KgtGame.hpp"
+#include "../game/GameConfig.hpp"
 #include <vector>
 
 class Node;
@@ -21,7 +22,7 @@ public:
     Game();
 
     bool initialize();
-    void cleanup();
+    void cleanUp();
     void runLoop();
 
     void loadData();
@@ -30,6 +31,7 @@ public:
     Renderer *getRenderer() const { return renderer; }
     AudioSystem *getAudioSystem() const { return audioSystem; }
     InputSystem *getInputSystem() const { return inputSystem; }
+    const GameConfig *getGameConfig() const { return &gameConfig; }
 
     void addGameObject(Node *obj);
     void removeGameObject(Node *obj);
@@ -52,6 +54,7 @@ private:
     bool updatingGameObjects = false;
 
     KgtGame kgt;
+    GameConfig gameConfig;
 };
 
 #endif //INC_2DFM_PLAYER_GAME_HPP

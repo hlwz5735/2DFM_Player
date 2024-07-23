@@ -53,6 +53,7 @@ SDL_Texture *SpriteFrame::getTexture(Renderer *renderer, int paletteNo) const {
     if (auto surface = buildIndexSurfaceBySDL(width, height, palette, rawData)) {
         auto tex = SDL_CreateTextureFromSurface(renderer->getSdlRenderer(), surface);
         SDL_FreeSurface(surface);
+        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
         return tex;
     }
     return nullptr;

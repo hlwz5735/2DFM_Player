@@ -1,15 +1,27 @@
 //
 // Created by 厉猛 on 2024-07-16.
 //
-#include <SDL.h>
 #include "Game.hpp"
 #include "Renderer.hpp"
 #include "Texture.hpp"
 #include "SpriteComponent.hpp"
+#include <SDL.h>
+#include <SDL_image.h>
 
 Renderer::Renderer(Game *game) : game(game) {}
 
 bool Renderer::initialize(const char *title, int width, int height) {
+    if (SDL_Init(SDL_INIT_VIDEO
+        | SDL_INIT_AUDIO
+        | SDL_INIT_GAMECONTROLLER) != 0) {
+        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+        return false;
+    }
+    if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == 0) {
+        SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
+        return false;
+    }
+    
     windowWidth = width;
     windowHeight = height;
     sdlWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,

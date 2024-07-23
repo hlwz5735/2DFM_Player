@@ -25,22 +25,26 @@ namespace _2dfm {
         char name[32];
     };
 
-    struct ScriptPart {
-        int scriptCount;
-        Script *scripts;
-        int scriptItemCount;
-        ScriptItem *scriptItems;
-        int pictureCount;
+    struct CommonResourcePart {
+        int scriptCount = 0;
+        Script *scripts = nullptr;
+        int scriptItemCount = 0;
+        ScriptItem *scriptItems = nullptr;
+        int pictureCount = 0;
         // 精灵帧信息是变长的
         std::vector<Picture *> pictures;
-        std::vector<ColorBgra *> sharedPalettes;
+        ColorBgra *sharedPalettes[8];
         int soundCount;
         std::vector<Sound *> sounds;
     };
 
+    /// 清理资源数据
+    void freeCommonResourcePart(CommonResourcePart *crp);
+
+    constexpr int KGT_FILE_HEADER_SIZE = 16 + 256;
     struct KgtFileHeader {
         byte fileSignature[16];
-        NameInfo projectName;
+        NameInfo name;
     };
 
     struct RecoverTimeConfig {
@@ -50,13 +54,16 @@ namespace _2dfm {
         byte clashRecoverTime;
     };
 
-    struct DemoConfig {
+    constexpr int DEMO_CONFIG_SIZE = 8;
+    struct GameDemoConfig {
         byte titleDemoId;
         byte storyModeCharSelectDemoId;
         byte oneVsOneModeCharSelectDemoId;
         byte teamModeCharSelectDemoId;
         byte continueDemoId;
         byte openingDemoId;
+        byte unknownTag1;
+        byte unkownTag2;
     };
 
     union ProjectBaseConfig {
@@ -66,7 +73,7 @@ namespace _2dfm {
             int encryptGame: 1;
             int allowClash: 1;
             int enableStoryMode: 1;
-            int enable1v1Mode: 1;
+            int enable1V1Mode: 1;
             int enableTeamMode: 1;
             int showHpAfterHpBar: 1;
             int pressToStart: 1;
@@ -88,6 +95,13 @@ namespace _2dfm {
         std::int16_t player2PortraitY;
         std::int16_t player2PortraitTeamOffsetX;
         std::int16_t player2PortraitTeamOffsetY;
+    };
+
+    struct KgtDemoConfig {
+        int16_t bgmSoundId;
+        bool pressToSkip;
+        int16_t unknownGap;
+        int32_t totalTime;
     };
 }
 
