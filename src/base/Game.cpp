@@ -3,6 +3,7 @@
 //
 
 #include "Game.hpp"
+#include "../2dfm/KgtGame.hpp"
 #include "../game/GameConfig.hpp"
 #include "InputSystem.hpp"
 #include "Node.hpp"
@@ -59,19 +60,22 @@ void Game::runLoop() {
 
 void Game::loadData() {
     kgt = readKgtFile(gameConfig.gameBasePath + '/' + gameConfig.kgtFileName);
-    for (auto &sf : kgt.spriteFrames) {
+    for (auto &sf : kgt->spriteFrames) {
         const auto t = new Texture(renderer, &sf);
-        renderer->addTexture(t);
+        kgt->pictures.emplace_back(t);
     }
 
     auto root = new Node(this);
-    root->setPosition(Vector2(winWidth / 2, winHeight / 2));
+    root->setPosition(Vector2::ZERO);
     auto sprite = new SpriteComponent(root);
-    auto tc = new TestComponent(root);
-    tc->setKgtGame(&kgt);
+    auto openDemoName = gameConfig.gameBasePath + '/' + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId)] + ".demo";
 
-    auto sound = kgt.sounds[1];
-    audioSystem->playClip(sound);
+    auto demo = readDemoFile(openDemoName);
+    for (auto &sf : demo->spriteFrames) {
+        demo->pictures.emplace_back(new Texture(renderer, &sf));
+    }
+    auto tc = new TestComponent(root);
+    tc->setCommonResource(demo);
 }
 
 void Game::addGameObject(Node *obj) {

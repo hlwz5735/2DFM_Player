@@ -30,25 +30,25 @@ std::string gb2312ToUtf8(const char* gb2312) {
     return { utf8.begin(), utf8.end() };
 }
 
-void setCommonResource(CommonResource &result, const _2dfm::CommonResourcePart &commonResource) {
-    result.sharedPalettes.reserve(8);
+void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &commonResource) {
+    result->sharedPalettes.reserve(8);
     for (int i = 0; i < 8; ++i) {
-        result.sharedPalettes.emplace_back(createSdlPalette(commonResource.sharedPalettes[i]));
+        result->sharedPalettes.emplace_back(createSdlPalette(commonResource.sharedPalettes[i]));
     }
-    result.spriteFrames.reserve(commonResource.pictureCount);
+    result->spriteFrames.reserve(commonResource.pictureCount);
     for (auto &picture : commonResource.pictures) {
-        auto &sfi = result.spriteFrames.emplace_back();
+        auto &sfi = result->spriteFrames.emplace_back();
         sfi.setFrom2dfmPicture(picture);
-        sfi.setSharedPalettes(result.sharedPalettes.data());
+        sfi.setSharedPalettes(result->sharedPalettes.data());
     }
     // 声音片段
-    result.sounds.reserve(commonResource.soundCount);
+    result->sounds.reserve(commonResource.soundCount);
     for (auto s : commonResource.sounds) {
-        result.sounds.emplace_back(SoundClip::from2dfmSound(s));
+        result->sounds.emplace_back(SoundClip::from2dfmSound(s));
     }
 }
 
-KgtGame readKgtFile(const std::string& filepath) {
+KgtGame *readKgtFile(const std::string& filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
     auto file = fopen(filepath.c_str(), "rb");
@@ -102,54 +102,54 @@ KgtGame readKgtFile(const std::string& filepath) {
     fread(&csc, sizeof(_2dfm::CharSelectConfig), 1, file);
 
     // 拼装数据
-    KgtGame result;
-    result.projectName = header.name.name;
+    auto result = new KgtGame;
+    result->projectName = header.name.name;
     setCommonResource(result, commonResource);
 
-    result.playerNames.reserve(_2dfm::maxPlayerNum);
+    result->playerNames.reserve(_2dfm::maxPlayerNum);
     for (auto playerName = playerNames; playerName != playerNames + _2dfm::maxPlayerNum; ++playerName) {
-        result.playerNames.emplace_back(gb2312ToUtf8(playerName->name));
+        result->playerNames.emplace_back(gb2312ToUtf8(playerName->name));
     }
-    result.stageNames.reserve(_2dfm::maxStageNum);
+    result->stageNames.reserve(_2dfm::maxStageNum);
     for (auto stageName = stageNames; stageName != stageNames + _2dfm::maxStageNum; ++stageName) {
-        result.stageNames.emplace_back(gb2312ToUtf8(stageName->name));
+        result->stageNames.emplace_back(gb2312ToUtf8(stageName->name));
     }
-    result.demoNames.reserve(_2dfm::maxDemoNum);
+    result->demoNames.reserve(_2dfm::maxDemoNum);
     for (auto demoName = demoNames; demoName != demoNames + _2dfm::maxDemoNum; ++demoName) {
-        result.demoNames.emplace_back(gb2312ToUtf8(demoName->name));
+        result->demoNames.emplace_back(gb2312ToUtf8(demoName->name));
     }
-    result.reactions.reserve(_2dfm::maxReactionNum);
+    result->reactions.reserve(_2dfm::maxReactionNum);
     for (auto reactionItem = reactionItems; reactionItem != reactionItems + _2dfm::maxReactionNum; ++reactionItem) {
         Reaction r;
         r.name = gb2312ToUtf8(reactionItem->reactionName);
         r.isHurtAction = static_cast<bool>(reactionItem->isHurtAction);
-        result.reactions.emplace_back(r);
+        result->reactions.emplace_back(r);
     }
-    result.throwReactions.reserve(_2dfm::maxThrowReactionNum);
+    result->throwReactions.reserve(_2dfm::maxThrowReactionNum);
     for (auto reaction = throwReactions; reaction != throwReactions + _2dfm::maxThrowReactionNum; ++reaction) {
-        result.throwReactions.emplace_back(gb2312ToUtf8(reaction->name));
+        result->throwReactions.emplace_back(gb2312ToUtf8(reaction->name));
     }
-    result.recoverTimeConfig = recoverTimeConfig;
-    result.demoConfig = demoConfig;
+    result->recoverTimeConfig = recoverTimeConfig;
+    result->demoConfig = demoConfig;
 
     // 游戏基础设置
-    result.projectBaseConfig.encryptGame = pbc.value.encryptGame;
-    result.projectBaseConfig.allowClash = pbc.value.allowClash;
-    result.projectBaseConfig.enableStoryMode = pbc.value.enableStoryMode;
-    result.projectBaseConfig.enable1V1Mode = pbc.value.enable1V1Mode;
-    result.projectBaseConfig.enableTeamMode = pbc.value.enableTeamMode;
-    result.projectBaseConfig.showHpAfterHpBar = pbc.value.showHpAfterHpBar;
-    result.projectBaseConfig.pressToStart = pbc.value.pressToStart;
+    result->projectBaseConfig.encryptGame = pbc.value.encryptGame;
+    result->projectBaseConfig.allowClash = pbc.value.allowClash;
+    result->projectBaseConfig.enableStoryMode = pbc.value.enableStoryMode;
+    result->projectBaseConfig.enable1V1Mode = pbc.value.enable1V1Mode;
+    result->projectBaseConfig.enableTeamMode = pbc.value.enableTeamMode;
+    result->projectBaseConfig.showHpAfterHpBar = pbc.value.showHpAfterHpBar;
+    result->projectBaseConfig.pressToStart = pbc.value.pressToStart;
 
     // 角色选择画面设置
-    result.charSelectConfig.selectBoxStartPos = Vector2(csc.selectBoxStartX, csc.selectBoxStartY);
-    result.charSelectConfig.playerAvatarIconSize = Vector2(csc.iconWidth, csc.iconHeight);
-    result.charSelectConfig.rowCount = csc.rowNum;
-    result.charSelectConfig.columnCount = csc.columnNum;
-    result.charSelectConfig.player1PortraitPos = Vector2(csc.player1PortraitX, csc.player1PortraitY);
-    result.charSelectConfig.player1PortraitOffset = Vector2(csc.player1PortraitTeamOffsetX, csc.player1PortraitTeamOffsetY);
-    result.charSelectConfig.player2PortraitPos = Vector2(csc.player2PortraitX, csc.player2PortraitY);
-    result.charSelectConfig.player2PortraitOffset = Vector2(csc.player2PortraitTeamOffsetX, csc.player2PortraitTeamOffsetY);
+    result->charSelectConfig.selectBoxStartPos = Vector2(csc.selectBoxStartX, csc.selectBoxStartY);
+    result->charSelectConfig.playerAvatarIconSize = Vector2(csc.iconWidth, csc.iconHeight);
+    result->charSelectConfig.rowCount = csc.rowNum;
+    result->charSelectConfig.columnCount = csc.columnNum;
+    result->charSelectConfig.player1PortraitPos = Vector2(csc.player1PortraitX, csc.player1PortraitY);
+    result->charSelectConfig.player1PortraitOffset = Vector2(csc.player1PortraitTeamOffsetX, csc.player1PortraitTeamOffsetY);
+    result->charSelectConfig.player2PortraitPos = Vector2(csc.player2PortraitX, csc.player2PortraitY);
+    result->charSelectConfig.player2PortraitOffset = Vector2(csc.player2PortraitTeamOffsetX, csc.player2PortraitTeamOffsetY);
 
     // 资源清理
     fclose(file);
@@ -163,7 +163,7 @@ KgtGame readKgtFile(const std::string& filepath) {
     return result;
 }
 
-KgtDemo readDemoFile(const std::string &filepath) {
+KgtDemo *readDemoFile(const std::string &filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
     auto file = fopen(filepath.c_str(), "rb");
@@ -182,11 +182,11 @@ KgtDemo readDemoFile(const std::string &filepath) {
     _2dfm::KgtDemoConfig config;
     fread(&config, sizeof(_2dfm::KgtDemoConfig), 1, file);
 
-    KgtDemo result;
+    auto result = new KgtDemo;
     // 资源拼接部分
-    result.demoName = header.name.name;
+    result->demoName = header.name.name;
     setCommonResource(result, commonResource);
-    result.config = config;
+    result->config = config;
 
     // 资源清理
     fclose(file);

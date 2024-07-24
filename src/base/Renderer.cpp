@@ -40,10 +40,10 @@ bool Renderer::initialize(const char *title, int width, int height) {
 }
 
 void Renderer::cleanUp() {
-    for (auto t : textures) {
+    /*for (auto t : textures) {
         delete t;
     }
-    textures.clear();
+    textures.clear();*/
     SDL_DestroyRenderer(sdlRenderer);
     SDL_DestroyWindow(sdlWindow);
 }
@@ -62,7 +62,7 @@ void Renderer::render() {
     SDL_RenderPresent(sdlRenderer);
 }
 
-Texture *Renderer::getTexture(size_t idx) {
+/*Texture *Renderer::createTexture(size_t idx) {
     if (idx >= textures.size()) {
         return nullptr;
     }
@@ -76,7 +76,7 @@ void Renderer::addTexture(Texture *texture) {
             textures.emplace_back(texture);
         }
     }
-}
+}*/
 
 void Renderer::addSprite(SpriteComponent *sprite) {
     int order = sprite->getZOrder();

@@ -1,7 +1,7 @@
 #include "SoundClip.hpp"
-
 #include "AudioSystem.hpp"
 #include "Game.hpp"
+#include "../2dfm/2dfmCommon.hpp"
 
 SoundClip::~SoundClip() {
     if (mixChunk) {

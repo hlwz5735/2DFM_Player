@@ -25,8 +25,8 @@ void SpriteComponent::draw(Renderer *renderer) {
     int h = texture->getHeight();
     SDL_Rect sr { 0, 0, w, h };
 
-    int dx = x - w / 2;
-    int dy = y - h;
+    int dx = origin == TOP_LEFT ? x : x - w / 2;
+    int dy = origin == TOP_LEFT ? y : y - h;
     SDL_Rect dr { dx + static_cast<int>(offset.x), dy + static_cast<int>(offset.y), w, h };
 
     int flip = SDL_FLIP_NONE;

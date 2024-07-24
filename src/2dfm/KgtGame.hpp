@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-class SoundClip;
-
 struct Reaction {
     std::string name;
     bool isHurtAction;
@@ -58,5 +56,7 @@ struct KgtGame : CommonResource {
         Vector2 player2PortraitOffset;
     } charSelectConfig;
 };
+
+void cleanKgtGame(KgtGame *game);
 
 #endif //INC_2DFM_PLAYER_KGTGAME_HPP

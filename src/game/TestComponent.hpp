@@ -2,14 +2,17 @@
 
 #include "../base/Component.hpp"
 
+class CommonResource;
+
 class TestComponent : public Component {
 public:
     TestComponent(Node *owner, int updateOrder = 10);
     void update(float deltaTime) override;
 
-    void setKgtGame(class KgtGame *game) { kgtGame = game; }
+    void setCommonResource(CommonResource *res) { cr = res; }
+
 private:
-    class KgtGame *kgtGame = nullptr;
+    CommonResource *cr = nullptr;
     class SpriteComponent *sprite = nullptr;
-    int textureId = 0;
+    int picNo = 0;
 };

@@ -6,7 +6,6 @@
 #define INC_2DFM_PLAYER_GAME_HPP
 
 #include <SDL.h>
-#include "../2dfm/KgtGame.hpp"
 #include "../game/GameConfig.hpp"
 #include <vector>
 
@@ -53,7 +52,7 @@ private:
     std::vector<Node *> pendingObjects;
     bool updatingGameObjects = false;
 
-    KgtGame kgt;
+    class KgtGame *kgt;
     GameConfig gameConfig;
 };
 

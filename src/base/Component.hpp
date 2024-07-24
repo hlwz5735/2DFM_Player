@@ -17,9 +17,9 @@ public:
     int getUpdateOrder() const { return updateOrder; }
 
 protected:
+
     Node *owner;
     int updateOrder;
 };
-
 
 #endif //INC_2DFM_PLAYER_COMPONENT_HPP

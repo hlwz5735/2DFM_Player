@@ -3,7 +3,7 @@
 Texture::Texture(Renderer *renderer, SpriteFrame *sf, int paletteNo) {
     width = sf->width;
     height = sf->height;
-    sdlTexture = sf->getTexture(renderer, paletteNo);
+    sdlTexture = createTextureFromSpriteFrame(sf, renderer, paletteNo);
 }
 
 Texture::~Texture() {

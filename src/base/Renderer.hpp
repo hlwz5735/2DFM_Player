@@ -26,8 +26,8 @@ public:
 
     SDL_Renderer *getSdlRenderer() { return sdlRenderer; }
 
-    Texture *getTexture(size_t idx);
-    void addTexture(Texture *texture);
+    //Texture *createTexture(size_t idx);
+    //void addTexture(Texture *texture);
     void addSprite(SpriteComponent *sprite);
     void removeSprite(SpriteComponent *sprite);
 protected:
@@ -40,7 +40,7 @@ private:
 
     class Game *game;
 
-    std::vector<Texture *> textures;
+    //std::vector<Texture *> textures;
     std::vector<SpriteComponent *> sprites;
 };
 

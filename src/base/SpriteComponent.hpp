@@ -6,6 +6,11 @@
 class Renderer;
 class Texture;
 
+enum Origin {
+    TOP_LEFT,
+    BOTTOM_CENTER
+};
+
 class SpriteComponent : public Component {
 public:
     SpriteComponent(Node *owner, int updateOrder = 100);
@@ -25,7 +30,8 @@ private:
 
     int zOrder = 100;
 
-    Vector2 offset = Vector2::ZERO;
+    Origin origin = TOP_LEFT;
 
+    Vector2 offset = Vector2::ZERO;
     Texture *texture = nullptr;
 };

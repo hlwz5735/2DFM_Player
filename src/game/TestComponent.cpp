@@ -1,9 +1,8 @@
 #include "TestComponent.hpp"
-#include "../2dfm/KgtGame.hpp"
+#include "../2dfm/CommonResource.hpp"
 #include "../base/Game.hpp"
 #include "../base/InputSystem.hpp"
 #include "../base/Node.hpp"
-#include "../base/Renderer.hpp"
 #include "../base/SpriteComponent.hpp"
 
 TestComponent::TestComponent(Node *owner, int updateOrder): Component(owner, updateOrder) {
@@ -11,23 +10,29 @@ TestComponent::TestComponent(Node *owner, int updateOrder): Component(owner, upd
 }
 
 void TestComponent::update(float deltaTime) {
-    if (kgtGame && sprite) {
+    if (cr && sprite) {
         auto input = Game::getInstance()->getInputSystem();
 
         if (input->isKeyDown(SDL_SCANCODE_RIGHT)) {
-            textureId += 1;
-            if (textureId >= kgtGame->spriteFrames.size()) {
-                textureId = 0;
+            picNo += 1;
+            if (picNo >= cr->spriteFrames.size()) {
+                picNo = 0;
             }
         }
         if (input->isKeyDown(SDL_SCANCODE_LEFT)) {
-            if (textureId <= 0) {
-                textureId = kgtGame->spriteFrames.size();
+            if (picNo <= 0) {
+                picNo = cr->spriteFrames.size();
             }
-            textureId -= 1;
+            picNo -= 1;
         }
 
-        auto texture = Game::getInstance()->getRenderer()->getTexture(textureId);
-        sprite->setTexture(texture);
+        const auto t = cr->pictures.at(picNo);
+        if (sprite->getTexture() != t) {
+            const auto s = cr->spriteFrames.at(picNo);
+            SDL_Log("picNo: %d/%d, width: %d, height: %d, privateP: %c",
+                picNo, cr->pictures.size(), s.width, s.height, s.hasPrivatePalette ? 'o' : 'x');
+
+            sprite->setTexture(cr->pictures.at(picNo));
+        }
     }
 }

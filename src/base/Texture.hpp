@@ -10,7 +10,7 @@ public:
     explicit Texture(Renderer *renderer, SpriteFrame *sf, int paletteNo = 0);
     ~Texture();
 
-    SDL_Texture * getSdlTexture() const { return sdlTexture; }
+    SDL_Texture *getSdlTexture() const { return sdlTexture; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
 private:
