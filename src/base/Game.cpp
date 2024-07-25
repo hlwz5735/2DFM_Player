@@ -3,16 +3,17 @@
 //
 
 #include "Game.hpp"
-#include "../2dfm/KgtGame.hpp"
-#include "../game/GameConfig.hpp"
 #include "InputSystem.hpp"
 #include "Node.hpp"
 #include "Renderer.hpp"
 #include "Texture.hpp"
-#include "../2dfm/2dfmFileReader.hpp"
-#include "../game/TestComponent.hpp"
 #include "AudioSystem.hpp"
 #include "SpriteComponent.hpp"
+#include "../2dfm/KgtGame.hpp"
+#include "../2dfm/2dfmFileReader.hpp"
+#include "../game/GameConfig.hpp"
+#include "../game/TestComponent.hpp"
+#include "../game/DemoScriptInterceptor.hpp"
 
 const char *title = "Game";
 Game *Game::INSTANCE = nullptr;
@@ -68,14 +69,17 @@ void Game::loadData() {
     auto root = new Node(this);
     root->setPosition(Vector2::ZERO);
     auto sprite = new SpriteComponent(root);
-    auto openDemoName = gameConfig.gameBasePath + '/' + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId)] + ".demo";
+    auto openDemoName = gameConfig.gameBasePath + '/'
+            + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]
+            + ".demo";
 
-    auto demo = readDemoFile(openDemoName);
+    KgtDemo *demo = readDemoFile(openDemoName);
     for (auto &sf : demo->spriteFrames) {
         demo->pictures.emplace_back(new Texture(renderer, &sf));
     }
-    auto tc = new TestComponent(root);
-    tc->setCommonResource(demo);
+    auto comp = new DemoScriptInterceptor(root);
+    comp->setDemoData(demo);
+    comp->setRunningScript(1);
 }
 
 void Game::addGameObject(Node *obj) {

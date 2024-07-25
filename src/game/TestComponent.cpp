@@ -1,5 +1,6 @@
 #include "TestComponent.hpp"
 #include "../2dfm/CommonResource.hpp"
+#include "../2dfm/2dfmScriptItem.hpp"
 #include "../base/Game.hpp"
 #include "../base/InputSystem.hpp"
 #include "../base/Node.hpp"

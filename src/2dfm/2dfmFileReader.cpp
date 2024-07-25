@@ -30,17 +30,34 @@ std::string gb2312ToUtf8(const char* gb2312) {
     return { utf8.begin(), utf8.end() };
 }
 
+/// 设置公共资源部分
+/// 注意：只能初次设置，如果已有数据，调用时会导致内存泄漏
 void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &commonResource) {
-    result->sharedPalettes.reserve(8);
-    for (int i = 0; i < 8; ++i) {
-        result->sharedPalettes.emplace_back(createSdlPalette(commonResource.sharedPalettes[i]));
+    // 复制脚本信息
+    result->scripts.reserve(commonResource.scriptCount);
+    for (auto i = 0; i < commonResource.scriptCount; ++i) {
+        result->scripts.emplace_back(new _2dfm::Script(commonResource.scripts[i]));
     }
+    // 复制脚本项信息
+    result->scriptItems.reserve(commonResource.scriptItemCount);
+    for (auto i = 0; i < commonResource.scriptItemCount; ++i) {
+        result->scriptItems.emplace_back(new _2dfm::ScriptItem(commonResource.scriptItems[i]));
+    }
+
+    // 读取创建共享调色盘
+    result->sharedPalettes.reserve(8);
+    for (auto sharedPalette: commonResource.sharedPalettes) {
+        result->sharedPalettes.emplace_back(createSdlPalette(sharedPalette));
+    }
+
+    // 读取创建精灵帧对象
     result->spriteFrames.reserve(commonResource.pictureCount);
     for (auto &picture : commonResource.pictures) {
         auto &sfi = result->spriteFrames.emplace_back();
         sfi.setFrom2dfmPicture(picture);
         sfi.setSharedPalettes(result->sharedPalettes.data());
     }
+
     // 声音片段
     result->sounds.reserve(commonResource.soundCount);
     for (auto s : commonResource.sounds) {

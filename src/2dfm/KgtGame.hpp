@@ -17,6 +17,8 @@ struct Reaction {
 };
 
 struct KgtGame : CommonResource {
+    ~KgtGame() override;
+
     std::string projectName;
     /// 角色名称列表
     std::vector<std::string> playerNames;

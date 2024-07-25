@@ -23,7 +23,7 @@ namespace _2dfm {
 
     constexpr int SCRIPT_ITEM_SIZE = 16;
     struct ScriptItem {
-        int type: 1;
+        byte type;
         byte bytes[15];
     };
 
