@@ -27,7 +27,7 @@ namespace _2dfm {
 
     struct CommonResourcePart {
         int scriptCount = 0;
-        Script *scripts = nullptr;
+        byte *rawScriptsData = nullptr;
         int scriptItemCount = 0;
         ScriptItem *scriptItems = nullptr;
         int pictureCount = 0;

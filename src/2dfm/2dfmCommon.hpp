@@ -10,7 +10,7 @@
 #include <string>
 #include <SDL.h>
 
-using std::byte;
+typedef unsigned char byte;
 
 namespace _2dfm {
     constexpr int SCRIPT_SIZE = 39;
@@ -18,7 +18,7 @@ namespace _2dfm {
         char scriptName[32];
         std::uint16_t scriptIndex;
         byte gap;
-        int flags;
+        int32_t flags;
     };
 
     constexpr int SCRIPT_ITEM_SIZE = 16;

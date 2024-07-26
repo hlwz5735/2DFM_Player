@@ -3,6 +3,8 @@
 #include "../2dfm/2dfmScriptItem.hpp"
 #include "../2dfm/KgtDemo.hpp"
 #include "../base/SpriteComponent.hpp"
+#include "../base/Game.hpp"
+#include "../base/AudioSystem.hpp"
 
 DemoScriptInterceptor::DemoScriptInterceptor(Node *owner, int updateOrder)
         : Component(owner, updateOrder) {
@@ -20,10 +22,11 @@ void DemoScriptInterceptor::update(float deltaTime) {
     if (hasNoShowPicItem()) {
         return;
     }
-    timeWaiting -= deltaTime;
+    if (timeWaiting > 0) {
+        timeWaiting -= deltaTime;
+    }
     const _2dfm::ShowPic *showPicScript = nullptr;
     while (timeWaiting <= 0) {
-        ++runningScriptItemIdx;
         showPicScript = getNextPicToShow();
         if (!showPicScript) {
             timeWaiting = std::numeric_limits<float>::infinity();
@@ -34,28 +37,25 @@ void DemoScriptInterceptor::update(float deltaTime) {
         if (keepTime == 0) {
             timeWaiting = std::numeric_limits<float>::infinity();
         } else {
-            timeWaiting += static_cast<float>(showPicScript->keepTime) / 100;
+            timeWaiting += keepTime;
         }
     }
-    auto tex = demoData->pictures.at(showPicScript->getPicIdx());
-    spriteComponent->setTexture(tex);
-    spriteComponent->setOffset(showPicScript->getOffset());
+    if (showPicScript) {
+        auto tex = demoData->pictures.at(showPicScript->getPicIdx());
+        spriteComponent->setTexture(tex);
+        spriteComponent->setOffset(showPicScript->getOffset());
+    }
 }
 
 void DemoScriptInterceptor::setRunningScript(int scriptIdx) {
-    auto script = demoData->scripts.at(scriptIdx);
-    startIdx = script->scriptIndex;
-    if (scriptIdx == demoData->scripts.size() - 1) {
-        endIdx = demoData->scriptItems.size();
-    } else {
-        auto nextScript = demoData->scripts.at(scriptIdx + 1);
-        endIdx = nextScript->scriptIndex;
-    }
+    auto &script = demoData->scripts.at(scriptIdx);
+    startIdx = script.startIdx;
+    endIdx = script.endIdx;
     runningScriptItemIdx = startIdx;
 }
 
 bool DemoScriptInterceptor::hasNoShowPicItem() const {
-    for (int i = startIdx; i < endIdx; ++i) {
+    for (int i = runningScriptItemIdx; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
         if (static_cast<int>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
             return false;
@@ -64,11 +64,16 @@ bool DemoScriptInterceptor::hasNoShowPicItem() const {
     return true;
 }
 
-_2dfm::ShowPic *DemoScriptInterceptor::getNextPicToShow() const {
-    for (int i = runningScriptItemIdx; i < endIdx; ++i) {
+_2dfm::ShowPic *DemoScriptInterceptor::getNextPicToShow() {
+    for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
-        if (static_cast<int>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
+        if (item->type == _2dfm::DemoScriptItemTypes::PIC) {
+            runningScriptItemIdx = i;
             return reinterpret_cast<_2dfm::ShowPic *>(item);
+        } else if (item->type == _2dfm::DemoScriptItemTypes::SOUND) {
+            auto soundScript = reinterpret_cast<_2dfm::PlaySound *>(item);
+            auto soundClip = demoData->sounds.at(soundScript->soundIdx);
+            Game::getInstance()->getAudioSystem()->playClip(soundClip);
         }
     }
     return nullptr;

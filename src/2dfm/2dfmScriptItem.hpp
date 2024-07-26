@@ -30,6 +30,7 @@ namespace _2dfm {
         int32_t unused[3];
     };
 
+#pragma pack(push, 1)
     struct ShowPic {
         byte type; // 0
         uint16_t keepTime; // 1
@@ -43,6 +44,13 @@ namespace _2dfm {
         bool isFlipY() const { return (idxAndFlip & 0x8000) != 0;  }
         Vector2 getOffset() const { return Vector2(offsetX, offsetY); }
     };
+
+    struct PlaySound {
+        byte type;
+        byte unknown;
+        uint16_t soundIdx;
+    };
+#pragma pack(pop)
 
     struct Unknown {
         byte type;

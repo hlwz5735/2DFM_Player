@@ -30,14 +30,35 @@ std::string gb2312ToUtf8(const char* gb2312) {
     return { utf8.begin(), utf8.end() };
 }
 
+namespace {
+    void readScripts(CommonResource *result, byte *rawData, int scriptCount, int itemCount) {
+        for (auto i = 0; i < scriptCount; ++i) {
+            auto s = reinterpret_cast<_2dfm::Script *>(rawData + i * _2dfm::SCRIPT_SIZE);
+            int endIndex = 0;
+            if (i == scriptCount - 1) {
+                endIndex = itemCount;
+            } else {
+                auto nextS = reinterpret_cast<_2dfm::Script *>(rawData + (i + 1) * _2dfm::SCRIPT_SIZE);
+                endIndex = nextS->scriptIndex;
+            }
+            KgtScript kgtScript {
+                    s->flags,
+                    gb2312ToUtf8(s->scriptName),
+                    static_cast<int>(s->scriptIndex),
+                    endIndex
+            };
+            result->scripts.emplace_back(kgtScript);
+        }
+    }
+}
+
 /// 设置公共资源部分
 /// 注意：只能初次设置，如果已有数据，调用时会导致内存泄漏
 void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &commonResource) {
     // 复制脚本信息
     result->scripts.reserve(commonResource.scriptCount);
-    for (auto i = 0; i < commonResource.scriptCount; ++i) {
-        result->scripts.emplace_back(new _2dfm::Script(commonResource.scripts[i]));
-    }
+    readScripts(result, commonResource.rawScriptsData, commonResource.scriptCount, commonResource.scriptItemCount);
+
     // 复制脚本项信息
     result->scriptItems.reserve(commonResource.scriptItemCount);
     for (auto i = 0; i < commonResource.scriptItemCount; ++i) {
@@ -220,11 +241,12 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
     fread(&intBuffer, sizeof(int), 1, file);
     _2dfm::CommonResourcePart crp;
     crp.scriptCount = intBuffer;
-    crp.scripts = static_cast<_2dfm::Script *>(malloc(_2dfm::SCRIPT_SIZE * crp.scriptCount));
-    if (!crp.scripts) {
+    // 这里不能直接按指针相加读取，因为存在字节对齐问题
+    crp.rawScriptsData = static_cast<byte *>(malloc(_2dfm::SCRIPT_SIZE * crp.scriptCount));
+    if (!crp.rawScriptsData) {
         throw std::runtime_error("there is no enough memory space!");
     }
-    fread(crp.scripts, _2dfm::SCRIPT_SIZE, crp.scriptCount, file);
+    fread(crp.rawScriptsData, _2dfm::SCRIPT_SIZE, crp.scriptCount, file);
 
     // 读入脚本格子列表
     fread(&intBuffer, sizeof(int), 1, file);

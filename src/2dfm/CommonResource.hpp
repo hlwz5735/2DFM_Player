@@ -6,12 +6,19 @@
 class Texture;
 class SoundClip;
 
+struct KgtScript {
+    int flags;
+    std::string name;
+    int startIdx;
+    int endIdx;
+};
+
 struct CommonResource {
     virtual ~CommonResource();
 
     /// 脚本信息
-    std::vector<_2dfm::Script *>scripts;
-    std::vector<_2dfm::ScriptItem *>scriptItems;
+    std::vector<KgtScript> scripts;
+    std::vector<_2dfm::ScriptItem *> scriptItems;
     /// 精灵帧信息
     std::vector<SpriteFrame> spriteFrames;
     /// 根据选择的色盘，这里直接保存其纹理

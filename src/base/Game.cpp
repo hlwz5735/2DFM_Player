@@ -64,20 +64,23 @@ void Game::loadData() {
         kgt->pictures.emplace_back(t);
     }
 
-    auto root = new Node(this);
-    root->setPosition(Vector2::ZERO);
-    auto sprite = new SpriteComponent(root);
     auto openDemoName = gameConfig.gameBasePath + '/'
-            + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]
+             + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]
+//            + kgt->demoNames[10]
             + ".demo";
 
     KgtDemo *demo = readDemoFile(openDemoName);
     for (auto &sf : demo->spriteFrames) {
         demo->pictures.emplace_back(new Texture(renderer, &sf));
     }
-    auto comp = new DemoScriptInterceptor(root);
-    comp->setDemoData(demo);
-    comp->setRunningScript(1);
+    for (int i = 1; i < demo->scripts.size(); ++i) {
+        auto scriptNode = new Node(this);
+        scriptNode->setPosition(Vector2::ZERO);
+        new SpriteComponent(scriptNode);
+        auto comp = new DemoScriptInterceptor(scriptNode);
+        comp->setDemoData(demo);
+        comp->setRunningScript(i);
+    }
 }
 
 void Game::addGameObject(Node *obj) {

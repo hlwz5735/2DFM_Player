@@ -1,8 +1,8 @@
 #include "2dfmFile.hpp"
 
 void _2dfm::freeCommonResourcePart(_2dfm::CommonResourcePart *crp) {
-    if (crp->scripts) {
-        free(crp->scripts);
+    if (crp->rawScriptsData) {
+        free(crp->rawScriptsData);
     }
     if (crp->scriptItems) {
         free(crp->scriptItems);

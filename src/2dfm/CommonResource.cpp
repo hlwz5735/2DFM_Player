@@ -7,9 +7,6 @@ CommonResource::~CommonResource() {
         delete t;
     }
     this->pictures.clear();
-    for (auto s : this->scripts) {
-        delete s;
-    }
     this->scripts.clear();
     for (auto s : this->scriptItems) {
         delete s;

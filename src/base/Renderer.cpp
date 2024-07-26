@@ -50,7 +50,7 @@ void Renderer::cleanUp() {
 
 void Renderer::render() {
     // 清理颜色缓冲区
-    SDL_SetRenderDrawColor(sdlRenderer, 57, 83, 164, 255);
+    SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
     SDL_RenderClear(sdlRenderer);
 
     // 具体渲染逻辑
