@@ -7,7 +7,7 @@
 
 #include <SDL.h>
 
-enum KeyState
+enum class KeyState
 {
     NONE,
     PRESSED,

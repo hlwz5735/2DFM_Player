@@ -5,7 +5,7 @@
 #include "Game.hpp"
 #include "Component.hpp"
 
-Node::Node(Game *game): state(ACTIVE), position(Vector2::ZERO), game(game) {
+Node::Node(Game *game): state(State::ACTIVE), position(Vector2::ZERO), game(game) {
     game->addGameObject(this);
 }
 
@@ -36,7 +36,7 @@ void Node::removeComponent(Component *component) {
 }
 
 void Node::__update(float deltaTime) {
-    if (state == ACTIVE) {
+    if (state == State::ACTIVE) {
         updateComponents(deltaTime);
         update(deltaTime);
     }

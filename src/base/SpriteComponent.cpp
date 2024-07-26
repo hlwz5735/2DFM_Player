@@ -19,14 +19,17 @@ void SpriteComponent::draw(Renderer *renderer) {
     if (!texture) {
         return;
     }
-    int x = owner->getPosition().x;
-    int y = owner->getPosition().y;
+    if (opacity == 0) {
+        return;
+    }
+    int x = static_cast<int>(owner->getPosition().x);
+    int y = static_cast<int>(owner->getPosition().y);
     int w = texture->getWidth();
     int h = texture->getHeight();
     SDL_Rect sr { 0, 0, w, h };
 
-    int dx = origin == TOP_LEFT ? x : x - w / 2;
-    int dy = origin == TOP_LEFT ? y : y - h;
+    int dx = origin == Origin::TOP_LEFT ? x : x - w / 2;
+    int dy = origin == Origin::TOP_LEFT ? y : y - h;
     SDL_Rect dr { dx + static_cast<int>(offset.x), dy + static_cast<int>(offset.y), w, h };
 
     int flip = SDL_FLIP_NONE;

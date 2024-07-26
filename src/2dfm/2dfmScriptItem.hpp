@@ -3,13 +3,13 @@
 #include "../math/Vector.hpp"
 
 namespace _2dfm {
-    enum DemoScriptTypes {
+    enum class DemoScriptTypes {
         NORMAL = 0,
         BACKGROUND = 1,
         SYSTEM_ICON = 3
     };
 
-    enum DemoScriptItemTypes {
+    enum class DemoScriptItemTypes {
         START = 0,
         PIC = 12,
         MOVE = 1,
@@ -30,6 +30,13 @@ namespace _2dfm {
         int32_t unused[3];
     };
 
+    enum class ColorSetType {
+        NORMAL = 0,
+        TRANSPARENCY,
+        ADD_BLEND,
+        MINUS_BLEND,
+        ALPHA_BLEND,
+    };
 #pragma pack(push, 1)
     struct ShowPic {
         byte type; // 0
@@ -49,6 +56,15 @@ namespace _2dfm {
         byte type;
         byte unknown;
         uint16_t soundIdx;
+    };
+
+    struct ColorSet {
+        byte type;
+        byte colorSetType;
+        byte red;
+        byte green;
+        byte blue;
+        byte alpha;
     };
 #pragma pack(pop)
 

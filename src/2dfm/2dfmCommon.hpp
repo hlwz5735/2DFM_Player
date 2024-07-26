@@ -55,7 +55,7 @@ namespace _2dfm {
         std::string toString();
     };
 
-    enum SoundType {
+    enum class SoundType {
         WAVE = 1,
         MIDI,
         CDDA

@@ -19,7 +19,7 @@ void DemoScriptInterceptor::update(float deltaTime) {
     if (timeWaiting == std::numeric_limits<float>::infinity()) {
         return;
     }
-    if (hasNoShowPicItem()) {
+    if (runningScriptItemIdx == endIdx) {
         return;
     }
     if (timeWaiting > 0) {
@@ -27,7 +27,7 @@ void DemoScriptInterceptor::update(float deltaTime) {
     }
     const _2dfm::ShowPic *showPicScript = nullptr;
     while (timeWaiting <= 0) {
-        showPicScript = getNextPicToShow();
+        showPicScript = interceptScriptUntilShowPic();
         if (!showPicScript) {
             timeWaiting = std::numeric_limits<float>::infinity();
             runningScriptItemIdx = endIdx;
@@ -57,24 +57,34 @@ void DemoScriptInterceptor::setRunningScript(int scriptIdx) {
 bool DemoScriptInterceptor::hasNoShowPicItem() const {
     for (int i = runningScriptItemIdx; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
-        if (static_cast<int>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
+        if (static_cast<_2dfm::DemoScriptItemTypes>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
             return false;
         }
     }
     return true;
 }
 
-_2dfm::ShowPic *DemoScriptInterceptor::getNextPicToShow() {
+_2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
     for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
-        if (item->type == _2dfm::DemoScriptItemTypes::PIC) {
+        _2dfm::DemoScriptItemTypes type = static_cast<_2dfm::DemoScriptItemTypes>(item->type);
+
+        if (type == _2dfm::DemoScriptItemTypes::PIC) {
             runningScriptItemIdx = i;
             return reinterpret_cast<_2dfm::ShowPic *>(item);
-        } else if (item->type == _2dfm::DemoScriptItemTypes::SOUND) {
+        } else if (type == _2dfm::DemoScriptItemTypes::SOUND) {
             auto soundScript = reinterpret_cast<_2dfm::PlaySound *>(item);
             auto soundClip = demoData->sounds.at(soundScript->soundIdx);
             Game::getInstance()->getAudioSystem()->playClip(soundClip);
+        } else if (type == _2dfm::DemoScriptItemTypes::COLOR) {
+            auto colorSet = reinterpret_cast<_2dfm::ColorSet *>(item);
+            if (static_cast<_2dfm::ColorSetType>(colorSet->colorSetType) == _2dfm::ColorSetType::ALPHA_BLEND) {
+                spriteComponent->setOpacity((32.f - static_cast<float>(colorSet->alpha)) / 32.f);
+            }
+        } else if (type == _2dfm::DemoScriptItemTypes::END) {
+            spriteComponent->setTexture(nullptr);
         }
     }
+    spriteComponent->setTexture(nullptr);
     return nullptr;
 }

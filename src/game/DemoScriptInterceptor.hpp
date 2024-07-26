@@ -18,7 +18,7 @@ public:
     void setRunningScript(int scriptIdx);
 private:
     bool hasNoShowPicItem() const;
-    _2dfm::ShowPic *getNextPicToShow();
+    _2dfm::ShowPic *interceptScriptUntilShowPic();
 
     class SpriteComponent *spriteComponent = nullptr;
     KgtDemo *demoData = nullptr;

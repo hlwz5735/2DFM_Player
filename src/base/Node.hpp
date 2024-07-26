@@ -15,7 +15,7 @@ class Game;
 class Node {
 public:
     friend class Game;
-    enum State { ACTIVE, PAUSED, DEAD };
+    enum class State { ACTIVE, PAUSED, DEAD };
 
     Node(Game *game);
     virtual ~Node();
