@@ -23,26 +23,31 @@ public:
     bool initialize(const char *title, int width, int height);
     void cleanUp();
 
+    void initSpriteVerts(const float *vertexBuffer, const unsigned int *indexBuffer);
+    bool loadShaders();
+
     void render();
 
-    SDL_Renderer *getSdlRenderer() { return sdlRenderer; }
-
-    //Texture *createTexture(size_t idx);
-    //void addTexture(Texture *texture);
     void addSprite(SpriteComponent *sprite);
     void removeSprite(SpriteComponent *sprite);
+
+    int getWindowWidth() const { return windowWidth; }
+    int getWindowHeight() const { return windowHeight; }
+
 protected:
 private:
     int windowWidth;
     int windowHeight;
 
     SDL_Window *sdlWindow = nullptr;
-    SDL_Renderer *sdlRenderer = nullptr;
+    SDL_GLContext glContext;
 
     class Game *game;
 
-    //std::vector<Texture *> textures;
     std::vector<SpriteComponent *> sprites;
+
+    class Shader *spriteShader;
+    class VertexArray *spriteVerts;
 };
 
 #endif //INC_2DFM_PLAYER_RENDERER_HPP

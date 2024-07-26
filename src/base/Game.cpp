@@ -65,8 +65,8 @@ void Game::loadData() {
     }
 
     auto openDemoName = gameConfig.gameBasePath + '/'
-             + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]
-//            + kgt->demoNames[10]
+//             + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]
+            + kgt->demoNames[3]
             + ".demo";
 
     KgtDemo *demo = readDemoFile(openDemoName);
@@ -76,7 +76,7 @@ void Game::loadData() {
     for (int i = 1; i < demo->scripts.size(); ++i) {
         auto scriptNode = new Node(this);
         scriptNode->setPosition(Vector2::ZERO);
-        new SpriteComponent(scriptNode);
+        new SpriteComponent(scriptNode, i);
         auto comp = new DemoScriptInterceptor(scriptNode);
         comp->setDemoData(demo);
         comp->setRunningScript(i);

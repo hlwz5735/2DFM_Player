@@ -2,6 +2,7 @@
 
 #include "SpriteFrame.hpp"
 #include <SDL.h>
+#include <GL/glew.h>
 
 class Renderer;
 
@@ -10,11 +11,13 @@ public:
     explicit Texture(Renderer *renderer, SpriteFrame *sf, int paletteNo = 0);
     ~Texture();
 
-    SDL_Texture *getSdlTexture() const { return sdlTexture; }
     int getWidth() const { return width; }
     int getHeight() const { return height; }
+
+    void setActive() const;
 private:
     int width;
     int height;
-    SDL_Texture *sdlTexture;
+    /// OpenGL 纹理ID
+    unsigned int textureId;
 };

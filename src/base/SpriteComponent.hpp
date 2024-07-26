@@ -13,10 +13,10 @@ enum class Origin {
 
 class SpriteComponent : public Component {
 public:
-    SpriteComponent(Node *owner, int updateOrder = 100);
+    SpriteComponent(Node *owner, int zOrder = 100);
     ~SpriteComponent();
 
-    void draw(Renderer *renderer);
+    void draw(class Shader *shader);
 
     const Vector2 &getPosition() const { return owner->getPosition(); }
 

@@ -1,29 +1,17 @@
-#include <stdexcept>
+﻿#include <stdexcept>
 #include "../2dfm/2dfmFileReader.hpp"
 #include "SpriteFrame.hpp"
 #include "Renderer.hpp"
 namespace {
-    SDL_Surface *buildIndexSurfaceBySDL(int width, int height, SDL_Palette *palette, const void *picData) {
-        if (const auto surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, 8, 0, 0, 0, 0)) {
-            if (SDL_LockSurface(surface) != 0) {
-                SDL_FreeSurface(surface);
-                return nullptr;
-            }
-            const auto pixels = static_cast<byte *>(surface->pixels);
+    SDL_Color *buildColorData(int width, int height, SDL_Palette *palette, const void *picData) {
+        if (auto pixels = static_cast<SDL_Color *>(malloc(width * height * sizeof(SDL_Color)))) {
             const auto rawData = static_cast<const byte *>(picData);
-            auto res = SDL_SetSurfacePalette(surface, palette);
-            if (res != 0) {
-                SDL_Log("Error occured when setting palette for surface: %s", SDL_GetError());
-                SDL_FreeSurface(surface );
-                return nullptr;
-            }
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
-                    pixels[y * surface->pitch + x] = rawData[y * width + x];
+                    pixels[y * width + x] = palette->colors[rawData[y * width + x]];
                 }
             }
-            SDL_UnlockSurface(surface);
-            return surface;
+            return pixels;
         }
         return nullptr;
     }
@@ -127,7 +115,7 @@ SpriteFrame & SpriteFrame::operator=(SpriteFrame &&o) noexcept {
     return *this;
 }
 
-SDL_Texture *createTextureFromSpriteFrame(SpriteFrame *spriteFrame, Renderer *renderer, int paletteNo) {
+byte *extractPixelDataFromSpriteFrame(class SpriteFrame *spriteFrame, int paletteNo) {
     SDL_Palette *palette;
     if (spriteFrame->hasPrivatePalette) {
         palette = spriteFrame->privatePalette;
@@ -138,13 +126,9 @@ SDL_Texture *createTextureFromSpriteFrame(SpriteFrame *spriteFrame, Renderer *re
         }
     }
     
-    if (auto surface = buildIndexSurfaceBySDL(spriteFrame->width, spriteFrame->height, palette, spriteFrame->rawData)) {
-        auto tex = SDL_CreateTextureFromSurface(renderer->getSdlRenderer(), surface);
-        SDL_FreeSurface(surface);
-        SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-        return tex;
-    }
-    return nullptr;
+    return reinterpret_cast<byte *>(
+            buildColorData(spriteFrame->width, spriteFrame->height, palette, spriteFrame->rawData)
+    );
 }
 
 void SpriteFrame::setFrom2dfmPicture(_2dfm::Picture *picture) {

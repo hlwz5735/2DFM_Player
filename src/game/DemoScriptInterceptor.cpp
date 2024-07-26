@@ -67,7 +67,7 @@ bool DemoScriptInterceptor::hasNoShowPicItem() const {
 _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
     for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
-        _2dfm::DemoScriptItemTypes type = static_cast<_2dfm::DemoScriptItemTypes>(item->type);
+        auto type = static_cast<_2dfm::DemoScriptItemTypes>(item->type);
 
         if (type == _2dfm::DemoScriptItemTypes::PIC) {
             runningScriptItemIdx = i;
@@ -83,6 +83,7 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
             }
         } else if (type == _2dfm::DemoScriptItemTypes::END) {
             spriteComponent->setTexture(nullptr);
+            return nullptr;
         }
     }
     spriteComponent->setTexture(nullptr);

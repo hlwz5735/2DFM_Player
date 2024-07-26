@@ -7,7 +7,7 @@ class Renderer;
 
 class SpriteFrame {
 public:
-    friend SDL_Texture *createTextureFromSpriteFrame(SpriteFrame *spriteFrame, Renderer *renderer, int paletteNo);
+    friend byte *extractPixelDataFromSpriteFrame(class SpriteFrame *spriteFrame, int paletteNo);
 
     SpriteFrame() = default;
     SpriteFrame(const SpriteFrame &o);
@@ -29,4 +29,5 @@ private:
     SDL_Palette *sharedPalettes[8] = { nullptr };
 };
 
-SDL_Texture *createTextureFromSpriteFrame(class SpriteFrame *spriteFrame, Renderer *renderer, int paletteNo = 0);
+/// 从精灵帧数据中提取像素颜色信息
+byte *extractPixelDataFromSpriteFrame(class SpriteFrame *spriteFrame, int paletteNo = 0);

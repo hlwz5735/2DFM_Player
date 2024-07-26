@@ -1,4 +1,5 @@
 add_subdirectory(rapidjson)
+add_subdirectory(GLEW)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_subdirectory(libiconv)
