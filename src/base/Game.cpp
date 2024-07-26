@@ -12,6 +12,9 @@
 #include "../2dfm/KgtGame.hpp"
 #include "../2dfm/2dfmFileReader.hpp"
 #include "../game/DemoScriptInterceptor.hpp"
+#include <format>
+
+#include "MoveComponent.hpp"
 
 const char *title = "2DFM Player";
 Game *Game::INSTANCE = nullptr;
@@ -58,16 +61,16 @@ void Game::runLoop() {
 }
 
 void Game::loadData() {
-    kgt = readKgtFile(gameConfig.gameBasePath + '/' + gameConfig.kgtFileName);
+    auto kgtFilePath = std::format("{}/{}", gameConfig.gameBasePath, gameConfig.kgtFileName);
+    kgt = readKgtFile(kgtFilePath);
     for (auto &sf : kgt->spriteFrames) {
         const auto t = new Texture(renderer, &sf);
         kgt->pictures.emplace_back(t);
     }
 
-    auto openDemoName = gameConfig.gameBasePath + '/'
-//             + kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]
-            + kgt->demoNames[3]
-            + ".demo";
+    auto openDemoName = std::format("{}/{}.demo", gameConfig.gameBasePath,
+             kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
+            // kgt->demoNames[6]);
 
     KgtDemo *demo = readDemoFile(openDemoName);
     for (auto &sf : demo->spriteFrames) {
@@ -76,6 +79,7 @@ void Game::loadData() {
     for (int i = 1; i < demo->scripts.size(); ++i) {
         auto scriptNode = new Node(this);
         scriptNode->setPosition(Vector2::ZERO);
+        new MoveComponent(scriptNode, 5);
         new SpriteComponent(scriptNode, i);
         auto comp = new DemoScriptInterceptor(scriptNode);
         comp->setDemoData(demo);

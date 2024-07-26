@@ -18,6 +18,8 @@ public:
     /// 计算夹角
     float angle(const Vector2 &o);
     bool isZero() const;
+
+    Vector2 &operator+=(const Vector2 &o);
 public:
     float x;
     float y;

@@ -66,6 +66,16 @@ namespace _2dfm {
         byte blue;
         byte alpha;
     };
+
+    struct MoveCmd {
+        byte type;
+        int16_t unknown;
+        int16_t moveX;
+        int16_t moveY;
+        // accelX
+        // accelY
+        // setType(set/add)
+    };
 #pragma pack(pop)
 
     struct Unknown {

@@ -3,12 +3,14 @@
 #include "../2dfm/2dfmScriptItem.hpp"
 #include "../2dfm/KgtDemo.hpp"
 #include "../base/SpriteComponent.hpp"
+#include "../base/MoveComponent.hpp"
 #include "../base/Game.hpp"
 #include "../base/AudioSystem.hpp"
 
 DemoScriptInterceptor::DemoScriptInterceptor(Node *owner, int updateOrder)
         : Component(owner, updateOrder) {
     spriteComponent = owner->getComponent<SpriteComponent>();
+    moveComponent = owner->getComponent<MoveComponent>();
 }
 
 void DemoScriptInterceptor::update(float deltaTime) {
@@ -72,18 +74,31 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
         if (type == _2dfm::DemoScriptItemTypes::PIC) {
             runningScriptItemIdx = i;
             return reinterpret_cast<_2dfm::ShowPic *>(item);
-        } else if (type == _2dfm::DemoScriptItemTypes::SOUND) {
+        }
+        if (type == _2dfm::DemoScriptItemTypes::END) {
+            spriteComponent->setTexture(nullptr);
+            return nullptr;
+        }
+
+        if (type == _2dfm::DemoScriptItemTypes::SOUND) {
             auto soundScript = reinterpret_cast<_2dfm::PlaySound *>(item);
             auto soundClip = demoData->sounds.at(soundScript->soundIdx);
             Game::getInstance()->getAudioSystem()->playClip(soundClip);
         } else if (type == _2dfm::DemoScriptItemTypes::COLOR) {
             auto colorSet = reinterpret_cast<_2dfm::ColorSet *>(item);
-            if (static_cast<_2dfm::ColorSetType>(colorSet->colorSetType) == _2dfm::ColorSetType::ALPHA_BLEND) {
+            auto setType = static_cast<_2dfm::ColorSetType>(colorSet->colorSetType);
+            switch (setType) {
+            case _2dfm::ColorSetType::NORMAL:
+                spriteComponent->setOpacity(1.f);
+                break;
+            case _2dfm::ColorSetType::ALPHA_BLEND:
                 spriteComponent->setOpacity((32.f - static_cast<float>(colorSet->alpha)) / 32.f);
+                break;
             }
-        } else if (type == _2dfm::DemoScriptItemTypes::END) {
-            spriteComponent->setTexture(nullptr);
-            return nullptr;
+        } else if (type == _2dfm::DemoScriptItemTypes::MOVE) {
+            auto moveCmd = reinterpret_cast<_2dfm::MoveCmd *>(item);
+            auto vel = Vector2(moveCmd->moveX, moveCmd->moveY) * 0.01f;
+            moveComponent->setVelocity(vel);
         }
     }
     spriteComponent->setTexture(nullptr);

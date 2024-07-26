@@ -21,6 +21,7 @@ private:
     _2dfm::ShowPic *interceptScriptUntilShowPic();
 
     class SpriteComponent *spriteComponent = nullptr;
+    class MoveComponent *moveComponent = nullptr;
     KgtDemo *demoData = nullptr;
 
     int runningScriptItemIdx = 0;

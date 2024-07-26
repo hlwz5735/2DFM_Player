@@ -49,6 +49,12 @@ bool Vector2::isZero() const {
     return x == 0 && y == 0;
 }
 
+Vector2 & Vector2::operator+=(const Vector2 &o) {
+    x += o.x;
+    y += o.y;
+    return *this;
+}
+
 Vector2 operator-(const Vector2 &a) {
     return Vector2(-a.x, -a.y);
 }
