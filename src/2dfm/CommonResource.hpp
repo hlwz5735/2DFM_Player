@@ -9,16 +9,16 @@ class SoundClip;
 struct CommonResource {
     virtual ~CommonResource();
 
-    /// ½Å±¾ĞÅÏ¢
+    /// è„šæœ¬ä¿¡æ¯
     std::vector<_2dfm::Script *>scripts;
     std::vector<_2dfm::ScriptItem *>scriptItems;
-    /// ¾«ÁéÖ¡ĞÅÏ¢
+    /// ç²¾çµå¸§ä¿¡æ¯
     std::vector<SpriteFrame> spriteFrames;
-    /// ¸ù¾İÑ¡ÔñµÄÉ«ÅÌ£¬ÕâÀïÖ±½Ó±£´æÆäÎÆÀí
+    /// æ ¹æ®é€‰æ‹©çš„è‰²ç›˜ï¼Œè¿™é‡Œç›´æ¥ä¿å­˜å…¶çº¹ç†
     std::vector<Texture *> pictures;
-    /// µ÷É«ÅÌĞÅÏ¢
+    /// è°ƒè‰²ç›˜ä¿¡æ¯
     std::vector<SDL_Palette *> sharedPalettes;
-    /// ÉùÒôĞÅÏ¢
+    /// å£°éŸ³ä¿¡æ¯
     std::vector<SoundClip *> sounds;
 };
 

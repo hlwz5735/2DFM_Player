@@ -9,7 +9,7 @@ std::string gb2312ToUtf8(const char* gb2312) {
     if (len == 0) {
         return "";
     }
-    std::vector<char> utf8(len * 4); // ·ÖÅä×ã¹»´óµÄ¿Õ¼ä£¬·ÀÖ¹Òç³ö
+    std::vector<char> utf8(len * 4); // åˆ†é…è¶³å¤Ÿå¤§çš„ç©ºé—´ï¼Œé˜²æ­¢æº¢å‡º
     char* inbuf = const_cast<char*>(gb2312);
     size_t inbytesleft = len;
     char* outbuf = &utf8[0];
@@ -26,31 +26,31 @@ std::string gb2312ToUtf8(const char* gb2312) {
     }
 
     iconv_close(cd);
-    utf8.resize(utf8.size() - outbytesleft); // µ÷Õû´óĞ¡ÒÔÈ¥³ıÎ´Ê¹ÓÃµÄ¿Õ¼ä
+    utf8.resize(utf8.size() - outbytesleft); // è°ƒæ•´å¤§å°ä»¥å»é™¤æœªä½¿ç”¨çš„ç©ºé—´
     return { utf8.begin(), utf8.end() };
 }
 
-/// ÉèÖÃ¹«¹²×ÊÔ´²¿·Ö
-/// ×¢Òâ£ºÖ»ÄÜ³õ´ÎÉèÖÃ£¬Èç¹ûÒÑÓĞÊı¾İ£¬µ÷ÓÃÊ±»áµ¼ÖÂÄÚ´æĞ¹Â©
+/// è®¾ç½®å…¬å…±èµ„æºéƒ¨åˆ†
+/// æ³¨æ„ï¼šåªèƒ½åˆæ¬¡è®¾ç½®ï¼Œå¦‚æœå·²æœ‰æ•°æ®ï¼Œè°ƒç”¨æ—¶ä¼šå¯¼è‡´å†…å­˜æ³„æ¼
 void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &commonResource) {
-    // ¸´ÖÆ½Å±¾ĞÅÏ¢
+    // å¤åˆ¶è„šæœ¬ä¿¡æ¯
     result->scripts.reserve(commonResource.scriptCount);
     for (auto i = 0; i < commonResource.scriptCount; ++i) {
         result->scripts.emplace_back(new _2dfm::Script(commonResource.scripts[i]));
     }
-    // ¸´ÖÆ½Å±¾ÏîĞÅÏ¢
+    // å¤åˆ¶è„šæœ¬é¡¹ä¿¡æ¯
     result->scriptItems.reserve(commonResource.scriptItemCount);
     for (auto i = 0; i < commonResource.scriptItemCount; ++i) {
         result->scriptItems.emplace_back(new _2dfm::ScriptItem(commonResource.scriptItems[i]));
     }
 
-    // ¶ÁÈ¡´´½¨¹²Ïíµ÷É«ÅÌ
+    // è¯»å–åˆ›å»ºå…±äº«è°ƒè‰²ç›˜
     result->sharedPalettes.reserve(8);
     for (auto sharedPalette: commonResource.sharedPalettes) {
         result->sharedPalettes.emplace_back(createSdlPalette(sharedPalette));
     }
 
-    // ¶ÁÈ¡´´½¨¾«ÁéÖ¡¶ÔÏó
+    // è¯»å–åˆ›å»ºç²¾çµå¸§å¯¹è±¡
     result->spriteFrames.reserve(commonResource.pictureCount);
     for (auto &picture : commonResource.pictures) {
         auto &sfi = result->spriteFrames.emplace_back();
@@ -58,7 +58,7 @@ void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &
         sfi.setSharedPalettes(result->sharedPalettes.data());
     }
 
-    // ÉùÒôÆ¬¶Î
+    // å£°éŸ³ç‰‡æ®µ
     result->sounds.reserve(commonResource.soundCount);
     for (auto s : commonResource.sounds) {
         result->sounds.emplace_back(SoundClip::from2dfmSound(s));
@@ -67,58 +67,58 @@ void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &
 
 KgtGame *readKgtFile(const std::string& filepath) {
     _2dfm::KgtFileHeader header;
-    // ´ò¿ªÎÄ¼ş
+    // æ‰“å¼€æ–‡ä»¶
     auto file = fopen(filepath.c_str(), "rb");
     if (!file) {
         throw std::runtime_error("open kgt file failed");
     }
-    // ¶ÁÈëÎÄ¼şÍ·
+    // è¯»å…¥æ–‡ä»¶å¤´
     fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
     long offset = ftell(file);
 
-    // ¶ÁÈë¹«¹²×ÊÔ´²¿·Ö
+    // è¯»å…¥å…¬å…±èµ„æºéƒ¨åˆ†
     auto commonResource = readCommonResourcePart(&offset, file);
 
-    // ¶ÁÈëÍæ¼ÒÃû³ÆĞÅÏ¢
+    // è¯»å…¥ç©å®¶åç§°ä¿¡æ¯
     fseek(file, offset + 4, SEEK_SET);
     _2dfm::NameInfo *playerNames = static_cast<_2dfm::NameInfo *>(malloc(sizeof(_2dfm::NameInfo) * _2dfm::maxPlayerNum));
     fread(playerNames, sizeof(_2dfm::NameInfo), _2dfm::maxPlayerNum, file);
 
-    // ¶ÁÈëÊÜ»÷·´Ó¦ĞÅÏ¢
+    // è¯»å…¥å—å‡»ååº”ä¿¡æ¯
     _2dfm::ReactionItem *reactionItems = static_cast<_2dfm::ReactionItem *>(malloc(sizeof(_2dfm::ReactionItem) * _2dfm::maxReactionNum));
     fread(reactionItems, sizeof(_2dfm::ReactionItem), _2dfm::maxReactionNum, file);
 
-    // ¶ÁÈëÓ²Ö±Ê±¼äĞÅÏ¢
+    // è¯»å…¥ç¡¬ç›´æ—¶é—´ä¿¡æ¯
     fseek(file, 4, SEEK_CUR);
     _2dfm::RecoverTimeConfig recoverTimeConfig;
     fread(&recoverTimeConfig, sizeof(_2dfm::RecoverTimeConfig), 1, file);
 
-    // ¶ÁÈë³¡¾°ĞÅÏ¢
+    // è¯»å…¥åœºæ™¯ä¿¡æ¯
     _2dfm::NameInfo *stageNames = static_cast<_2dfm::NameInfo *>(malloc(sizeof(_2dfm::NameInfo) * _2dfm::maxStageNum));
     fread(stageNames, sizeof(_2dfm::NameInfo), _2dfm::maxStageNum, file);
 
-    // ¶ÁÈëÓ°Æ¬ĞÅÏ¢
+    // è¯»å…¥å½±ç‰‡ä¿¡æ¯
     _2dfm::NameInfo *demoNames = static_cast<_2dfm::NameInfo *>(malloc(sizeof(_2dfm::NameInfo) * _2dfm::maxDemoNum));
     fread(demoNames, sizeof(_2dfm::NameInfo), _2dfm::maxDemoNum, file);
 
-    // ¶ÁÈëÓ°Æ¬ĞÅÏ¢
+    // è¯»å…¥å½±ç‰‡ä¿¡æ¯
     _2dfm::GameDemoConfig demoConfig;
     fread(&demoConfig, _2dfm::DEMO_CONFIG_SIZE, 1, file);
 
-    // ¶ÁÈëÏîÄ¿Í¨³£ÉèÖÃ
+    // è¯»å…¥é¡¹ç›®é€šå¸¸è®¾ç½®
     _2dfm::ProjectBaseConfig pbc;
     fread(&pbc, 4, 1, file);
 
-    // ¶ÁÈëÍ¶ÖÀ·´Ó¦ÁĞ±í
+    // è¯»å…¥æŠ•æ·ååº”åˆ—è¡¨
     _2dfm::ThrowReaction *throwReactions = static_cast<_2dfm::ThrowReaction *>(malloc(sizeof(_2dfm::ThrowReaction) * _2dfm::maxThrowReactionNum));
     fread(throwReactions, sizeof(_2dfm::ThrowReaction), _2dfm::maxThrowReactionNum, file);
 
-    // Ìø¹ıÎ»ÖÃÊı¾İ
+    // è·³è¿‡ä½ç½®æ•°æ®
     fseek(file, 264, SEEK_CUR);
     _2dfm::CharSelectConfig csc;
     fread(&csc, sizeof(_2dfm::CharSelectConfig), 1, file);
 
-    // Æ´×°Êı¾İ
+    // æ‹¼è£…æ•°æ®
     auto result = new KgtGame;
     result->projectName = header.name.name;
     setCommonResource(result, commonResource);
@@ -149,7 +149,7 @@ KgtGame *readKgtFile(const std::string& filepath) {
     result->recoverTimeConfig = recoverTimeConfig;
     result->demoConfig = demoConfig;
 
-    // ÓÎÏ·»ù´¡ÉèÖÃ
+    // æ¸¸æˆåŸºç¡€è®¾ç½®
     result->projectBaseConfig.encryptGame = pbc.value.encryptGame;
     result->projectBaseConfig.allowClash = pbc.value.allowClash;
     result->projectBaseConfig.enableStoryMode = pbc.value.enableStoryMode;
@@ -158,7 +158,7 @@ KgtGame *readKgtFile(const std::string& filepath) {
     result->projectBaseConfig.showHpAfterHpBar = pbc.value.showHpAfterHpBar;
     result->projectBaseConfig.pressToStart = pbc.value.pressToStart;
 
-    // ½ÇÉ«Ñ¡Ôñ»­ÃæÉèÖÃ
+    // è§’è‰²é€‰æ‹©ç”»é¢è®¾ç½®
     result->charSelectConfig.selectBoxStartPos = Vector2(csc.selectBoxStartX, csc.selectBoxStartY);
     result->charSelectConfig.playerAvatarIconSize = Vector2(csc.iconWidth, csc.iconHeight);
     result->charSelectConfig.rowCount = csc.rowNum;
@@ -168,7 +168,7 @@ KgtGame *readKgtFile(const std::string& filepath) {
     result->charSelectConfig.player2PortraitPos = Vector2(csc.player2PortraitX, csc.player2PortraitY);
     result->charSelectConfig.player2PortraitOffset = Vector2(csc.player2PortraitTeamOffsetX, csc.player2PortraitTeamOffsetY);
 
-    // ×ÊÔ´ÇåÀí
+    // èµ„æºæ¸…ç†
     fclose(file);
     free(playerNames);
     free(stageNames);
@@ -182,30 +182,30 @@ KgtGame *readKgtFile(const std::string& filepath) {
 
 KgtDemo *readDemoFile(const std::string &filepath) {
     _2dfm::KgtFileHeader header;
-    // ´ò¿ªÎÄ¼ş
+    // æ‰“å¼€æ–‡ä»¶
     auto file = fopen(filepath.c_str(), "rb");
     if (!file) {
         throw std::runtime_error("open demo file failed");
     }
-    // ¶ÁÈëÎÄ¼şÍ·
+    // è¯»å…¥æ–‡ä»¶å¤´
     fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
     long offset = ftell(file);
 
-    // ¶ÁÈë¹«¹²×ÊÔ´²¿·Ö
+    // è¯»å…¥å…¬å…±èµ„æºéƒ¨åˆ†
     auto commonResource = readCommonResourcePart(&offset, file);
     fseek(file, offset + 4, SEEK_SET);
 
-    // ¶ÁÈëDEMOÅäÖÃĞÅÏ¢
+    // è¯»å…¥DEMOé…ç½®ä¿¡æ¯
     _2dfm::KgtDemoConfig config;
     fread(&config, sizeof(_2dfm::KgtDemoConfig), 1, file);
 
     auto result = new KgtDemo;
-    // ×ÊÔ´Æ´½Ó²¿·Ö
+    // èµ„æºæ‹¼æ¥éƒ¨åˆ†
     result->demoName = header.name.name;
     setCommonResource(result, commonResource);
     result->config = config;
 
-    // ×ÊÔ´ÇåÀí
+    // èµ„æºæ¸…ç†
     fclose(file);
     freeCommonResourcePart(&commonResource);
 
@@ -215,7 +215,7 @@ KgtDemo *readDemoFile(const std::string &filepath) {
 _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
     fseek(file, *offset, SEEK_SET);
 
-    // ¶ÁÈë½Å±¾ÏîÁĞ±í
+    // è¯»å…¥è„šæœ¬é¡¹åˆ—è¡¨
     int intBuffer;
     fread(&intBuffer, sizeof(int), 1, file);
     _2dfm::CommonResourcePart crp;
@@ -226,7 +226,7 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
     }
     fread(crp.scripts, _2dfm::SCRIPT_SIZE, crp.scriptCount, file);
 
-    // ¶ÁÈë½Å±¾¸ñ×ÓÁĞ±í
+    // è¯»å…¥è„šæœ¬æ ¼å­åˆ—è¡¨
     fread(&intBuffer, sizeof(int), 1, file);
     crp.scriptItemCount = intBuffer;
     crp.scriptItems = static_cast<_2dfm::ScriptItem *>(malloc(_2dfm::SCRIPT_ITEM_SIZE * crp.scriptItemCount));
@@ -235,7 +235,7 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
     }
     fread(crp.scriptItems, _2dfm::SCRIPT_ITEM_SIZE, crp.scriptItemCount, file);
 
-    // ¶ÁÈë¾«ÁéÖ¡ĞÅÏ¢
+    // è¯»å…¥ç²¾çµå¸§ä¿¡æ¯
     fread(&intBuffer, sizeof(int), 1, file);
     crp.pictureCount = intBuffer;
     crp.pictures.reserve(crp.pictureCount);
@@ -249,7 +249,7 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
         crp.pictures.emplace_back(sf);
     }
 
-    // ¶ÁÈëµ÷É«ÅÌĞÅÏ¢
+    // è¯»å…¥è°ƒè‰²ç›˜ä¿¡æ¯
     for (auto &sharedPalette : crp.sharedPalettes) {
         _2dfm::ColorBgra *pPalette = static_cast<_2dfm::ColorBgra *>(malloc(_2dfm::PALETTE_SIZE));
         fread(pPalette, _2dfm::PALETTE_SIZE, 1, file);
@@ -257,7 +257,7 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
         fseek(file, sizeof(int) * 8, SEEK_CUR);
     }
 
-    // ¶ÁÈëÉùÒôĞÅÏ¢
+    // è¯»å…¥å£°éŸ³ä¿¡æ¯
     fread(&intBuffer, sizeof(int), 1, file);
     crp.soundCount = intBuffer;
     crp.sounds.reserve(crp.soundCount);

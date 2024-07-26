@@ -8,8 +8,8 @@
 KgtGame *readKgtFile(const std::string &filepath);
 KgtDemo *readDemoFile(const std::string &filepath);
 
-/// 读取公共资源部分
-/// 注意offset一方面会作为当前起始点，一方面会作为读取完毕后的偏移量传出
+/// 璇诲彇鍏叡璧勬簮閮ㄥ垎
+/// 娉ㄦ剰offset涓�鏂归潰浼氫綔涓哄綋鍓嶈捣濮嬬偣锛屼竴鏂归潰浼氫綔涓鸿鍙栧畬姣曞悗鐨勫亸绉婚噺浼犲嚭
 _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file);
 
 int get2dfmPictureRealSize(_2dfm::PictureHeader *sfh);

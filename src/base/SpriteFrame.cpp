@@ -134,7 +134,7 @@ SDL_Texture *createTextureFromSpriteFrame(SpriteFrame *spriteFrame, Renderer *re
     } else {
         palette = spriteFrame->sharedPalettes[paletteNo];
         if (!palette) {
-            throw std::runtime_error("µ±Ç°¾«ÁéÖ¡¼ÈÃ»ÓĞ×¨ÓÃµ÷É«ÅÌ£¬Ò²Ã»ÓĞÖ¸¶¨µ÷É«ÅÌ£¡");
+            throw std::runtime_error("å½“å‰ç²¾çµå¸§æ—¢æ²¡æœ‰ä¸“ç”¨è°ƒè‰²ç›˜ï¼Œä¹Ÿæ²¡æœ‰æŒ‡å®šè°ƒè‰²ç›˜ï¼");
         }
     }
     

@@ -7,10 +7,10 @@
 
 #include <vector>
 #include <typeinfo>
+#include "Component.hpp"
 #include "../math/Vector.hpp"
 
 class Game;
-class Component;
 
 class Node {
 public:

@@ -11,7 +11,7 @@ SoundClip::~SoundClip() {
 }
 
 SoundClip *SoundClip::from2dfmSound(_2dfm::Sound *sound) {
-    // 目前只支持WAV，MIDI直接忽略
+    // 鐩墠鍙敮鎸乄AV锛孧IDI鐩存帴蹇界暐
     if (sound->header.soundType == _2dfm::SoundType::MIDI) {
         return nullptr;
     }

@@ -1,9 +1,18 @@
 set(target_name 2DFM_Player)
 
-#find_package(SDL2 REQUIRED)
-#find_package(SDL2_image REQUIRED)
-#find_package(SDL2_mixer REQUIRED)
-#include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS})
+set(SDL2_LIB_NAME "SDL2")
+set(SDL2_IMAGE_NAME "SDL2_image")
+set(SDL2_MIXER_NAME "SDL2_mixer")
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    find_package(SDL2 REQUIRED)
+    find_package(SDL2_image REQUIRED)
+    find_package(SDL2_mixer REQUIRED)
+    include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS})
+
+    set(SDL2_LIB_NAME ${SDL2_LIBRARIES})
+    set(SDL2_IMAGE_NAME ${SDL2_IMAGE_LIBRARIES})
+    set(SDL2_MIXER_NAME ${SDL2_MIXER_LIBRARIES})
+endif()
 
 aux_source_directory(. sources)
 
@@ -23,10 +32,10 @@ add_executable(${target_name}
 )
 
 target_link_libraries(${target_name}
-        sdl2
-        SDL2_image
-        SDL2_mixer
-        iconv
+        ${SDL2_LIB_NAME}
+        ${SDL2_IMAGE_NAME}
+        ${SDL2_MIXER_NAME}
+        Iconv
         rapidjson)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")

@@ -11,11 +11,9 @@
 #include "SpriteComponent.hpp"
 #include "../2dfm/KgtGame.hpp"
 #include "../2dfm/2dfmFileReader.hpp"
-#include "../game/GameConfig.hpp"
-#include "../game/TestComponent.hpp"
 #include "../game/DemoScriptInterceptor.hpp"
 
-const char *title = "Game";
+const char *title = "2DFM Player";
 Game *Game::INSTANCE = nullptr;
 constexpr int winWidth = 640, winHeight = 480;
 
@@ -26,7 +24,7 @@ bool Game::initialize() {
     INSTANCE = this;
 
     renderer = new Renderer(this);
-    renderer->initialize("2DFM Player", winWidth, winHeight);
+    renderer->initialize(title, winWidth, winHeight);
     inputSystem = new InputSystem();
     inputSystem->initialize();
     audioSystem = new AudioSystem(this);

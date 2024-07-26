@@ -7,6 +7,7 @@
 
 #include <SDL.h>
 #include <vector>
+#include "Game.hpp"
 
 class SpriteFrame;
 class Texture;
