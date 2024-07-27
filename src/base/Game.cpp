@@ -69,8 +69,8 @@ void Game::loadData() {
     }
 
     auto openDemoName = std::format("{}/{}.demo", gameConfig.gameBasePath,
-             kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
-            // kgt->demoNames[6]);
+             // kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
+             kgt->demoNames[5]);
 
     KgtDemo *demo = readDemoFile(openDemoName);
     for (auto &sf : demo->spriteFrames) {

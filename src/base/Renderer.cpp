@@ -93,7 +93,6 @@ void Renderer::render() {
 
     // 启用颜色混合，设置使用线性混合模式
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // 具体渲染逻辑
     spriteShader->setActive();

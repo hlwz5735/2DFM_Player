@@ -24,6 +24,7 @@ public:
 
     void setFloatUniform(const char *uniformName, float val);
     void setMatrixUniform(const char *name, const Matrix4 &matrix);
+    void setVectorUniform(const char *uniformName, Vector3 vector);
 
 private:
     /// 尝试编译指定的着色器源码

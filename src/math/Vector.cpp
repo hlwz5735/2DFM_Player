@@ -79,6 +79,8 @@ bool operator==(const Vector2 &a, const Vector2 &b) {
     return a.x == b.x && a.y == b.y;
 }
 
+Vector3 Vector3::ZERO(0, 0, 0);
+
 Vector3::Vector3(float x, float y, float z) noexcept: x(x), y(y), z(z) {}
 
 void Vector3::normalize() {

@@ -97,7 +97,13 @@ void Shader::setFloatUniform(const char *uniformName, float val) {
     // 获取指定 uniform 参数名的位置
     // TODO 可缓存记录，不必每次都查询位置
     GLuint loc = glGetUniformLocation(shaderProgramId, uniformName);
-    // 指定矩阵类型的 uniform 参数
-    // 参数：uniform位置，矩阵的数量，使用行向量，将矩阵对象转化为浮点数组以传递
     glUniform1f(loc, val);
+}
+
+void Shader::setVectorUniform(const char *uniformName, Vector3 vector) {
+    // 获取指定 uniform 参数名的位置
+    // TODO 可缓存记录，不必每次都查询位置
+    GLuint loc = glGetUniformLocation(shaderProgramId, uniformName);
+    float tempArr[3] = { vector.x, vector.y, vector.z };
+    glUniform3fv(loc, 1, tempArr);
 }

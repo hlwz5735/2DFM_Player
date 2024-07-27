@@ -11,6 +11,12 @@ enum class Origin {
     BOTTOM_CENTER
 };
 
+enum class BlendType {
+    NORMAL = 0,
+    ADD,
+    MINUS,
+};
+
 class SpriteComponent : public Component {
 public:
     SpriteComponent(Node *owner, int zOrder = 100);
@@ -34,6 +40,10 @@ public:
     void setOrigin(Origin origin) {SpriteComponent::origin = origin;}
     float getOpacity() const {return opacity;}
     void setOpacity(float opacity) {SpriteComponent::opacity = opacity;}
+    BlendType getBlendType() const { return blendType; }
+    void setBlendType(BlendType blendType) { SpriteComponent::blendType = blendType; }
+    const Vector3 &getBlendColor() const { return blendColor; }
+    void setBlendColor(const Vector3 &blendColor) { SpriteComponent::blendColor = blendColor; }
 
 private:
     bool flipX = false;
@@ -41,8 +51,14 @@ private:
 
     int zOrder = 100;
 
+    /// 原点位置
     Origin origin = Origin::TOP_LEFT;
+    /// 混合模式
+    BlendType blendType = BlendType::NORMAL;
+    /// 透明度
     float opacity = 1.f;
+    /// 混合颜色
+    Vector3 blendColor = Vector3::ZERO;
 
     Vector2 offset = Vector2::ZERO;
     Texture *texture = nullptr;

@@ -7,6 +7,12 @@
 #include "../base/Game.hpp"
 #include "../base/AudioSystem.hpp"
 
+namespace {
+    float convertKgtRgbColorValue(byte rawByte) {
+        return static_cast<float>(static_cast<int>(*(reinterpret_cast<char *>(&rawByte)))) / 32;
+    }
+}
+
 DemoScriptInterceptor::DemoScriptInterceptor(Node *owner, int updateOrder)
         : Component(owner, updateOrder) {
     spriteComponent = owner->getComponent<SpriteComponent>();
@@ -84,17 +90,37 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
             auto soundScript = reinterpret_cast<_2dfm::PlaySound *>(item);
             auto soundClip = demoData->sounds.at(soundScript->soundIdx);
             Game::getInstance()->getAudioSystem()->playClip(soundClip);
-        } else if (type == _2dfm::DemoScriptItemTypes::COLOR) {
+        } else if (type == _2dfm::DemoScriptItemTypes::COLOR) { // 色
             auto colorSet = reinterpret_cast<_2dfm::ColorSet *>(item);
             auto setType = static_cast<_2dfm::ColorSetType>(colorSet->colorSetType);
             switch (setType) {
-            case _2dfm::ColorSetType::NORMAL:
-                spriteComponent->setOpacity(1.f);
-                break;
             case _2dfm::ColorSetType::ALPHA_BLEND:
+                spriteComponent->setBlendType(BlendType::NORMAL);
                 spriteComponent->setOpacity((32.f - static_cast<float>(colorSet->alpha)) / 32.f);
                 break;
+            case _2dfm::ColorSetType::TRANSPARENCY:
+                spriteComponent->setBlendType(BlendType::NORMAL);
+                spriteComponent->setOpacity(.5f);
+                break;
+            case _2dfm::ColorSetType::ADD_BLEND:
+                spriteComponent->setBlendType(BlendType::ADD);
+                spriteComponent->setOpacity(1.f);
+                break;
+            case _2dfm::ColorSetType::MINUS_BLEND:
+                spriteComponent->setBlendType(BlendType::MINUS);
+                spriteComponent->setOpacity(1.f);
+                break;
+            case _2dfm::ColorSetType::NORMAL:
+            default:
+                spriteComponent->setBlendType(BlendType::NORMAL);
+                spriteComponent->setOpacity(1.f);
+                break;
             }
+            spriteComponent->setBlendColor(
+                    Vector3(convertKgtRgbColorValue(colorSet->red),
+                            convertKgtRgbColorValue(colorSet->green),
+                            convertKgtRgbColorValue(colorSet->blue))
+            );
         } else if (type == _2dfm::DemoScriptItemTypes::MOVE) {
             auto moveCmd = reinterpret_cast<_2dfm::MoveCmd *>(item);
             auto vel = Vector2(moveCmd->moveX, moveCmd->moveY) * 0.01f;

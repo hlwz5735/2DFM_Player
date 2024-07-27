@@ -56,6 +56,8 @@ public:
     static Vector3 transformWithPerspDiv(const Vector3& vec, const class Matrix4& mat, float w = 1.0f);
 
     Vector3 &operator *=(float n);
+
+    static Vector3 ZERO;
 public:
     float x;
     float y;
