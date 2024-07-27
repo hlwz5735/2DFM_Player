@@ -69,12 +69,28 @@ namespace _2dfm {
 
     struct MoveCmd {
         byte type;
-        int16_t unknown;
+        int16_t accelX;
         int16_t moveX;
         int16_t moveY;
-        // accelX
-        // accelY
-        // setType(set/add)
+        int16_t accelY;
+        byte flags;
+
+        /// 是否为相加模式
+        bool isAdd() const {
+            return flags & 0x1;
+        }
+        bool isIgnoreMoveX() const {
+            return flags & 0x2;
+        }
+        bool isIgnoreMoveY() const {
+            return flags & 0x4;
+        }
+        bool isIgnoreAccelX() const {
+            return flags & 0x8;
+        }
+        bool isIgnoreAccelY() const {
+            return flags & 0x16;
+        }
     };
 #pragma pack(pop)
 

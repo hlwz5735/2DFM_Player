@@ -124,6 +124,23 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
         } else if (type == _2dfm::DemoScriptItemTypes::MOVE) {
             auto moveCmd = reinterpret_cast<_2dfm::MoveCmd *>(item);
             auto vel = Vector2(moveCmd->moveX, moveCmd->moveY) * 0.01f;
+            auto accel = Vector2(moveCmd->accelX, moveCmd->accelY) * 0.01f;
+            auto &oriVel = moveComponent->getVelocity();
+            auto &oriAccel = moveComponent->getAcceleration();
+            if (moveCmd->isAdd()) {
+                // 相加模式
+                vel.x += (moveCmd->isIgnoreMoveX() ? 0 : oriVel.x);
+                vel.y += (moveCmd->isIgnoreMoveY() ? 0 : oriVel.y);
+                accel.x += (moveCmd->isIgnoreAccelX() ? 0 : oriAccel.x);
+                accel.y += (moveCmd->isIgnoreAccelY() ? 0 : oriAccel.y);
+            } else {
+                // 代入模式
+                vel.x = moveCmd->isIgnoreMoveX() ? oriVel.x : vel.x;
+                vel.y = moveCmd->isIgnoreMoveY() ? oriVel.y : vel.y;
+                accel.x = moveCmd->isIgnoreAccelX() ? oriAccel.x : accel.x;
+                accel.y = moveCmd->isIgnoreAccelY() ? oriAccel.y : accel.y;
+            }
+            moveComponent->setAcceleration(accel);
             moveComponent->setVelocity(vel);
         }
     }
