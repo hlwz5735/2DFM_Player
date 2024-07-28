@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../2dfm/2dfmCommon.hpp"
-#include <cstddef>
+#include <array>
 
 class Renderer;
 
@@ -22,11 +22,11 @@ public:
     bool compressed = false;
 
     void setFrom2dfmPicture(_2dfm::Picture *picture);
-    void setSharedPalettes(SDL_Palette *palettes[8]);
+    void setSharedPalettes(const std::array<SDL_Palette *, 8> &palettes);
 private:
     byte *rawData = nullptr;
     SDL_Palette *privatePalette = nullptr;
-    SDL_Palette *sharedPalettes[8] = { nullptr };
+    std::array<SDL_Palette *, 8>sharedPalettes = { nullptr };
 };
 
 /// 从精灵帧数据中提取像素颜色信息

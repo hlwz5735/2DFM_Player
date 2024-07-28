@@ -1,38 +1,8 @@
 #include "2dfmFileReader.hpp"
 #include "2dfmCommon.hpp"
 #include "../base/SoundClip.hpp"
-#include <iconv.h>
-#include <stdexcept>
-
-std::string gb2312ToUtf8(const char* gb2312) {
-#if defined(WIN32)
-    return std::string(gb2312);
-#else
-    auto len = strlen(gb2312);
-    if (len == 0) {
-        return "";
-    }
-    std::vector<char> utf8(len * 4); // 分配足够大的空间，防止溢出
-    char *inbuf = const_cast<char *>(gb2312);
-    size_t inbytesleft = len;
-    char *outbuf = &utf8[0];
-    size_t outbytesleft = utf8.size();
-
-    iconv_t cd = iconv_open("UTF-8", "GB2312");
-    if (cd == (iconv_t)-1) {
-        throw std::runtime_error("iconv_open failed");
-    }
-
-    if (iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft) == static_cast<size_t>(-1)) {
-        iconv_close(cd);
-        throw std::runtime_error("iconv failed");
-    }
-
-    iconv_close(cd);
-    utf8.resize(utf8.size() - outbytesleft); // 调整大小以去除未使用的空间
-    return { utf8.begin(), utf8.end() };
-#endif
-}
+#include "../base/MyString.hpp"
+#include "../base/Texture.hpp"
 
 namespace {
     void readScripts(CommonResource *result, byte *rawData, int scriptCount, int itemCount) {
@@ -70,17 +40,16 @@ void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &
     }
 
     // 读取创建共享调色盘
-    result->sharedPalettes.reserve(8);
-    for (auto sharedPalette: commonResource.sharedPalettes) {
-        result->sharedPalettes.emplace_back(createSdlPalette(sharedPalette));
+    for (int i = 0; i < 8; ++i) {
+        result->sharedPalettes[i] = createSdlPalette(commonResource.sharedPalettes[i], false);
     }
 
     // 读取创建精灵帧对象
     result->spriteFrames.reserve(commonResource.pictureCount);
-    for (auto &picture : commonResource.pictures) {
+    for (_2dfm::Picture *picture : commonResource.pictures) {
         auto &sfi = result->spriteFrames.emplace_back();
         sfi.setFrom2dfmPicture(picture);
-        sfi.setSharedPalettes(result->sharedPalettes.data());
+        sfi.setSharedPalettes(result->sharedPalettes);
     }
 
     // 声音片段
@@ -237,6 +206,16 @@ KgtDemo *readDemoFile(const std::string &filepath) {
     return result;
 }
 
+void createTexturesForCommonResource(CommonResource *cr, int paletteNo) {
+    for (auto tex : cr->pictures) {
+        delete tex;
+    }
+    cr->pictures.clear();
+    for (auto &sf : cr->spriteFrames) {
+        cr->pictures.emplace_back(new Texture(&sf, paletteNo));
+    }
+}
+
 _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
     fseek(file, *offset, SEEK_SET);
 
@@ -301,17 +280,25 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
     return crp;
 }
 
-SDL_Palette *createSdlPalette(_2dfm::ColorBgra *originPalette) {
+SDL_Palette *createSdlPalette(_2dfm::ColorBgra *originPalette, bool isPrivate) {
     auto palette = SDL_AllocPalette(256);
-
-    for (int i = 0; i < 256; ++i) {
-        auto &color = (palette->colors)[i];
-        color.r = static_cast<Uint8>(originPalette[i].channel.red);
-        color.g = static_cast<Uint8>(originPalette[i].channel.green);
-        color.b = static_cast<Uint8>(originPalette[i].channel.blue);
-        color.a = static_cast<Uint8>(static_cast<unsigned char>(originPalette[i].channel.alpha) == 0 ? 255 : 0);
-        if (color.r == 0 && color.g == 0 && color.b == 0) {
-            color.a = 0;
+    if (isPrivate) {
+        for (int i = 0; i < 256; ++i) {
+            auto &color = (palette->colors)[i];
+            color.r = originPalette[i].channel.red;
+            color.g = originPalette[i].channel.green;
+            color.b = originPalette[i].channel.blue;
+            if (color.r == 0 && color.g == 0 && color.b == 0) {
+                color.a = 0;
+            }
+        }
+    } else {
+        for (int i = 0; i < 256; ++i) {
+            auto &color = (palette->colors)[i];
+            color.r = originPalette[i].channel.red;
+            color.g = originPalette[i].channel.green;
+            color.b = originPalette[i].channel.blue;
+            color.a = static_cast<Uint8>(originPalette[i].channel.alpha == 1 ? 255 : 0);
         }
     }
 

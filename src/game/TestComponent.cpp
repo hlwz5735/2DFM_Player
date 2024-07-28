@@ -29,7 +29,7 @@ void TestComponent::update(float deltaTime) {
 
         const auto t = cr->pictures.at(picNo);
         if (sprite->getTexture() != t) {
-            const auto s = cr->spriteFrames.at(picNo);
+            const auto &s = cr->spriteFrames.at(picNo);
             SDL_Log("picNo: %d/%d, width: %d, height: %d, privateP: %c",
                 picNo, cr->pictures.size(), s.width, s.height, s.hasPrivatePalette ? 'o' : 'x');
 

@@ -22,7 +22,7 @@ SpriteFrame::SpriteFrame(const SpriteFrame &o) {
     height = o.height;
     hasPrivatePalette = o.hasPrivatePalette;
     compressed = o.compressed;
-    memcpy(sharedPalettes, o.sharedPalettes, sizeof(SDL_Palette *) * 8);
+    sharedPalettes = o.sharedPalettes;
 
     int size = o.width * o.height * sizeof(byte);
     if (size > 0) {
@@ -31,7 +31,7 @@ SpriteFrame::SpriteFrame(const SpriteFrame &o) {
     }
     if (o.privatePalette) {
         privatePalette = SDL_AllocPalette(o.privatePalette->ncolors);
-        memcpy(privatePalette->colors, o.privatePalette->colors, o.privatePalette->ncolors * sizeof(SDL_Color *));
+        memcpy(privatePalette->colors, o.privatePalette->colors, o.privatePalette->ncolors * sizeof(SDL_Color));
     }
 }
 
@@ -40,7 +40,7 @@ SpriteFrame::SpriteFrame(SpriteFrame &&o) noexcept {
     height = o.height;
     hasPrivatePalette = o.hasPrivatePalette;
     compressed = o.compressed;
-    memcpy(sharedPalettes, o.sharedPalettes, sizeof(SDL_Palette *) * 8);
+    sharedPalettes = o.sharedPalettes;
 
     rawData = o.rawData;
     o.rawData = nullptr;
@@ -67,7 +67,7 @@ SpriteFrame &SpriteFrame::operator=(const SpriteFrame &o) {
     height = o.height;
     hasPrivatePalette = o.hasPrivatePalette;
     compressed = o.compressed;
-    memcpy(sharedPalettes, o.sharedPalettes, sizeof(SDL_Palette *) * 8);
+    sharedPalettes = o.sharedPalettes;
 
     if (rawData) {
         free(rawData);
@@ -84,7 +84,7 @@ SpriteFrame &SpriteFrame::operator=(const SpriteFrame &o) {
     }
     if (o.hasPrivatePalette) {
         privatePalette = SDL_AllocPalette(o.privatePalette->ncolors);
-        memcpy(privatePalette->colors, o.privatePalette->colors, o.privatePalette->ncolors * sizeof(SDL_Color *));
+        memcpy(privatePalette->colors, o.privatePalette->colors, o.privatePalette->ncolors * sizeof(SDL_Color));
     }
 
     return *this;
@@ -98,7 +98,7 @@ SpriteFrame & SpriteFrame::operator=(SpriteFrame &&o) noexcept {
     height = o.height;
     hasPrivatePalette = o.hasPrivatePalette;
     compressed = o.compressed;
-    memcpy(sharedPalettes, o.sharedPalettes, sizeof(SDL_Palette *) * 8);
+    sharedPalettes = o.sharedPalettes;
     if (rawData) {
         free(rawData);
         rawData = nullptr;
@@ -147,7 +147,7 @@ void SpriteFrame::setFrom2dfmPicture(_2dfm::Picture *picture) {
     }
     
     if (hasPrivatePalette) {
-        privatePalette = createSdlPalette(reinterpret_cast<_2dfm::ColorBgra *>(content));
+        privatePalette = createSdlPalette(reinterpret_cast<_2dfm::ColorBgra *>(content), true);
     } else {
         if (privatePalette) {
             SDL_FreePalette(privatePalette);
@@ -163,6 +163,6 @@ void SpriteFrame::setFrom2dfmPicture(_2dfm::Picture *picture) {
     memcpy(rawData, ppic, picSize);
 }
 
-void SpriteFrame::setSharedPalettes(SDL_Palette *palettes[8]) {
-    memcpy(sharedPalettes, palettes, sizeof(SDL_Palette *) * 8);
+void SpriteFrame::setSharedPalettes(const std::array<SDL_Palette *, 8> &palettes) {
+    sharedPalettes = palettes;
 }

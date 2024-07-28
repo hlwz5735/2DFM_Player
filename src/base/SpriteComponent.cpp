@@ -16,7 +16,7 @@ SpriteComponent::~SpriteComponent() {
 }
 
 void SpriteComponent::draw(Shader *shader) {
-    if (!texture || texture->getWidth() == 0 || texture->getHeight() == 0) {
+    if (!texture || !texture->isBound()) {
         return;
     }
     if (opacity == 0) {

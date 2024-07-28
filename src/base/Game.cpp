@@ -9,12 +9,11 @@
 #include "Texture.hpp"
 #include "AudioSystem.hpp"
 #include "SpriteComponent.hpp"
+#include "MoveComponent.hpp"
 #include "../2dfm/KgtGame.hpp"
 #include "../2dfm/2dfmFileReader.hpp"
 #include "../game/DemoScriptInterceptor.hpp"
 #include <format>
-
-#include "MoveComponent.hpp"
 
 const char *title = "2DFM Player";
 Game *Game::INSTANCE = nullptr;
@@ -63,19 +62,15 @@ void Game::runLoop() {
 void Game::loadData() {
     auto kgtFilePath = std::format("{}/{}", gameConfig.gameBasePath, gameConfig.kgtFileName);
     kgt = readKgtFile(kgtFilePath);
-    for (auto &sf : kgt->spriteFrames) {
-        const auto t = new Texture(renderer, &sf);
-        kgt->pictures.emplace_back(t);
-    }
+    createTexturesForCommonResource(kgt, 0);
 
-    auto openDemoName = std::format("{}/{}.demo", gameConfig.gameBasePath,
-             // kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
-             kgt->demoNames[1]);
+    auto openDemoName = std::format("{}/{}.demo", gameConfig.gameBasePath, 
+            kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
+             // kgt->demoNames[1]);
 
     KgtDemo *demo = readDemoFile(openDemoName);
-    for (auto &sf : demo->spriteFrames) {
-        demo->pictures.emplace_back(new Texture(renderer, &sf));
-    }
+    createTexturesForCommonResource(demo, 0);
+
     for (int i = 1; i < demo->scripts.size(); ++i) {
         auto scriptNode = new Node(this);
         scriptNode->setPosition(Vector2::ZERO);

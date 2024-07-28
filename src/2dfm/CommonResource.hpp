@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vector>
 #include "../base/SpriteFrame.hpp"
+#include <vector>
+#include <array>
 
 class Texture;
 class SoundClip;
@@ -24,7 +25,7 @@ struct CommonResource {
     /// 根据选择的色盘，这里直接保存其纹理
     std::vector<Texture *> pictures;
     /// 调色盘信息
-    std::vector<SDL_Palette *> sharedPalettes;
+    std::array<SDL_Palette *, 8> sharedPalettes;
     /// 声音信息
     std::vector<SoundClip *> sounds;
 };

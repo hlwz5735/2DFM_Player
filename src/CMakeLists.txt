@@ -34,6 +34,15 @@ add_executable(${target_name}
     ${game_sources}
 )
 
+if (MSVC)
+    target_compile_options(${target_name} PRIVATE "/utf-8")
+    target_compile_definitions(${target_name}
+        PRIVATE
+            "_UNICODE"
+            "UNICODE"
+    )
+endif()
+
 target_link_libraries(${target_name}
         ${SDL2_LIB_NAME}
         ${SDL2_IMAGE_NAME}
