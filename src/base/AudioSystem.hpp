@@ -20,7 +20,7 @@ public:
     void addClip(SoundClip *clip);
     void removeClip(SoundClip *clip);
 
-    void playClip(SoundClip *clip, bool loop = false);
+    void playClip(SoundClip *clip);
     void stopAll();
 private:
     Game *game = nullptr;

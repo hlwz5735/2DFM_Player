@@ -33,6 +33,10 @@ void DemoScriptInterceptor::update(float deltaTime) {
     if (timeWaiting > 0) {
         timeWaiting -= deltaTime;
     }
+    playTimer += deltaTime;
+    if (demoData->config.totalTime != 0 && playTimer * 100 >= demoData->config.totalTime) {
+        // TODO: 结束播放并向后跳转
+    }
     const _2dfm::ShowPic *showPicScript = nullptr;
     while (timeWaiting <= 0) {
         showPicScript = interceptScriptUntilShowPic();
@@ -63,7 +67,7 @@ void DemoScriptInterceptor::setRunningScript(int scriptIdx) {
 }
 
 bool DemoScriptInterceptor::hasNoShowPicItem() const {
-    for (int i = runningScriptItemIdx; i < endIdx; ++i) {
+    for (int i = startIdx; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
         if (static_cast<_2dfm::DemoScriptItemTypes>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
             return false;
@@ -144,6 +148,13 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
             moveComponent->setVelocity(vel);
         }
     }
-    spriteComponent->setTexture(nullptr);
-    return nullptr;
+    // 如果走到了最后，发现从头到尾都没有图片指令，则退出播放
+    if (hasNoShowPicItem()) {
+        spriteComponent->setTexture(nullptr);
+        return nullptr;
+    } else {
+        // 只要没遇到“完”，就会从头开始
+        runningScriptItemIdx = startIdx;
+        return interceptScriptUntilShowPic();
+    }
 }

@@ -66,8 +66,15 @@ namespace _2dfm {
         int unknown; // 0-3
         char name[32]; // 4-35
         int size; // 36-39
-        SoundType soundType: 1; // 40
-        int track: 1; // 41
+        byte soundType; // 40
+        byte track; // 41
+
+        SoundType getSoundType() {
+            return static_cast<SoundType>(soundType & 0b1111);
+        }
+        bool isLoop() {
+            return soundType & 0b10000;
+        }
     };
     struct Sound {
         SoundItemHeader header;

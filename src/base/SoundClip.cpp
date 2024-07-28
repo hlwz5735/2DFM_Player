@@ -1,6 +1,4 @@
 #include "SoundClip.hpp"
-#include "AudioSystem.hpp"
-#include "Game.hpp"
 #include "../2dfm/2dfmCommon.hpp"
 
 SoundClip::~SoundClip() {
@@ -12,10 +10,9 @@ SoundClip::~SoundClip() {
 
 SoundClip *SoundClip::from2dfmSound(_2dfm::Sound *sound) {
     // 目前只支持WAV，MIDI直接忽略
-    if (sound->header.soundType == _2dfm::SoundType::MIDI) {
+    if (sound->header.getSoundType() != _2dfm::SoundType::WAVE) {
         return nullptr;
     }
-    auto audioSystem = Game::getInstance()->getAudioSystem();
 
     const auto size = sound->header.size;
     auto rwop = SDL_RWFromMem(sound->content, size);
@@ -24,6 +21,7 @@ SoundClip *SoundClip::from2dfmSound(_2dfm::Sound *sound) {
     auto clip = new SoundClip();
     clip->size = size;
     clip->mixChunk = chunk;
-    audioSystem->addClip(clip);
+    clip->loop = sound->header.isLoop();
+    // audioSystem->addClip(clip);
     return clip;
 }

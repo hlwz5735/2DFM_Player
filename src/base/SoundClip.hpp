@@ -15,7 +15,9 @@ public:
 
     size_t getSize() const { return size; }
     Mix_Chunk *getMixChunk() const { return mixChunk; }
+    bool isLoop() const { return loop; }
 private:
     Mix_Chunk *mixChunk = nullptr;
     size_t size = 0;
+    bool loop = false;
 };

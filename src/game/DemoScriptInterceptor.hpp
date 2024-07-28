@@ -29,4 +29,6 @@ private:
     int endIdx = 0;
 
     float timeWaiting = 0;
+    /// 播放时间（到达上限后自动结束）
+    float playTimer = 0;
 };

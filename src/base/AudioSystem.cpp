@@ -41,9 +41,9 @@ void AudioSystem::removeClip(SoundClip *clip) {
     delete clip;
 }
 
-void AudioSystem::playClip(SoundClip *clip, bool loop) {
+void AudioSystem::playClip(SoundClip *clip) {
     if (clip && clip->getSize() > 0 && clip->getMixChunk()) {
-        Mix_PlayChannel(-1, clip->getMixChunk(), loop ? -1 : 0);
+        Mix_PlayChannel(-1, clip->getMixChunk(), clip->isLoop() ? -1 : 0);
     }
 }
 
