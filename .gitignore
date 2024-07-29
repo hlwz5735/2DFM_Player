@@ -4,3 +4,5 @@
 /cmake-build-release
 /out
 /.vs
+/build_x86
+/build_x64
