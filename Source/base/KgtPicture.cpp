@@ -1,6 +1,7 @@
 #include "KgtPicture.hpp"
 #include "KgtPalette.hpp"
 #include "../2dfm/2dfmFileReader.hpp"
+#include <renderer/backend/Types.h>
 #include <stdexcept>
 
 using _2dfm::ColorBgra;
@@ -143,7 +144,14 @@ ax::Texture2D *KgtPicture::createTexture(int paletteNo) {
     byte *imageData = this->extractPixelData(paletteNo);
 
     auto tex = new ax::Texture2D();
+    // 设置纹理过滤参数
+    ax::Texture2D::TexParams texParams(ax::backend::SamplerFilter::NEAREST,    // 最小过滤：临近过滤
+                                       ax::backend::SamplerFilter::NEAREST,    // 最大过滤：临近过滤
+                                       ax::backend::SamplerAddressMode::CLAMP_TO_EDGE, // 横向纹理环绕模式：边缘钳制
+                                       ax::backend::SamplerAddressMode::CLAMP_TO_EDGE  // 纵向纹理环绕模式：边缘钳制
+    );
     tex->initWithData(imageData, width * height * sizeof(_2dfm::ColorBgra), ax::PixelFormat::BGRA8, width, height);
+    tex->setTexParameters(texParams);
 
     free(imageData);
 

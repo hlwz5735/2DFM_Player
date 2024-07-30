@@ -1,4 +1,5 @@
 #pragma once
+#include <cctype>
 
 namespace _2dfm {
     class Sound;

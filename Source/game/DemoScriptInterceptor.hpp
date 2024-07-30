@@ -7,6 +7,7 @@ struct KgtDemo;
 
 namespace _2dfm {
     struct ShowPic;
+    struct ColorSet;
 }
 
 class DemoScriptInterceptor : public ax::Component {
@@ -17,6 +18,9 @@ public:
 
     void setDemoData(KgtDemo *data) { demoData = data; }
     void setRunningScript(int scriptIdx);
+protected:
+    void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
+    void interceptColorSetCmd(const _2dfm::ColorSet *cmd);
 private:
     bool hasNoShowPicItem() const;
     _2dfm::ShowPic *interceptScriptUntilShowPic();

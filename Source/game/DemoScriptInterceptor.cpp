@@ -69,19 +69,7 @@ void DemoScriptInterceptor::update(float deltaTime) {
         }
     }
     if (showPicScript) {
-        auto tex = demoData->pictures.at(showPicScript->getPicIdx());
-        if (tex) {
-            const auto blendFunc = spriteComponent->getBlendFunc();
-            spriteComponent->setTexture(tex);
-            const auto &r = tex->getContentSizeInPixels();
-            spriteComponent->setTextureRect({0, 0, r.width, r.height});
-            spriteComponent->setPosition(showPicScript->getOffset().x, -showPicScript->getOffset().y);
-            spriteComponent->setVisible(true);
-            spriteComponent->setBlendFunc(blendFunc);
-        } else {
-            spriteComponent->setTexture(nullptr);
-            spriteComponent->setVisible(false);
-        }
+        this->interceptShowPicCmd(showPicScript);
     }
 }
 
@@ -123,36 +111,7 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
             //Game::getInstance()->getAudioSystem()->playClip(soundClip);
             //ax::AudioEngine::play2d();
         } else if (type == _2dfm::DemoScriptItemTypes::COLOR) { // 色
-            auto colorSet = reinterpret_cast<_2dfm::ColorSet *>(item);
-            auto setType = static_cast<_2dfm::ColorSetType>(colorSet->colorSetType);
-            switch (setType) {
-            case _2dfm::ColorSetType::ALPHA_BLEND:
-                spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
-                spriteComponent->setOpacity(convertKgtOpacityColorValue(colorSet->alpha));
-                break;
-            case _2dfm::ColorSetType::TRANSPARENCY:
-                spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
-                spriteComponent->setOpacity(128);
-                break;
-            case _2dfm::ColorSetType::ADD_BLEND:
-                spriteComponent->setBlendFunc(BlendFunc::ADDITIVE);
-                spriteComponent->setOpacity(255);
-                break;
-            case _2dfm::ColorSetType::MINUS_BLEND:
-                spriteComponent->setBlendFunc({backend::BlendFactor::ONE, backend::BlendFactor::ONE_MINUS_SRC_COLOR});
-                spriteComponent->setOpacity(255);
-                break;
-            case _2dfm::ColorSetType::NORMAL:
-            default:
-                spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
-                spriteComponent->setOpacity(255);
-                break;
-            }
-            // TODO: 颜色叠加暂时关闭
-            /*const ax::Color3B blendColor(convertKgtRgbColorValue(colorSet->red),
-                convertKgtRgbColorValue(colorSet->green),
-                convertKgtRgbColorValue(colorSet->blue));
-            spriteComponent->setColor(blendColor);*/
+            interceptColorSetCmd(reinterpret_cast<_2dfm::ColorSet *>(item));
         } else if (type == _2dfm::DemoScriptItemTypes::MOVE) {
             auto moveCmd = reinterpret_cast<_2dfm::MoveCmd *>(item);
             auto vel       = ax::Vec2(moveCmd->moveX, moveCmd->moveY) * 0.01f;
@@ -185,4 +144,64 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
         runningScriptItemIdx = startIdx;
         return interceptScriptUntilShowPic();
     }
+}
+
+void DemoScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
+    auto tex = demoData->pictures.at(cmd->getPicIdx());
+    if (tex) {
+        const auto blendFunc = spriteComponent->getBlendFunc();
+        const auto visible = spriteComponent->isVisible();
+        spriteComponent->setTexture(tex);
+        const auto &r = tex->getContentSizeInPixels();
+        spriteComponent->setTextureRect({0, 0, r.width, r.height});
+        spriteComponent->setPosition(cmd->getOffset().x, -cmd->getOffset().y);
+        spriteComponent->setVisible(visible);
+        spriteComponent->setBlendFunc(blendFunc);
+    } else {
+        spriteComponent->setTexture(nullptr);
+        spriteComponent->setVisible(false);
+    }
+}
+
+void DemoScriptInterceptor::interceptColorSetCmd(const _2dfm::ColorSet *cmd) {
+    auto setType = static_cast<_2dfm::ColorSetType>(cmd->colorSetType);
+    switch (setType) {
+    case _2dfm::ColorSetType::ALPHA_BLEND: {
+        auto opacity = convertKgtOpacityColorValue(cmd->alpha);
+        if (opacity == 0) {
+            spriteComponent->setOpacity(0);
+            spriteComponent->setVisible(false);
+        } else {
+            spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
+            spriteComponent->setOpacity(opacity);
+        }
+    }
+    break;
+    case _2dfm::ColorSetType::TRANSPARENCY:
+        spriteComponent->setVisible(true);
+        spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
+        spriteComponent->setOpacity(128);
+        break;
+    case _2dfm::ColorSetType::ADD_BLEND:
+        spriteComponent->setVisible(true);
+        spriteComponent->setBlendFunc(BlendFunc::ADDITIVE);
+        spriteComponent->setOpacity(255);
+        break;
+    case _2dfm::ColorSetType::MINUS_BLEND:
+        spriteComponent->setVisible(true);
+        spriteComponent->setBlendFunc({backend::BlendFactor::ONE, backend::BlendFactor::ONE_MINUS_SRC_COLOR});
+        spriteComponent->setOpacity(255);
+        break;
+    case _2dfm::ColorSetType::NORMAL:
+    default:
+        spriteComponent->setVisible(true);
+        spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
+        spriteComponent->setOpacity(255);
+        break;
+    }
+    // TODO: 颜色叠加暂时关闭
+    /*const ax::Color3B blendColor(convertKgtRgbColorValue(colorSet->red),
+        convertKgtRgbColorValue(colorSet->green),
+        convertKgtRgbColorValue(colorSet->blue));
+    spriteComponent->setColor(blendColor);*/
 }
