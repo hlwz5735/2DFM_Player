@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../2dfm/2dfmCommon.hpp"
 #include <array>
+#include "2dfmCommon.hpp"
 
 class KgtPalette {
 public:

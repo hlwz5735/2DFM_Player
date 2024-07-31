@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../2dfm/2dfmCommon.hpp"
-#include "KgtPalette.hpp"
 #include <renderer/Texture2D.h>
 #include <array>
+#include "2dfmCommon.hpp"
+#include "KgtPalette.hpp"
 
 class Renderer;
 

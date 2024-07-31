@@ -1,6 +1,5 @@
 #include "CommonResource.hpp"
-#include "../base/SoundClip.hpp"
-#include <axmol.h>
+#include "SoundClip.hpp"
 
 CommonResource::~CommonResource() {
     for (auto t : this->pictures) {

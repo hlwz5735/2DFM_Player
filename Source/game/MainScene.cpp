@@ -25,9 +25,9 @@
 
 #include "MainScene.hpp"
 
-#include "DemoScriptInterceptor.hpp"
 #include "2dfm/2dfmFileReader.hpp"
-#include "base/MoveComponent.hpp"
+#include "DemoScriptInterceptor.hpp"
+#include "MoveComponent.hpp"
 
 USING_NS_AX;
 

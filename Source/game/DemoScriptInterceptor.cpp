@@ -1,8 +1,8 @@
 #include "DemoScriptInterceptor.hpp"
+#include <2d/Node.h>
 #include "../2dfm/2dfmScriptItem.hpp"
 #include "../2dfm/KgtDemo.hpp"
-#include "../base/MoveComponent.hpp"
-#include <2d/Node.h>
+#include "MoveComponent.hpp"
 
 USING_NS_AX;
 

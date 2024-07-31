@@ -1,8 +1,8 @@
 #include "2dfmFileReader.hpp"
 #include "2dfmCommon.hpp"
-#include "../base/KgtPalette.hpp"
-#include "../base/SoundClip.hpp"
-#include "../base/MyString.hpp"
+#include "KgtPalette.hpp"
+#include "SoundClip.hpp"
+#include "engine/MyString.hpp"
 #include <axmol.h>
 
 namespace {

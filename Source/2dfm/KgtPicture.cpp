@@ -1,7 +1,6 @@
 #include "KgtPicture.hpp"
+#include "2dfmFileReader.hpp"
 #include "KgtPalette.hpp"
-#include "../2dfm/2dfmFileReader.hpp"
-#include <renderer/backend/Types.h>
 #include <stdexcept>
 
 using _2dfm::ColorBgra;

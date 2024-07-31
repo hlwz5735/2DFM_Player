@@ -1,5 +1,5 @@
 #include "SoundClip.hpp"
-#include "../2dfm/2dfmCommon.hpp"
+#include "2dfmCommon.hpp"
 
 SoundClip::~SoundClip() {
     //if (mixChunk) {
