@@ -3,6 +3,9 @@
 #include <2d/Component.h>
 #include <2d/Sprite.h>
 
+namespace _2dfm {
+struct PlaySoundCmd;
+}
 struct KgtDemo;
 
 namespace _2dfm {
@@ -19,6 +22,7 @@ public:
     void setDemoData(KgtDemo *data) { demoData = data; }
     void setRunningScript(int scriptIdx);
 protected:
+    void interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd);
     void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
     void interceptColorSetCmd(const _2dfm::ColorSet *cmd);
 private:

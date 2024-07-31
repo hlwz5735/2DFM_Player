@@ -24,9 +24,11 @@
  ****************************************************************************/
 
 #include "AppDelegate.h"
+
+#include "engine/AudioSystem.hpp"
 #include "game/MainScene.hpp"
 
-#define USE_AUDIO_ENGINE 1
+#define USE_AUDIO_ENGINE 0
 
 #if USE_AUDIO_ENGINE
 #    include "audio/AudioEngine.h"
@@ -64,6 +66,8 @@ bool AppDelegate::applicationDidFinishLaunching() {
 #endif
         director->setGLView(glView);
     }
+
+    AudioSystem::getInstance();
 
     // turn on display FPS
     director->setStatsDisplay(true);

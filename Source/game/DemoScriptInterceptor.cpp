@@ -3,6 +3,8 @@
 #include "../2dfm/2dfmScriptItem.hpp"
 #include "../2dfm/KgtDemo.hpp"
 #include "MoveComponent.hpp"
+#include "engine/AudioSystem.hpp"
+#include "engine/SoundClip.hpp"
 
 USING_NS_AX;
 
@@ -80,6 +82,11 @@ void DemoScriptInterceptor::setRunningScript(int scriptIdx) {
     runningScriptItemIdx = startIdx;
 }
 
+void DemoScriptInterceptor::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
+    auto soundClip = demoData->sounds.at(cmd->soundIdx);
+    AudioSystem::getInstance()->playClip(soundClip, soundClip->isLoop(), 1.f);
+}
+
 bool DemoScriptInterceptor::hasNoShowPicItem() const {
     for (int i = startIdx; i < endIdx; ++i) {
         auto item = demoData->scriptItems[i];
@@ -106,10 +113,7 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
         }
 
         if (type == _2dfm::DemoScriptItemTypes::SOUND) {
-            auto soundScript = reinterpret_cast<_2dfm::PlaySoundCmd *>(item);
-            auto soundClip = demoData->sounds.at(soundScript->soundIdx);
-            //Game::getInstance()->getAudioSystem()->playClip(soundClip);
-            //ax::AudioEngine::play2d();
+            interceptPlaySoundCmd(reinterpret_cast<_2dfm::PlaySoundCmd *>(item));
         } else if (type == _2dfm::DemoScriptItemTypes::COLOR) { // 色
             interceptColorSetCmd(reinterpret_cast<_2dfm::ColorSet *>(item));
         } else if (type == _2dfm::DemoScriptItemTypes::MOVE) {
@@ -174,6 +178,7 @@ void DemoScriptInterceptor::interceptColorSetCmd(const _2dfm::ColorSet *cmd) {
         } else {
             spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
             spriteComponent->setOpacity(opacity);
+            spriteComponent->setVisible(true);
         }
     }
     break;

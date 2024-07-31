@@ -1,5 +1,5 @@
 #include "CommonResource.hpp"
-#include "SoundClip.hpp"
+#include "engine/SoundClip.hpp"
 
 CommonResource::~CommonResource() {
     for (auto t : this->pictures) {

@@ -25,9 +25,26 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-set(APP_NAME KgtPlayer)
+set(APP_NAME 2DFM_Player)
 
 project(${APP_NAME})
+
+set(AX_ENABLE_MSEDGE_WEBVIEW2 FALSE)
+SET(AX_ENABLE_MFMEDIA FALSE)
+SET(AX_ENABLE_VLC_MEDIA FALSE)
+SET(AX_ENABLE_3D FALSE)
+SET(AX_ENABLE_3D_PHYSICS FALSE)
+SET(AX_ENABLE_NAVMESH FALSE)
+SET(AX_ENABLE_MEDIA FALSE)
+SET(AX_USE_ALSOFT TRUE)
+SET(AX_ENABLE_EXT_PARTICLE3D FALSE)
+SET(AX_ENABLE_EXT_PHYSICS_NODE FALSE)
+SET(AX_ENABLE_EXT_SPINE FALSE)
+SET(AX_ENABLE_EXT_DRAGONBONES FALSE)
+SET(AX_ENABLE_EXT_COCOSTUDIO FALSE)
+SET(AX_ENABLE_EXT_FAIRYGUI FALSE)
+SET(AX_ENABLE_EXT_SDFGEN FALSE)
+SET(AX_ENABLE_EXT_LUA FALSE)
 
 add_subdirectory(ThirdParty)
 
@@ -182,7 +199,15 @@ if (NOT _AX_USE_PREBUILT)
     target_link_libraries(${APP_NAME} ${_AX_CORE_LIB})
 endif()
 
-target_link_libraries(${APP_NAME} Iconv)
+target_link_libraries(${APP_NAME} Iconv libsndfile)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    add_custom_command(TARGET ${APP_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/libsndfile/lib/windows/x64/sndfile.dll"
+            $<TARGET_FILE_DIR:${APP_NAME}>
+    )
+endif()
 
 # The optional thirdparties(not dependent by engine)
 if (AX_WITH_YAML_CPP)

@@ -1,7 +1,7 @@
 #include "2dfmFileReader.hpp"
 #include "2dfmCommon.hpp"
 #include "KgtPalette.hpp"
-#include "SoundClip.hpp"
+#include "engine/SoundClip.hpp"
 #include "engine/MyString.hpp"
 #include <axmol.h>
 
