@@ -26,6 +26,7 @@
 #include "AppDelegate.h"
 
 #include "engine/AudioSystem.hpp"
+#include "engine/InputSystem.hpp"
 #include "game/FirstScene.hpp"
 
 #define USE_AUDIO_ENGINE 0
@@ -68,6 +69,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     }
 
     AudioSystem::getInstance();
+    InputSystem::getInstance();
 
     // turn on display FPS
     director->setStatsDisplay(true);

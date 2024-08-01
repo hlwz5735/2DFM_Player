@@ -16,7 +16,8 @@ class SoundClip;
 
 class AudioSystem : ax::Object {
 public:
-    ~AudioSystem() override;
+    AudioSystem(const AudioSystem &o) = delete;
+    AudioSystem & operator=(const AudioSystem &o) = delete;
 
     bool initialize();
 
@@ -29,10 +30,10 @@ public:
 
     void update(float dt);
 
-    static AudioSystem *INSTANCE;
     static AudioSystem *getInstance();
 protected:
     AudioSystem();
+    ~AudioSystem() override;
 private:
     ALuint findValidSource();
     void updateForStop();

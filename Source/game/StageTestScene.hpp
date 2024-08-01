@@ -9,19 +9,20 @@
 
 struct KgtStage;
 
+constexpr int stageWidth = 640 * 2, stageHeight = 480 * 2;
+
 class StageTestScene : public ax::Scene {
 public:
     bool init() override;
 
-    void onMouseDown(ax::Event* event);
-    void onMouseUp(ax::Event* event);
-    void onMouseMove(ax::Event* event);
+    void update(float delta) override;
 
+protected:
+    void updatePositionByCameraPos();
 private:
     KgtStage *stage = nullptr;
-
-    ax::Vec2 ploc = ax::Vec2::ZERO;
-    ax::Vec2 loc = ax::Vec2::ZERO;
+    ax::Vec2 cameraLoc {stageWidth / 2, stageHeight / 4};
+    int cameraSpeed = 5;
 };
 
 #endif //STAGETESTSCENE_HPP

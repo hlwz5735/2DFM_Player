@@ -9,15 +9,18 @@
 struct KgtGame;
 class GlobalData {
 public:
-    GlobalData();
-    ~GlobalData();
+    GlobalData(const GlobalData &o) = delete;
+    GlobalData & operator=(const GlobalData &o) = delete;
 
-    static GlobalData *INSTANCE;
-    static GlobalData *getInstance();
 
     [[nodiscard]] const GameConfig &getGameConfig() const { return gameConfig; }
     void setKgtGame(KgtGame *kgt) { kgtGame = kgt; }
     KgtGame *getKgtGame() { return kgtGame; }
+
+    static GlobalData *getInstance();
+protected:
+    GlobalData();
+    ~GlobalData();
 private:
     GameConfig gameConfig;
     KgtGame *kgtGame = nullptr;
