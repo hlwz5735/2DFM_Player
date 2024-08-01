@@ -80,5 +80,5 @@ void StageTestScene::update(float delta) {
 void StageTestScene::updatePositionByCameraPos() {
     cameraLoc.x = clampf(cameraLoc.x, stageWidth / 4, stageWidth / 4 * 3);
     cameraLoc.y = clampf(cameraLoc.y, stageHeight / 4, stageHeight / 4 * 3);
-    setPosition(-cameraLoc.x + stageWidth / 4, stageHeight / 4 * 3 - cameraLoc.y);
+    setPosition(stageWidth / 4 - cameraLoc.x, stageHeight / 4 * 3 - cameraLoc.y);
 }
