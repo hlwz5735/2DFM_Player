@@ -17,12 +17,15 @@ public:
 
     void update(float delta) override;
 
+    void loadStage(int stageNo);
+    void unloadStage();
 protected:
     void updatePositionByCameraPos();
 private:
     KgtStage *stage = nullptr;
     ax::Vec2 cameraLoc {stageWidth / 2, stageHeight / 4};
     int cameraSpeed = 5;
+    int stageNo = 0;
 };
 
 #endif //STAGETESTSCENE_HPP
