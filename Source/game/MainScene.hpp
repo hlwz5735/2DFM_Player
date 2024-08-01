@@ -30,23 +30,11 @@
 #include <2d/Scene.h>
 
 class MainScene : public ax::Scene {
-    enum class GameState {
-        init = 0,
-        update,
-        pause,
-        end,
-        menu1,
-        menu2,
-    };
-
 public:
     bool init() override;
-    void update(float delta) override;
-
+    void onEnterTransitionDidFinish() override;
     // a selector callback
     void menuCloseCallback(ax::Object *sender);
-private:
-    GameState _gameState = GameState::init;
 };
 
 #endif  // __MAIN_SCENE_H__

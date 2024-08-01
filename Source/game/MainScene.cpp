@@ -3,6 +3,7 @@
 #include "DemoScene.hpp"
 #include "GameManager.hpp"
 #include "MoveComponent.hpp"
+#include "StageTestScene.hpp"
 #include "engine/Input.hpp"
 
 USING_NS_AX;
@@ -55,34 +56,24 @@ bool MainScene::init() {
         return false;
     }
 
-    scheduleUpdate();
-
     return true;
 }
 
-void MainScene::update(float delta) {
+void MainScene::onEnterTransitionDidFinish() {
+    Scene::onEnterTransitionDidFinish();
     const auto kgt = GameManager::getInstance().getKgtGame();
     if (kgt == nullptr) {
         AXLOGE("KGT is null");
-        _gameState = GameState::end;
+        return;
     }
-    switch (_gameState) {
-    case GameState::init: {
-        _gameState = GameState::update;
-        auto openDemoName = std::format("{}/{}.demo",
-            GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
-        const auto openDemoScene = utils::createInstance<DemoScene>(
-            &DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
-        _director->replaceScene(openDemoScene);
-        break;
-    }
-    case GameState::end:
-        // CleanUpMyCrap();
-        menuCloseCallback(this);
-        break;
-    default:
-        break;
-    } //switch
+    _director->replaceScene(ax::utils::createInstance<StageTestScene>());
+    return;
+
+    auto openDemoName =
+    std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
+    const auto openDemoScene =
+        utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
+    _director->replaceScene(openDemoScene);
 }
 
 void MainScene::menuCloseCallback(Object *sender) {

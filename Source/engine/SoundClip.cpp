@@ -16,10 +16,14 @@ SoundClip *SoundClip::from2dfmSound(_2dfm::Sound *sound) {
     }
 
     const auto size = sound->header.size;
-    auto decodedData = decodeWavFile(sound->content, size);
+    DecodedSoundData decodedData;
+    try {
+        decodedData = decodeWavFile(sound->content, size);
+    } catch (std::runtime_error &e) {
+        return nullptr;
+    }
 
     // 在这里可以进行后续的声音处理或读取操作
-
     ALenum format;
     if (decodedData.channels == 1) {
         format = AL_FORMAT_MONO16;

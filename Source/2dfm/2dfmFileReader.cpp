@@ -207,6 +207,38 @@ KgtDemo *readDemoFile(const std::string_view filepath) {
     return result;
 }
 
+KgtStage * readStageFile(const std::string &filepath){
+    _2dfm::KgtFileHeader header;
+    // 打开文件
+    auto file = fopen(filepath.c_str(), "rb");
+    if (!file) {
+        throw std::runtime_error("open demo file failed");
+    }
+    // 读入文件头
+    fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
+    long offset = ftell(file);
+
+    // 读入公共资源部分
+    auto commonResource = readCommonResourcePart(&offset, file);
+    fseek(file, offset + 4, SEEK_SET);
+
+    // 读入场景配置信息
+    _2dfm::KgtStageConfig config;
+    fread(&config, sizeof(_2dfm::KgtStageConfig), 1, file);
+
+    auto result = new KgtStage;
+    // 资源拼接部分
+    result->stageName = header.name.name;
+    setCommonResource(result, commonResource);
+    result->bgmSoundId = config.bgmSoundId;
+
+    // 资源清理
+    fclose(file);
+    freeCommonResourcePart(&commonResource);
+
+    return result;
+}
+
 void createTexturesForCommonResource(CommonResource *cr, int paletteNo) {
     for (auto tex : cr->pictures) {
         delete tex;

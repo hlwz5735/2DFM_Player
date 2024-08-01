@@ -6,3 +6,4 @@
 /.vs
 /build_x86
 /build_x64
+/build_x64_clang

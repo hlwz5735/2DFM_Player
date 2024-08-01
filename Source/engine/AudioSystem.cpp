@@ -9,17 +9,14 @@
 #include <PlatformMacros.h>
 #include <Director.h>
 
-AudioSystem *AudioSystem::INSTANCE = nullptr;
-
 AudioSystem *AudioSystem::getInstance() {
-    if (!INSTANCE) {
-        INSTANCE = new AudioSystem();
-        INSTANCE->initialize();
-    }
-    return INSTANCE;
+    static AudioSystem instance;
+    return &instance;
 }
 
-AudioSystem::AudioSystem() {}
+AudioSystem::AudioSystem() {
+    initialize();
+}
 
 AudioSystem::~AudioSystem() {
     if (scheduler != nullptr) {

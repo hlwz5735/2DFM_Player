@@ -103,6 +103,10 @@ namespace _2dfm {
         int16_t unknownGap;
         int32_t totalTime;
     };
+
+    struct KgtStageConfig {
+        int32_t bgmSoundId;
+    };
 }
 
 #endif //INC_2DFM_PLAYER_2DFMFILE_HPP
