@@ -1,10 +1,10 @@
-#include "DemoScriptInterceptor.hpp"
-#include <2d/Node.h>
-#include "../2dfm/2dfmScriptItem.hpp"
-#include "../2dfm/KgtDemo.hpp"
+#include "StageScriptInterceptor.hpp"
+#include "2dfm/2dfmScriptItem.hpp"
+#include "2dfm/KgtStage.hpp"
 #include "MoveComponent.hpp"
 #include "engine/AudioSystem.hpp"
 #include "engine/SoundClip.hpp"
+#include <2d/Node.h>
 
 USING_NS_AX;
 
@@ -20,14 +20,14 @@ uint8_t convertKgtOpacityColorValue(byte rawByte) {
 }
 }
 
-bool DemoScriptInterceptor::init() {
+bool StageScriptInterceptor::init() {
     if (!Component::init()) {
         return false;
     }
     return true;
 }
 
-void DemoScriptInterceptor::onAdd() {
+void StageScriptInterceptor::onAdd() {
     Component::onAdd();
     spriteComponent = dynamic_cast<Sprite *>(_owner->getChildByName("SpriteComponent"));
     moveComponent = dynamic_cast<MoveComponent *>(_owner->getComponent("MoveComponent"));
@@ -37,9 +37,9 @@ void DemoScriptInterceptor::onAdd() {
     }
 }
 
-void DemoScriptInterceptor::update(float deltaTime) {
+void StageScriptInterceptor::update(float deltaTime) {
     Component::update(deltaTime);
-    if (!spriteComponent || !demoData) {
+    if (!spriteComponent || !stageData) {
         return;
     }
     if (timeWaiting == std::numeric_limits<float>::infinity()) {
@@ -50,10 +50,6 @@ void DemoScriptInterceptor::update(float deltaTime) {
     }
     if (timeWaiting > 0) {
         timeWaiting -= deltaTime;
-    }
-    playTimer += deltaTime;
-    if (demoData->config.totalTime != 0 && playTimer * 100 >= demoData->config.totalTime) {
-        // TODO: 结束播放并向后跳转
     }
     const _2dfm::ShowPic *showPicScript = nullptr;
     while (timeWaiting <= 0) {
@@ -75,21 +71,23 @@ void DemoScriptInterceptor::update(float deltaTime) {
     }
 }
 
-void DemoScriptInterceptor::setRunningScript(int scriptIdx) {
-    auto &script = demoData->scripts.at(scriptIdx);
+void StageScriptInterceptor::setRunningScript(int scriptIdx) {
+    auto &script = stageData->scripts.at(scriptIdx);
     startIdx = script.startIdx;
     endIdx = script.endIdx;
     runningScriptItemIdx = startIdx;
 }
 
-void DemoScriptInterceptor::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
-    auto soundClip = demoData->sounds.at(cmd->soundIdx);
-    AudioSystem::getInstance()->playClip(soundClip, soundClip->isLoop(), 1.f);
+void StageScriptInterceptor::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
+    auto soundClip = stageData->sounds.at(cmd->soundIdx);
+    if (soundClip) {
+        AudioSystem::getInstance()->playClip(soundClip, soundClip->isLoop(), 1.f);
+    }
 }
 
-bool DemoScriptInterceptor::hasNoShowPicItem() const {
+bool StageScriptInterceptor::hasNoShowPicItem() const {
     for (int i = startIdx; i < endIdx; ++i) {
-        auto item = demoData->scriptItems[i];
+        auto item = stageData->scriptItems[i];
         if (static_cast<_2dfm::DemoScriptItemTypes>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
             return false;
         }
@@ -97,9 +95,9 @@ bool DemoScriptInterceptor::hasNoShowPicItem() const {
     return true;
 }
 
-_2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
+_2dfm::ShowPic *StageScriptInterceptor::interceptScriptUntilShowPic() {
     for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
-        auto item = demoData->scriptItems[i];
+        auto item = stageData->scriptItems[i];
         auto type = static_cast<_2dfm::DemoScriptItemTypes>(item->type);
 
         if (type == _2dfm::DemoScriptItemTypes::PIC) { // 图
@@ -131,8 +129,8 @@ _2dfm::ShowPic *DemoScriptInterceptor::interceptScriptUntilShowPic() {
     }
 }
 
-void DemoScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
-    auto tex = demoData->pictures.at(cmd->getPicIdx());
+void StageScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
+    auto tex = stageData->pictures.at(cmd->getPicIdx());
     if (tex) {
         const auto blendFunc = spriteComponent->getBlendFunc();
         const auto visible = spriteComponent->isVisible();
@@ -148,7 +146,7 @@ void DemoScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
     }
 }
 
-void DemoScriptInterceptor::interceptColorSetCmd(const _2dfm::ColorSet *cmd) {
+void StageScriptInterceptor::interceptColorSetCmd(const _2dfm::ColorSet *cmd) {
     auto setType = static_cast<_2dfm::ColorSetType>(cmd->colorSetType);
     switch (setType) {
     case _2dfm::ColorSetType::ALPHA_BLEND: {
@@ -190,7 +188,7 @@ void DemoScriptInterceptor::interceptColorSetCmd(const _2dfm::ColorSet *cmd) {
         convertKgtRgbColorValue(colorSet->blue));
     spriteComponent->setColor(blendColor);*/
 }
-void DemoScriptInterceptor::interceptMoveCmd(const _2dfm::MoveCmd *cmd){
+void StageScriptInterceptor::interceptMoveCmd(const _2dfm::MoveCmd *cmd){
     auto vel       = ax::Vec2(cmd->moveX, cmd->moveY) * 0.01f;
     auto accel     = ax::Vec2(cmd->accelX, cmd->accelY) * 0.01f;
     auto &oriVel = moveComponent->getVelocity();

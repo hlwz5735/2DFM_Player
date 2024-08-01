@@ -95,9 +95,7 @@ bool MainScene::init() {
     //keyboardListener->onKeyReleased = AX_CALLBACK_2(MainScene::onKeyReleased, this);
     //_eventDispatcher->addEventListenerWithFixedPriority(keyboardListener, 11);
 
-    auto kgtFilePath = std::format("{}/{}", gameConfig.gameBasePath, gameConfig.kgtFileName);
-    kgt = readKgtFile(kgtFilePath);
-    createTexturesForCommonResource(kgt, 0);
+
 
     auto openDemoName = std::format("{}/{}.demo", gameConfig.gameBasePath,
             kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);

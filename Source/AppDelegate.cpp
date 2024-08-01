@@ -26,7 +26,7 @@
 #include "AppDelegate.h"
 
 #include "engine/AudioSystem.hpp"
-#include "game/MainScene.hpp"
+#include "game/FirstScene.hpp"
 
 #define USE_AUDIO_ENGINE 0
 
@@ -80,7 +80,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
                                     ResolutionPolicy::SHOW_ALL);
     director->setClearColor(Color4F::BLACK);
     // create a scene. it's an autorelease object
-    auto scene = utils::createInstance<MainScene>();
+    auto scene = utils::createInstance<FirstScene>();
 
     // run
     director->runWithScene(scene);
