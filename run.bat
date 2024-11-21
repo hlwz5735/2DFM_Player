@@ -11,7 +11,7 @@ echo Entering run.bat directory: %myDir%
 cd /d %myDir%
 
 set APP_NAME=2DFM_Player
-set BUILD_DIR=build_x64
+set BUILD_DIR=cmake-build-debug
 set BUILD_CFG=%1
 
 rem Determine which build config to run

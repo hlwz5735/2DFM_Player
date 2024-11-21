@@ -6,7 +6,7 @@
 #include <string>
 
 KgtGame *readKgtFile(const std::string &filepath);
-KgtDemo *readDemoFile(const std::string &filepath);
+KgtDemo *readDemoFile(std::string_view filepath);
 
 void createTexturesForCommonResource(CommonResource *cr, int paletteNo = 0);
 

@@ -18,8 +18,9 @@ bool TestPictureScene::init() {
     addChild(sprite);
 
     GameConfig gameConfig;
+    gameConfig.readAndInit();
 
-    auto kgtFilePath = std::format("{}/{}", gameConfig.gameBasePath, gameConfig.kgtFileName);
+    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
     auto kgt = readKgtFile(kgtFilePath);
     createTexturesForCommonResource(kgt, 0);
 

@@ -1,9 +1,16 @@
 #pragma once
 #include <string>
+#include <axmol.h>
 
-struct GameConfig {
-    std::string gameBasePath = "D:/Games/dong_dong_never_die_170804/GAME";
-    std::string kgtFileName = "GAME.kgt";
-    // std::string gameBasePath = "F:/游戏归档/dong_dong_never_die_all/dong_dong_never_die_090815/GAME";
-    // std::string kgtFileName = "GAME.kgt";
+class GameConfig {
+public:
+    void readAndInit();
+    void save();
+
+    std::string getGameBasePath() const;
+    void setGameBasePath(std::string_view gamePath);
+    std::string getKgtFileName() const;
+    void setKgtFileName(std::string_view kgtFileName);
+private:
+    ax::ValueMap data;
 };

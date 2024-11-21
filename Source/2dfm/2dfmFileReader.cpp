@@ -175,10 +175,10 @@ KgtGame *readKgtFile(const std::string& filepath) {
     return result;
 }
 
-KgtDemo *readDemoFile(const std::string &filepath) {
+KgtDemo *readDemoFile(std::string_view filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
-    auto file = fopen(filepath.c_str(), "rb");
+    auto file = fopen(std::string(filepath).c_str(), "rb");
     if (!file) {
         throw std::runtime_error("open demo file failed");
     }

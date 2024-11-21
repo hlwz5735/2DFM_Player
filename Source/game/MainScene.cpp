@@ -28,6 +28,7 @@
 #include "2dfm/2dfmFileReader.hpp"
 #include "DemoScriptInterceptor.hpp"
 #include "MoveComponent.hpp"
+#include "DemoScene.hpp"
 
 USING_NS_AX;
 
@@ -51,6 +52,7 @@ bool MainScene::init() {
     auto origin = _director->getVisibleOrigin();
     auto safeArea = _director->getSafeAreaRect();
     auto safeOrigin = safeArea.origin;
+    gameConfig.readAndInit();
 
     /////////////////////////////
     // 2. add a menu item with "X" image, which is clicked to quit the program
@@ -75,60 +77,14 @@ bool MainScene::init() {
 
     /////////////////////////////
     // 3. add your codes below...
-
-    // Some templates (uncomment what you  need)
-    auto touchListener = EventListenerTouchAllAtOnce::create();
-    touchListener->onTouchesBegan = AX_CALLBACK_2(MainScene::onTouchesBegan, this);
-    touchListener->onTouchesMoved = AX_CALLBACK_2(MainScene::onTouchesMoved, this);
-    touchListener->onTouchesEnded = AX_CALLBACK_2(MainScene::onTouchesEnded, this);
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(touchListener, this);
-
-    //auto mouseListener           = EventListenerMouse::create();
-    //mouseListener->onMouseMove   = AX_CALLBACK_1(MainScene::onMouseMove, this);
-    //mouseListener->onMouseUp     = AX_CALLBACK_1(MainScene::onMouseUp, this);
-    //mouseListener->onMouseDown   = AX_CALLBACK_1(MainScene::onMouseDown, this);
-    //mouseListener->onMouseScroll = AX_CALLBACK_1(MainScene::onMouseScroll, this);
-    //_eventDispatcher->addEventListenerWithSceneGraphPriority(mouseListener, this);
-
-    //auto keyboardListener           = EventListenerKeyboard::create();
-    //keyboardListener->onKeyPressed  = AX_CALLBACK_2(MainScene::onKeyPressed, this);
-    //keyboardListener->onKeyReleased = AX_CALLBACK_2(MainScene::onKeyReleased, this);
-    //_eventDispatcher->addEventListenerWithFixedPriority(keyboardListener, 11);
-
-    auto kgtFilePath = std::format("{}/{}", gameConfig.gameBasePath, gameConfig.kgtFileName);
-    kgt = readKgtFile(kgtFilePath);
-    createTexturesForCommonResource(kgt, 0);
-
-    auto openDemoName = std::format("{}/{}.demo", gameConfig.gameBasePath,
-            kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
-    //         kgt->demoNames[5]);
-
-    KgtDemo *demo = readDemoFile(openDemoName);
-    createTexturesForCommonResource(demo, 0);
-
-    for (int i = 1; i < demo->scripts.size(); ++i) {
-        auto scriptNode = utils::createInstance<Node>();
-        scriptNode->setPosition(0, visibleSize.height);
-
-        auto mc = utils::createInstance<MoveComponent>();
-        mc->setName("MoveComponent");
-        scriptNode->addComponent(mc);
-
-        auto sprite = utils::createInstance<Sprite>();
-        sprite->setName("SpriteComponent");
-        sprite->setPosition(Vec2::ZERO);
-        sprite->setAnchorPoint(Vec2(0, 1));
-        scriptNode->addChild(sprite);
-
-        auto interceptor = utils::createInstance<DemoScriptInterceptor>();
-        interceptor->setDemoData(demo);
-        interceptor->setRunningScript(i);
-        scriptNode->addComponent(interceptor);
-
-        scriptNode->scheduleUpdate();
-
-        this->addChild(scriptNode);
+    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+    try {
+        kgt = readKgtFile(kgtFilePath);
+    } catch (...) {
+        AXLOGE("Failed to read kgt file");
+        return false;
     }
+    createTexturesForCommonResource(kgt, 0);
 
     // scheduleUpdate() is required to ensure update(float) is called on every loop
     scheduleUpdate();
@@ -136,57 +92,15 @@ bool MainScene::init() {
     return true;
 }
 
-
-void MainScene::onTouchesBegan(const std::vector<Touch *> &touches, Event *event) {
-    for (auto &&t : touches) {
-        AXLOG("onTouchesBegan detected, X:%f  Y:%f", t->getLocation().x, t->getLocation().y);
-    }
-}
-
-void MainScene::onTouchesMoved(const std::vector<Touch *> &touches, Event *event) {
-    for (auto &&t : touches) {
-        AXLOG("onTouchesMoved detected, X:%f  Y:%f", t->getLocation().x, t->getLocation().y);
-    }
-}
-
-void MainScene::onTouchesEnded(const std::vector<Touch *> &touches, Event *event) {
-    for (auto &&t : touches) {
-        AXLOG("onTouchesEnded detected, X:%f  Y:%f", t->getLocation().x, t->getLocation().y);
-    }
-}
-
-void MainScene::onMouseDown(Event *event) {
-    auto e = static_cast<EventMouse *>(event);
-    AXLOG("onMouseDown detected, Key: %d", static_cast<int>(e->getMouseButton()));
-}
-
-void MainScene::onMouseUp(Event *event) {
-    auto e = static_cast<EventMouse *>(event);
-    AXLOG("onMouseUp detected, Key: %d", static_cast<int>(e->getMouseButton()));
-}
-
-void MainScene::onMouseMove(Event *event) {
-    auto e = static_cast<EventMouse *>(event);
-    AXLOG("onMouseMove detected, X:%f  Y:%f", e->getCursorX(), e->getCursorY());
-}
-
-void MainScene::onMouseScroll(Event *event) {
-    auto e = static_cast<EventMouse *>(event);
-    AXLOG("onMouseScroll detected, X:%f  Y:%f", e->getScrollX(), e->getScrollY());
-}
-
-void MainScene::onKeyPressed(EventKeyboard::KeyCode code, Event *event) {
-    AXLOG("onKeyPressed, keycode: %d", static_cast<int>(code));
-}
-
-void MainScene::onKeyReleased(EventKeyboard::KeyCode code, Event *event) {
-    AXLOG("onKeyReleased, keycode: %d", static_cast<int>(code));
-}
-
 void MainScene::update(float delta) {
     switch (_gameState) {
     case GameState::init: {
         _gameState = GameState::update;
+        std::string openDemoName = std::format("{}/{}.demo",
+            gameConfig.getGameBasePath(),
+            kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
+        const auto openDemoScene = utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName);
+        _director->replaceScene(openDemoScene);
         break;
     }
 
@@ -248,4 +162,9 @@ void MainScene::menuCloseCallback(Object *sender) {
 
     // EventCustom customEndEvent("game_scene_close_event");
     //_eventDispatcher->dispatchEvent(&customEndEvent);
+}
+
+void MainScene::onExit() {
+    Scene::onExit();
+    gameConfig.save();
 }
