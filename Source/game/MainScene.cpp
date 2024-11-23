@@ -53,7 +53,7 @@ bool MainScene::init() {
     auto origin = _director->getVisibleOrigin();
     auto safeArea = _director->getSafeAreaRect();
     auto safeOrigin = safeArea.origin;
-    gameConfig.readAndInit();
+    GameConfig::getInstance().readAndInit();
 
     /////////////////////////////
     // 2. add a menu item with "X" image, which is clicked to quit the program
@@ -72,12 +72,13 @@ bool MainScene::init() {
     }
 
     // create menu, it's an autorelease object
-    auto menu = Menu::create(closeItem, NULL);
+    auto menu = Menu::create(closeItem, nullptr);
     menu->setPosition(Vec2::ZERO);
     this->addChild(menu, 1);
 
     /////////////////////////////
     // 3. add your codes below...
+    const auto &gameConfig = GameConfig::getInstance();
     auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
     try {
         auto kgt = readKgtFile(kgtFilePath);
@@ -95,17 +96,16 @@ bool MainScene::init() {
 }
 
 void MainScene::update(float delta) {
-    auto kgt = GameManager::getInstance().getKgtGame();
-    if (!kgt) {
+    const auto kgt = GameManager::getInstance().getKgtGame();
+    if (kgt == nullptr) {
         AXLOGE("KGT is null");
         _gameState = GameState::end;
     }
     switch (_gameState) {
     case GameState::init: {
         _gameState = GameState::update;
-        std::string openDemoName = std::format("{}/{}.demo",
-            gameConfig.getGameBasePath(),
-            kgt->demoNames[static_cast<int>(kgt->demoConfig.openingDemoId) - 1]);
+        auto openDemoName = std::format("{}/{}.demo",
+            GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
         const auto openDemoScene = utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName);
         _director->replaceScene(openDemoScene);
         break;
@@ -132,6 +132,6 @@ void MainScene::menuCloseCallback(Object *sender) {
 }
 
 void MainScene::onExit() {
+    GameConfig::getInstance().save();
     Scene::onExit();
-    gameConfig.save();
 }

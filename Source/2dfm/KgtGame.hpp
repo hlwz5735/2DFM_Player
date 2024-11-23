@@ -57,6 +57,9 @@ struct KgtGame : CommonResource {
         ax::Vec2 player2PortraitPos;
         ax::Vec2 player2PortraitOffset;
     } charSelectConfig;
+
+    std::string getOpeningDemoName() const;
+    std::string getTitleDemoName() const;
 };
 
 void cleanKgtGame(KgtGame *game);

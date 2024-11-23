@@ -4,8 +4,11 @@
 
 #include "DemoScene.hpp"
 #include "2dfm/2dfmFileReader.hpp"
-#include "MoveComponent.hpp"
 #include "DemoScriptInterceptor.hpp"
+#include "GameConfig.hpp"
+#include "GameManager.hpp"
+#include "MoveComponent.hpp"
+#include "engine/AudioSystem.hpp"
 
 USING_NS_AX;
 
@@ -44,5 +47,26 @@ bool DemoScene::initWithFile(std::string_view filePath) {
         scriptNodes.emplace_back(scriptNode);
     }
 
+    auto keyboardListener = EventListenerKeyboard::create();
+    keyboardListener->onKeyPressed = AX_CALLBACK_2(DemoScene::onKeyPressed, this);
+    keyboardListener->onKeyReleased = AX_CALLBACK_2(DemoScene::onKeyReleased, this);
+    _eventDispatcher->addEventListenerWithFixedPriority(keyboardListener, 11);
+
     return true;
+}
+void DemoScene::onExit() {
+    AudioSystem::getInstance()->stopAll();
+    Scene::onExit();
+}
+
+void DemoScene::onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event *event) {
+
+}
+
+void DemoScene::onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event *event) {
+    auto openDemoName = std::format("{}/{}.demo",
+        GameConfig::getInstance().getGameBasePath(),
+        GameManager::getInstance().getKgtGame()->getTitleDemoName());
+    const auto openDemoScene = utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName);
+    _director->replaceScene(openDemoScene);
 }

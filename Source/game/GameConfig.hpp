@@ -1,8 +1,10 @@
 #pragma once
-#include <string>
 #include <axmol.h>
+#include <string>
 
-class GameConfig {
+#include "engine/Singleton.hpp"
+
+class GameConfig : public Singleton<GameConfig> {
 public:
     void readAndInit();
     void save();

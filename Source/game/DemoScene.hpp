@@ -13,7 +13,13 @@ class DemoScriptInterceptor;
 class DemoScene : public ax::Scene {
 public:
     bool initWithFile(std::string_view filePath);
+    void onExit() override;
+
 private:
+    // Keyboard
+    void onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event *event);
+    void onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event *event);
+
     std::vector<ax::Node *> scriptNodes;
     KgtDemo *demo = nullptr;
 };

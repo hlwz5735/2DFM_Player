@@ -48,7 +48,6 @@ public:
     void menuCloseCallback(ax::Object *sender);
 private:
     GameState _gameState = GameState::init;
-    GameConfig gameConfig;
 };
 
 #endif  // __MAIN_SCENE_H__
