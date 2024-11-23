@@ -26,9 +26,10 @@
 #include "MainScene.hpp"
 
 #include "2dfm/2dfmFileReader.hpp"
-#include "DemoScriptInterceptor.hpp"
-#include "MoveComponent.hpp"
 #include "DemoScene.hpp"
+#include "DemoScriptInterceptor.hpp"
+#include "GameManager.hpp"
+#include "MoveComponent.hpp"
 
 USING_NS_AX;
 
@@ -79,12 +80,13 @@ bool MainScene::init() {
     // 3. add your codes below...
     auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
     try {
-        kgt = readKgtFile(kgtFilePath);
+        auto kgt = readKgtFile(kgtFilePath);
+        createTexturesForCommonResource(kgt, 0);
+        GameManager::getInstance().setKgtGame(kgt);
     } catch (...) {
         AXLOGE("Failed to read kgt file");
         return false;
     }
-    createTexturesForCommonResource(kgt, 0);
 
     // scheduleUpdate() is required to ensure update(float) is called on every loop
     scheduleUpdate();
@@ -93,6 +95,11 @@ bool MainScene::init() {
 }
 
 void MainScene::update(float delta) {
+    auto kgt = GameManager::getInstance().getKgtGame();
+    if (!kgt) {
+        AXLOGE("KGT is null");
+        _gameState = GameState::end;
+    }
     switch (_gameState) {
     case GameState::init: {
         _gameState = GameState::update;
@@ -103,52 +110,12 @@ void MainScene::update(float delta) {
         _director->replaceScene(openDemoScene);
         break;
     }
-
-    case GameState::update: {
-        /////////////////////////////
-        // Add your codes below...like....
-        // 
-        // UpdateJoyStick();
-        // UpdatePlayer();
-        // UpdatePhysics();
-        // ...
-        break;
-    }
-
-    case GameState::pause: {
-        /////////////////////////////
-        // Add your codes below...like....
-        //
-        // anyPauseStuff()
-
-        break;
-    }
-
-    case GameState::menu1: {
-        /////////////////////////////
-        // Add your codes below...like....
-        // 
-        // UpdateMenu1();
-        break;
-    }
-
-    case GameState::menu2: {
-        /////////////////////////////
-        // Add your codes below...like....
-        // 
-        // UpdateMenu2();
-        break;
-    }
-
-    case GameState::end: {
-        /////////////////////////////
-        // Add your codes below...like....
-        // 
+    case GameState::end:
         // CleanUpMyCrap();
         menuCloseCallback(this);
         break;
-    }
-
+    default:
+        break;
     } //switch
 }
 

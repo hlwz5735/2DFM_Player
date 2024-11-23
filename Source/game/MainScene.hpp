@@ -48,8 +48,6 @@ public:
     void menuCloseCallback(ax::Object *sender);
 private:
     GameState _gameState = GameState::init;
-
-    class KgtGame *kgt;
     GameConfig gameConfig;
 };
 
