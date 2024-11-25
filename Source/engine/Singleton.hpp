@@ -1,8 +1,8 @@
 #pragma once
-#include <iostream>
+
 #include <memory>
 #include <mutex>
-#include <functional> // 包含 std::call_once 和 std::once_flag
+#include <functional>
 
 template<typename T>
 class Singleton {
@@ -34,6 +34,6 @@ private:
 
 // 模板静态成员变量的定义和初始化
 template<typename T>
-std::unique_ptr<T> Singleton<T>::instance = nullptr; // 初始化为 nullptr（虽然 std::unique_ptr 默认初始化就是 nullptr）
+std::unique_ptr<T> Singleton<T>::instance = nullptr;
 template<typename T>
 std::once_flag Singleton<T>::instanceFlag;

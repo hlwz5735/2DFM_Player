@@ -42,7 +42,6 @@ class MainScene : public ax::Scene {
 public:
     bool init() override;
     void update(float delta) override;
-    void onExit() override;
 
     // a selector callback
     void menuCloseCallback(ax::Object *sender);

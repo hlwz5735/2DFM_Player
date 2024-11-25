@@ -55,7 +55,7 @@ void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd
 bool ScriptInterceptorComponent::hasNoShowPicItem() const {
     for (int i = startIdx; i < endIdx; ++i) {
         auto item = getCommonResource()->scriptItems[i];
-        if (static_cast<_2dfm::DemoScriptItemTypes>(item->type) == _2dfm::DemoScriptItemTypes::PIC) {
+        if (static_cast<_2dfm::CommonScriptItemTypes>(item->type) == _2dfm::CommonScriptItemTypes::PIC) {
             return false;
         }
     }
@@ -65,23 +65,23 @@ bool ScriptInterceptorComponent::hasNoShowPicItem() const {
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
     for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
         auto item = getCommonResource()->scriptItems[i];
-        auto type = static_cast<_2dfm::DemoScriptItemTypes>(item->type);
+        auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
 
-        if (type == _2dfm::DemoScriptItemTypes::PIC) {
+        if (type == _2dfm::CommonScriptItemTypes::PIC) {
             runningScriptItemIdx = i;
             return reinterpret_cast<_2dfm::ShowPic *>(item);
         }
-        if (type == _2dfm::DemoScriptItemTypes::END) {
+        if (type == _2dfm::CommonScriptItemTypes::END) {
             spriteComponent->setTexture(nullptr);
             spriteComponent->setVisible(false);
             return nullptr;
         }
 
-        if (type == _2dfm::DemoScriptItemTypes::SOUND) {
+        if (type == _2dfm::CommonScriptItemTypes::SOUND) {
             interceptPlaySoundCmd(reinterpret_cast<_2dfm::PlaySoundCmd *>(item));
-        } else if (type == _2dfm::DemoScriptItemTypes::COLOR) { // 色
+        } else if (type == _2dfm::CommonScriptItemTypes::COLOR) { // 色
             interceptColorSetCmd(reinterpret_cast<_2dfm::ColorSet *>(item));
-        } else if (type == _2dfm::DemoScriptItemTypes::MOVE) {
+        } else if (type == _2dfm::CommonScriptItemTypes::MOVE) {
             auto moveCmd = reinterpret_cast<_2dfm::MoveCmd *>(item);
             auto vel       = ax::Vec2(moveCmd->moveX, moveCmd->moveY) * 0.01f;
             auto accel     = ax::Vec2(moveCmd->accelX, moveCmd->accelY) * 0.01f;
@@ -102,6 +102,10 @@ _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
             }
             moveComponent->setAcceleration(accel);
             moveComponent->setVelocity(vel);
+        } else if (type == _2dfm::CommonScriptItemTypes::JUMP) {
+            auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
+            setRunningScript(jumpCmd->jumpId);
+            i = runningScriptItemIdx + jumpCmd->jumpPos - 1;
         }
     }
     // 如果走到了最后，发现从头到尾都没有图片指令，则退出播放

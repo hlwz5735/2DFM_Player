@@ -10,18 +10,29 @@
 #include "2dfm/KgtDemo.hpp"
 
 class DemoScriptInterceptor;
+
 class DemoScene : public ax::Scene {
 public:
-    bool initWithFile(std::string_view filePath);
+    enum class DemoType {
+        OPENING,
+        TITLE,
+        CHAR_SEL,
+        STORY,
+        CONTINUE,
+    };
+    bool initWithFile(std::string_view filePath, DemoType demoType = DemoType::STORY);
+    void update(float deltaTime) override;
     void onExit() override;
-
 private:
-    // Keyboard
-    void onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event *event);
-    void onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event *event);
+    bool initTitle();
+    void updateOpening();
+    void updateTitle();
+    void updateCharacterSelection();
+    void updateStory();
 
     std::vector<ax::Node *> scriptNodes;
     KgtDemo *demo = nullptr;
+    DemoType demoType = DemoType::OPENING;
 };
 
 #endif //DEMOSCENE_HPP

@@ -1,11 +1,14 @@
-#include "DemoScriptInterceptor.hpp"
+//
+// Created by limen on 2024/11/23.
+//
+
+#include "KgtScriptInterceptor.hpp"
 #include "2dfm/2dfmScriptItem.hpp"
 
-USING_NS_AX;
-
-void DemoScriptInterceptor::update(float deltaTime) {
+void KgtScriptInterceptor::update(float deltaTime) {
     ScriptInterceptorComponent::update(deltaTime);
-    if (!spriteComponent || !demoData) {
+    ScriptInterceptorComponent::update(deltaTime);
+    if (!spriteComponent || !kgtGame) {
         return;
     }
     if (timeWaiting == std::numeric_limits<float>::infinity()) {
@@ -16,10 +19,6 @@ void DemoScriptInterceptor::update(float deltaTime) {
     }
     if (timeWaiting > 0) {
         timeWaiting -= deltaTime;
-    }
-    playTimer += deltaTime;
-    if (demoData->config.totalTime != 0 && playTimer * 100 >= demoData->config.totalTime) {
-        // TODO: 结束播放并向后跳转
     }
     const _2dfm::ShowPic *showPicScript = nullptr;
     while (timeWaiting <= 0) {

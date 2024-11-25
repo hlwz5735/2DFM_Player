@@ -7,66 +7,95 @@
 #include "DemoScriptInterceptor.hpp"
 #include "GameConfig.hpp"
 #include "GameManager.hpp"
+#include "KgtScriptInterceptor.hpp"
 #include "MoveComponent.hpp"
 #include "engine/AudioSystem.hpp"
+#include "engine/Input.hpp"
+#include "engine/KgtNode.hpp"
 
 USING_NS_AX;
 
-bool DemoScene::initWithFile(std::string_view filePath) {
+bool DemoScene::initWithFile(std::string_view filePath, DemoType demoType) {
     if (!Scene::init()) {
         return false;
     }
 
-    auto visibleSize = _director->getVisibleSize();
+    this->demoType = demoType;
 
     KgtDemo *demo = readDemoFile(filePath);
     createTexturesForCommonResource(demo, 0);
 
     for (int i = 1; i < demo->scripts.size(); ++i) {
-        auto scriptNode = utils::createInstance<Node>();
-        scriptNode->setPosition(0, visibleSize.height);
+        auto scriptNode = utils::createInstance<KgtNode>();
+        scriptNode->setLogicPosition(Vec2::ZERO);
 
-        auto mc = utils::createInstance<MoveComponent>();
-        mc->setName("MoveComponent");
-        scriptNode->addComponent(mc);
-
-        auto sprite = utils::createInstance<Sprite>();
-        sprite->setName("SpriteComponent");
-        sprite->setPosition(Vec2::ZERO);
-        sprite->setAnchorPoint(Vec2(0, 1));
-        scriptNode->addChild(sprite);
-
-        auto interceptor = utils::createInstance<DemoScriptInterceptor>();
+        const auto interceptor = utils::createInstance<DemoScriptInterceptor>();
         interceptor->setDemoData(demo);
         interceptor->setRunningScript(i);
         scriptNode->addComponent(interceptor);
-
         scriptNode->scheduleUpdate();
 
         this->addChild(scriptNode);
         scriptNodes.emplace_back(scriptNode);
     }
 
-    auto keyboardListener = EventListenerKeyboard::create();
-    keyboardListener->onKeyPressed = AX_CALLBACK_2(DemoScene::onKeyPressed, this);
-    keyboardListener->onKeyReleased = AX_CALLBACK_2(DemoScene::onKeyReleased, this);
-    _eventDispatcher->addEventListenerWithFixedPriority(keyboardListener, 11);
+    scheduleUpdate();
 
+    if (demoType == DemoType::TITLE) {
+        return initTitle();
+    }
     return true;
 }
+void DemoScene::update(float deltaTime) {
+    Scene::update(deltaTime);
+    switch (demoType) {
+    case DemoType::OPENING:
+        updateOpening();
+        break;
+    case DemoType::TITLE:
+        updateTitle();
+        break;
+    default:
+        break;
+    }
+}
+
 void DemoScene::onExit() {
     AudioSystem::getInstance()->stopAll();
     Scene::onExit();
 }
 
-void DemoScene::onKeyPressed(ax::EventKeyboard::KeyCode code, ax::Event *event) {
+bool DemoScene::initTitle() {
+    auto cursorNode = utils::createInstance<KgtNode>();
+    auto kgtGame = GameManager::getInstance().getKgtGame();
+    const auto interceptor = utils::createInstance<KgtScriptInterceptor>();
+    interceptor->setKgtGame(kgtGame);
+    interceptor->setRunningScript(78); // TODO: 待完善
+    cursorNode->addComponent(interceptor);
+    Vec2 pos = { 135, 325 };
+    cursorNode->setLogicPosition(pos);
+    cursorNode->scheduleUpdate();
 
+    this->addChild(cursorNode);
+
+    return true;
 }
 
-void DemoScene::onKeyReleased(ax::EventKeyboard::KeyCode code, ax::Event *event) {
-    auto openDemoName = std::format("{}/{}.demo",
-        GameConfig::getInstance().getGameBasePath(),
-        GameManager::getInstance().getKgtGame()->getTitleDemoName());
-    const auto openDemoScene = utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName);
-    _director->replaceScene(openDemoScene);
+void DemoScene::updateOpening() {
+    if (Input::getInstance().isAnyAttackButtonDown()) {
+        auto openDemoName = std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(),
+                                        GameManager::getInstance().getKgtGame()->getTitleDemoName());
+        const auto openDemoScene =
+            utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoType::TITLE);
+        _director->replaceScene(openDemoScene);
+    }
+}
+void DemoScene::updateTitle() {
+    if (Input::getInstance().isAnyAttackButtonDown()) {
+        auto demoName = std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(),
+                                        GameManager::getInstance().getKgtGame()->getCharSelectionDemoName());
+        const auto openDemoScene =
+            utils::createInstance<DemoScene>(&DemoScene::initWithFile, demoName, DemoType::CHAR_SEL);
+        _director->replaceScene(openDemoScene);
+    }
 }

@@ -60,6 +60,7 @@ struct KgtGame : CommonResource {
 
     std::string getOpeningDemoName() const;
     std::string getTitleDemoName() const;
+    std::string getCharSelectionDemoName() const;
 };
 
 void cleanKgtGame(KgtGame *game);

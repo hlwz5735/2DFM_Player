@@ -1,35 +1,9 @@
-/****************************************************************************
- Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
- Copyright (c) 2019-present Axmol Engine contributors (see AUTHORS.md).
-
- https://axmol.dev/
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
- ****************************************************************************/
-
 #include "MainScene.hpp"
-
 #include "2dfm/2dfmFileReader.hpp"
 #include "DemoScene.hpp"
-#include "DemoScriptInterceptor.hpp"
 #include "GameManager.hpp"
 #include "MoveComponent.hpp"
+#include "engine/Input.hpp"
 
 USING_NS_AX;
 
@@ -43,26 +17,20 @@ static void problemLoading(const char *filename) {
 
 // on "init" you need to initialize your instance
 bool MainScene::init() {
-    //////////////////////////////
-    // 1. super init first
     if (!Scene::init()) {
         return false;
     }
+    if (!Input::getInstance().init()) {
+        AXLOGE("Failed to init Input system.");
+        return false;
+    }
 
-    auto visibleSize = _director->getVisibleSize();
-    auto origin = _director->getVisibleOrigin();
     auto safeArea = _director->getSafeAreaRect();
     auto safeOrigin = safeArea.origin;
     GameConfig::getInstance().readAndInit();
 
-    /////////////////////////////
-    // 2. add a menu item with "X" image, which is clicked to quit the program
-    //    you may modify it.
-
-    // add a "close" icon to exit the progress. it's an autorelease object
     auto closeItem = MenuItemImage::create("CloseNormal.png", "CloseSelected.png",
                                            AX_CALLBACK_1(MainScene::menuCloseCallback, this));
-
     if (closeItem == nullptr || closeItem->getContentSize().width <= 0 || closeItem->getContentSize().height <= 0) {
         problemLoading("'CloseNormal.png' and 'CloseSelected.png'");
     } else {
@@ -76,8 +44,6 @@ bool MainScene::init() {
     menu->setPosition(Vec2::ZERO);
     this->addChild(menu, 1);
 
-    /////////////////////////////
-    // 3. add your codes below...
     const auto &gameConfig = GameConfig::getInstance();
     auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
     try {
@@ -89,7 +55,6 @@ bool MainScene::init() {
         return false;
     }
 
-    // scheduleUpdate() is required to ensure update(float) is called on every loop
     scheduleUpdate();
 
     return true;
@@ -106,7 +71,8 @@ void MainScene::update(float delta) {
         _gameState = GameState::update;
         auto openDemoName = std::format("{}/{}.demo",
             GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
-        const auto openDemoScene = utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName);
+        const auto openDemoScene = utils::createInstance<DemoScene>(
+            &DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
         _director->replaceScene(openDemoScene);
         break;
     }
@@ -129,9 +95,4 @@ void MainScene::menuCloseCallback(Object *sender) {
 
     // EventCustom customEndEvent("game_scene_close_event");
     //_eventDispatcher->dispatchEvent(&customEndEvent);
-}
-
-void MainScene::onExit() {
-    GameConfig::getInstance().save();
-    Scene::onExit();
 }
