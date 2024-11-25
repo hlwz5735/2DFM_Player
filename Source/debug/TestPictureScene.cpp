@@ -1,8 +1,8 @@
 #include "TestPictureScene.hpp"
-#include "GameConfig.hpp"
-#include "2dfm/CommonResource.hpp"
-#include "2dfm/2dfmFileReader.hpp"
 #include <axmol.h>
+#include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/CommonResource.hpp"
+#include "game/GameConfig.hpp"
 
 USING_NS_AX;
 
@@ -25,13 +25,6 @@ bool TestPictureScene::init() {
     createTexturesForCommonResource(kgt, 0);
 
     this->cr = kgt;
-
-    // auto openDemoName = std::format(
-    //     "{}/{}.demo", gameConfig.gameBasePath,
-    //     kgt->demoNames[1]);
-
-    // KgtDemo *demo = readDemoFile(openDemoName);
-    // createTexturesForCommonResource(demo, 0);
 
     auto keyboardListener = EventListenerKeyboard::create();
     keyboardListener->onKeyPressed = AX_CALLBACK_2(TestPictureScene::onKeyPressed, this);
