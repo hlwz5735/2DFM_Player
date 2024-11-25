@@ -11,6 +11,7 @@
 typedef unsigned char byte;
 
 namespace _2dfm {
+#pragma pack(push, 1)
     constexpr int SCRIPT_SIZE = 39;
     struct Script {
         char scriptName[32];
@@ -78,6 +79,7 @@ namespace _2dfm {
         SoundItemHeader header;
         byte *content;
     };
+#pragma pack(pop)
 
     byte *decompress(byte *compressed, int compressedSize, int destSize);
 

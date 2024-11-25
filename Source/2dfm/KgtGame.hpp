@@ -58,9 +58,62 @@ struct KgtGame : CommonResource {
         ax::Vec2 player2PortraitOffset;
     } charSelectConfig;
 
+    bool isComboRight;
+
+    int comboHitScriptId = 0;
+    std::array<int, 10> comboNumberScriptIds {};
+    int roundStartScriptId = 0;
+    int roundEndScriptId = 0;
+    std::array<int, 10> roundNumberScriptIds {};
+    int finalRoundScriptId = 0;
+    int fightScriptId = 0;
+    int koScriptId = 0;
+    int perfectGameScriptId = 0;
+    int youWinScriptId;
+    int youLoseScriptId;
+    int player1WinScriptId = 0;
+    int player2WinScriptId = 0;
+    int drawGameScriptId = 0;
+    int doubleKillScriptId = 0;
+    int timeNumberInfinityScriptId = 0;
+    std::array<int, 10> timeNumberScriptIds {};
+    std::array<int, 10> skillPointNumberScriptIds {};
+    int victorySymbolFillScriptId = 0;
+    int victorySymbolOutlineScriptId = 0;
+    std::array<int, 10> stageGuiScripts {};
+    int player1HpBarScriptId = 0;
+    int player2HpBarScriptId = 0;
+    int player1SpBarScriptId = 0;
+    int player2SpBarScriptId = 0;
+    int timerPositionScriptId = 0;
+    int player1AvatarPositionScriptId = 0;
+    int player2AvatarPositionScriptId = 0;
+    int player1SkillPointPositionScriptId = 0;
+    int player2SkillPointPositionScriptId = 0;
+    int player1VictoryFlagPositionScriptId = 0;
+    int player2VictoryFlagPositionScriptId = 0;
+    int titleCursorScriptId = 0;
+    int storyModePositionScriptId;
+    int pvpModePositionScriptId;
+    int continueCursorScriptId = 0;
+    int continuePositionScriptId = 0;
+    int giveUpPositionScriptId = 0;
+    int player1CharSelCursorScriptId = 0;
+    int player2CharSelCursorScriptId = 0;
+    int player1CharSelConfirmCursorScriptId = 0;
+    int player2CharSelConfirmCursorScriptId = 0;
+    int teamModePositionScriptId = 0;
+    int pauseScriptId = 0;
+
     std::string getOpeningDemoName() const;
     std::string getTitleDemoName() const;
     std::string getCharSelectionDemoName() const;
+    ax::Vec2 getTitleStoryModePos() const;
+    ax::Vec2 getTitlePvpModePos() const;
+    ax::Vec2 getTitleTeamModePos() const;
+
+    /// 初始化基础图像脚本信息
+    void initBasicScriptInfos();
 };
 
 void cleanKgtGame(KgtGame *game);

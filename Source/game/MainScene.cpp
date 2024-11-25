@@ -94,6 +94,7 @@ bool MainScene::init() {
     try {
         auto kgt = readKgtFile(kgtFilePath);
         createTexturesForCommonResource(kgt, 0);
+        kgt->initBasicScriptInfos();
         GameManager::getInstance().setKgtGame(kgt);
     } catch (...) {
         AXLOGE("Failed to read kgt file");

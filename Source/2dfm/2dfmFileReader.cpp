@@ -17,7 +17,7 @@ namespace {
                 endIndex = nextS->scriptIndex;
             }
             KgtScript kgtScript {
-                    s->flags,
+                    static_cast<ScriptSpecialFlag>(s->flags),
                     gb2312ToUtf8(s->scriptName),
                     static_cast<int>(s->scriptIndex),
                     endIndex

@@ -30,9 +30,15 @@ private:
     void updateCharacterSelection();
     void updateStory();
 
+    void titleNextMode();
+    void titlePrevMode();
+
     std::vector<ax::Node *> scriptNodes;
     KgtDemo *demo = nullptr;
     DemoType demoType = DemoType::OPENING;
+    class KgtNode *cursorNode = nullptr;
+
+    int cursorIdx = -1;
 };
 
 #endif //DEMOSCENE_HPP
