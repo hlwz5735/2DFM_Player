@@ -49,7 +49,9 @@ void ScriptInterceptorComponent::setRunningScript(int scriptIdx) {
 
 void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
     auto soundClip = getCommonResource()->sounds.at(cmd->soundIdx);
-    AudioSystem::getInstance()->playClip(soundClip, soundClip->isLoop(), 1.f);
+    if (soundClip) {
+        AudioSystem::getInstance()->playClip(soundClip, soundClip->isLoop(), 1.f);
+    }
 }
 
 bool ScriptInterceptorComponent::hasNoShowPicItem() const {
@@ -64,8 +66,8 @@ bool ScriptInterceptorComponent::hasNoShowPicItem() const {
 
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
     for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
-        auto item = getCommonResource()->scriptItems[i];
-        auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
+        const auto item = getCommonResource()->scriptItems[i];
+        const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
 
         if (type == _2dfm::CommonScriptItemTypes::PIC) {
             runningScriptItemIdx = i;

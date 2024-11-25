@@ -1,6 +1,6 @@
 #pragma once
 
-#include <2d/Scene.h>
+#include <axmol.h>
 
 namespace ax {
 class Sprite;

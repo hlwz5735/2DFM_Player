@@ -1,8 +1,8 @@
 #include "TestPictureScene.hpp"
-#include <axmol.h>
 #include "2dfm/2dfmFileReader.hpp"
 #include "2dfm/CommonResource.hpp"
 #include "game/GameConfig.hpp"
+#include <axmol.h>
 
 USING_NS_AX;
 

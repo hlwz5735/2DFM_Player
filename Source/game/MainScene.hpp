@@ -27,14 +27,22 @@
 #define __MAIN_SCENE_H__
 
 #include "GameConfig.hpp"
-#include <2d/Scene.h>
+#include <axmol.h>
+#include <GUI/ScrollView/ScrollView.h>
 
-class MainScene : public ax::Scene {
+class MainScene : public ax::Scene, public ax::extension::ScrollViewDelegate {
 public:
     bool init() override;
     void onEnterTransitionDidFinish() override;
     // a selector callback
     void menuCloseCallback(ax::Object *sender);
+
+    void scrollViewDidScroll(ax::extension::ScrollView *view) override;
+    void scrollViewDidZoom(ax::extension::ScrollView *view) override;
+private:
+    void initDebugScenes();
+
+    std::vector<std::pair<std::string, std::function<ax::Scene *()>>> menuItems;
 };
 
 #endif  // __MAIN_SCENE_H__
