@@ -3,17 +3,21 @@
 //
 
 #include "StageTestScene.hpp"
+#include <format>
 #include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/2dfmScriptItem.hpp"
 #include "2dfm/KgtGame.hpp"
 #include "2dfm/KgtStage.hpp"
-#include "game/GameConfig.hpp"
-#include "game/GameManager.hpp"
-#include "game/MoveComponent.hpp"
-#include "game/StageScriptInterceptor.hpp"
 #include "engine/AudioSystem.hpp"
 #include "engine/Input.hpp"
 #include "engine/KgtNode.hpp"
-#include <format>
+#include "game/GameConfig.hpp"
+#include "game/GameManager.hpp"
+#include "game/MoveComponent.hpp"
+#include "game/ParallaxComponent.hpp"
+#include "game/SeamlessScrollComponent.hpp"
+#include "game/StageCameraNode.hpp"
+#include "game/StageScriptInterceptor.hpp"
 
 USING_NS_AX;
 
@@ -22,9 +26,9 @@ bool StageTestScene::init() {
         return false;
     }
 
+    cameraNode = utils::createInstance<StageCameraNode>();
+    this->addChild(cameraNode);
     loadStage(0);
-
-    updatePositionByCameraPos();
 
     this->scheduleUpdate();
     return true;
@@ -34,25 +38,37 @@ void StageTestScene::update(float delta) {
 
     auto dpad = Input::getInstance().getDPad();
     if (dpad == Input::DPadDir::LEFT_DOWN) {
-        cameraLoc.x -= cameraSpeed;
-        cameraLoc.y -= cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x - cameraSpeed,
+            cameraNode->getPosition().y - cameraSpeed);
     } else if (dpad == Input::DPadDir::DOWN) {
-        cameraLoc.y -= cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x,
+            cameraNode->getPosition().y - cameraSpeed);
     } else if (dpad == Input::DPadDir::RIGHT_DOWN) {
-        cameraLoc.x += cameraSpeed;
-        cameraLoc.y -= cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x + cameraSpeed,
+            cameraNode->getPosition().y - cameraSpeed);
     } else if (dpad == Input::DPadDir::LEFT) {
-        cameraLoc.x -= cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x - cameraSpeed,
+            cameraNode->getPosition().y);
     } else if (dpad == Input::DPadDir::RIGHT) {
-        cameraLoc.x += cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x + cameraSpeed,
+            cameraNode->getPosition().y);
     } else if (dpad == Input::DPadDir::LEFT_UP) {
-        cameraLoc.x -= cameraSpeed;
-        cameraLoc.y += cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x - cameraSpeed,
+            cameraNode->getPosition().y + cameraSpeed);
     } else if (dpad == Input::DPadDir::UP) {
-        cameraLoc.y += cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x,
+            cameraNode->getPosition().y + cameraSpeed);
     } else if (dpad == Input::DPadDir::RIGHT_UP) {
-        cameraLoc.x += cameraSpeed;
-        cameraLoc.y += cameraSpeed;
+        cameraNode->setPosition(
+            cameraNode->getPosition().x + cameraSpeed,
+            cameraNode->getPosition().y + cameraSpeed);
     }
 
     // 需要注意可能会遇到空场景
@@ -67,14 +83,6 @@ void StageTestScene::update(float delta) {
         stageNo = stageNo > 0 ? stageNo - 1 :  kgt->stageNames.size() - 1;
         loadStage(stageNo);
     }
-
-    updatePositionByCameraPos();
-}
-
-void StageTestScene::updatePositionByCameraPos() {
-    cameraLoc.x = clampf(cameraLoc.x, stageWidth / 4, stageWidth / 4 * 3);
-    cameraLoc.y = clampf(cameraLoc.y, stageHeight / 4, stageHeight / 4 * 3);
-    setPosition(stageWidth / 4 - cameraLoc.x, stageHeight / 4 * 3 - cameraLoc.y);
 }
 
 void StageTestScene::loadStage(int stageNo) {
@@ -90,22 +98,55 @@ void StageTestScene::loadStage(int stageNo) {
     createTexturesForCommonResource(stage, 0);
 
     for (int i = 1; i < stage->scripts.size(); ++i) {
-        auto scriptNode = utils::createInstance<KgtNode>();
-        scriptNode->setPosition(0, stageHeight / 2);
+        const auto &scriptInfo = stage->scripts[i];
+        if (scriptInfo.name.empty()) {
+            continue;
+        }
+
+        auto scriptNode = utils::createInstance<KgtNode>(&KgtNode::initWithVisibleHeight, GameConfig::stageHeight);
+        scriptNode->setPosition(0, GameConfig::stageHeight / 2);
 
         auto interceptor = utils::createInstance<StageScriptInterceptor>();
+        interceptor->setName("StageScriptInterceptor");
         interceptor->setStageData(stage);
         interceptor->setRunningScript(i);
         scriptNode->addComponent(interceptor);
 
+        const auto startItem = reinterpret_cast<_2dfm::StageStart *>(stage->scriptItems[scriptInfo.startIdx]);
+        auto parallaxComp = utils::createInstance<ParallaxComponent>(&ParallaxComponent::init, cameraNode);
+        parallaxComp->setName("ParallaxComponent");
+        if (startItem->isHoriScroll()) {
+            parallaxComp->setParallaxX(startItem->horiScroll / 100.f);
+        } else {
+            parallaxComp->setParallaxX(0);
+        }
+        if (startItem->isVertScroll()) {
+            parallaxComp->setParallaxY(startItem->vertScroll / 100.f);
+        } else {
+            parallaxComp->setParallaxY(0);
+        }
+        scriptNode->addComponent(parallaxComp);
+
+        if (startItem->isHoriLoop() || startItem->isVertLoop()) {
+            auto seamlessComp = utils::createInstance<SeamlessScrollComponent>();
+            seamlessComp->setName("SeamlessScrollComponent");
+            seamlessComp->setHoriSeamless(startItem->isHoriLoop());
+            seamlessComp->setVertSeamless(startItem->isVertLoop());
+            scriptNode->addComponent(seamlessComp);
+        }
+
         scriptNode->scheduleUpdate();
 
         this->addChild(scriptNode);
+        scriptNodes.emplace_back(scriptNode);
     }
 }
 
 void StageTestScene::unloadStage() {
     AudioSystem::getInstance()->stopAll();
-    this->removeAllChildren();
+    while (!scriptNodes.empty()) {
+        this->removeChild(scriptNodes.back());
+        scriptNodes.pop_back();
+    }
     delete stage;
 }

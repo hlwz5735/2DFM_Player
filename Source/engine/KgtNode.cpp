@@ -2,17 +2,16 @@
 // Created by limen on 2024/11/23.
 //
 #include "KgtNode.hpp"
-#include "game/MoveComponent.hpp"
 #include <axmol.h>
+#include "game/MoveComponent.hpp"
 
 USING_NS_AX;
 
-bool KgtNode::init() {
+bool KgtNode::initWithVisibleHeight(int visibleHeight) {
     if (!Node::init()) {
         return false;
     }
-    const auto visibleSize = _director->getVisibleSize();
-    this->visibleHeight = visibleSize.height;
+    this->visibleHeight = visibleHeight;
 
     auto mc = utils::createInstance<MoveComponent>();
     mc->setName("MoveComponent");
@@ -27,6 +26,11 @@ bool KgtNode::init() {
     return true;
 }
 
-void KgtNode::setLogicPosition(const ax::Vec2 &pos) {
-    setPosition(pos.x, visibleHeight - pos.y);
+void KgtNode::update(float delta) {
+    Node::update(delta);
+    setPosition(logicPosition.x, visibleHeight - logicPosition.y);
+}
+
+void KgtNode::setLogicPosition(const Vec2 &pos) {
+    logicPosition = pos;
 }

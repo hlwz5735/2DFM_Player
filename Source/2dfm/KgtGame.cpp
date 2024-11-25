@@ -30,17 +30,17 @@ std::string KgtGame::getCharSelectionDemoName() const {
     return demoNames[idx];
 }
 ax::Vec2 KgtGame::getTitleStoryModePos() const {
-    const auto script = scripts[this->storyModePositionScriptId];
+    const auto &script = scripts[this->storyModePositionScriptId];
     const auto scriptItem = scriptItems[script.startIdx];
     return reinterpret_cast<_2dfm::KgtPos *>(scriptItem)->getPosition();
 }
 ax::Vec2 KgtGame::getTitlePvpModePos() const {
-    const auto script = scripts[this->pvpModePositionScriptId];
+    const auto &script = scripts[this->pvpModePositionScriptId];
     const auto scriptItem = scriptItems[script.startIdx];
     return reinterpret_cast<_2dfm::KgtPos *>(scriptItem)->getPosition();
 }
 ax::Vec2 KgtGame::getTitleTeamModePos() const {
-    const auto script = scripts[this->teamModePositionScriptId];
+    const auto &script = scripts[this->teamModePositionScriptId];
     const auto scriptItem = scriptItems[script.startIdx];
     return reinterpret_cast<_2dfm::KgtPos *>(scriptItem)->getPosition();
 }

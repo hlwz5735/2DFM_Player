@@ -9,8 +9,6 @@
 
 struct KgtStage;
 
-constexpr int stageWidth = 640 * 2, stageHeight = 480 * 2;
-
 class StageTestScene : public ax::Scene {
 public:
     bool init() override;
@@ -19,13 +17,12 @@ public:
 
     void loadStage(int stageNo);
     void unloadStage();
-protected:
-    void updatePositionByCameraPos();
 private:
     KgtStage *stage = nullptr;
-    ax::Vec2 cameraLoc {stageWidth / 2, stageHeight / 4};
+    class StageCameraNode *cameraNode = nullptr;
     int cameraSpeed = 5;
     int stageNo = 0;
+    std::vector<ax::Node*> scriptNodes;
 };
 
 #endif //STAGETESTSCENE_HPP

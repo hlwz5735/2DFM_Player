@@ -6,6 +6,7 @@
 #include "2dfm/2dfmScriptItem.hpp"
 #include "2dfm/CommonResource.hpp"
 #include "MoveComponent.hpp"
+#include "SeamlessScrollComponent.hpp"
 #include "engine/AudioSystem.hpp"
 #include "engine/SoundClip.hpp"
 
@@ -122,6 +123,7 @@ _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
 }
 
 void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
+    auto oldTex = spriteComponent->getTexture();
     auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
     if (tex) {
         const auto blendFunc = spriteComponent->getBlendFunc();
@@ -135,6 +137,10 @@ void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) 
     } else {
         spriteComponent->setTexture(nullptr);
         spriteComponent->setVisible(false);
+    }
+    auto seamlessComp = dynamic_cast<SeamlessScrollComponent *>(_owner->getComponent("SeamlessScrollComponent"));
+    if (seamlessComp && oldTex != tex) {
+        seamlessComp->updateSprite();
     }
 }
 
