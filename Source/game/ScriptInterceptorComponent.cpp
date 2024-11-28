@@ -51,7 +51,7 @@ void ScriptInterceptorComponent::setRunningScript(int scriptIdx) {
 void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
     auto soundClip = getCommonResource()->sounds.at(cmd->soundIdx);
     if (soundClip) {
-        AudioSystem::getInstance()->playClip(soundClip, soundClip->isLoop(), 1.f);
+        AudioSystem::getInstance().playClip(soundClip, soundClip->isLoop(), 1.f);
     }
 }
 

@@ -9,31 +9,8 @@
 #include <PlatformMacros.h>
 #include <Director.h>
 
-AudioSystem *AudioSystem::getInstance() {
-    static AudioSystem instance;
-    return &instance;
-}
-
 AudioSystem::AudioSystem() {
     initialize();
-}
-
-AudioSystem::~AudioSystem() {
-    if (scheduler != nullptr) {
-        scheduler->unschedule(AX_SCHEDULE_SELECTOR(AudioSystem::update), this);
-    }
-    if (aLContext) {
-        alDeleteSources(MAX_AUDIOINSTANCES, alSources);
-
-        alcMakeContextCurrent(nullptr);
-        alcDestroyContext(aLContext);
-        aLContext = nullptr;
-    }
-
-    if (aLDevice) {
-        alcCloseDevice(aLDevice);
-        aLDevice = nullptr;
-    }
 }
 
 bool AudioSystem::initialize() {
@@ -58,6 +35,24 @@ bool AudioSystem::initialize() {
         }
     } while (false);
     return ret;
+}
+
+void AudioSystem::cleanup() {
+    if (scheduler != nullptr) {
+        scheduler->unschedule(AX_SCHEDULE_SELECTOR(AudioSystem::update), this);
+    }
+    if (aLContext) {
+        alDeleteSources(MAX_AUDIOINSTANCES, alSources);
+
+        alcMakeContextCurrent(nullptr);
+        alcDestroyContext(aLContext);
+        aLContext = nullptr;
+    }
+
+    if (aLDevice) {
+        alcCloseDevice(aLDevice);
+        aLDevice = nullptr;
+    }
 }
 
 AUDIO_ID AudioSystem::playClip(SoundClip *clip, bool loop, float volume) {

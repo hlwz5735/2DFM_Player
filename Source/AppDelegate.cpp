@@ -25,6 +25,7 @@
 
 #include "AppDelegate.h"
 
+#include "AudioEngine.h"
 #include "engine/AudioSystem.hpp"
 #include "engine/Input.hpp"
 #include "game/MainScene.hpp"
@@ -44,8 +45,9 @@ static auto designResolutionSize = Size(winWidth, winHeight);
 AppDelegate::AppDelegate() {}
 
 AppDelegate::~AppDelegate() {
-    GameConfig::getInstance().save();
+    // GameConfig::getInstance().save();
     Input::getInstance().cleanup();
+    AudioSystem::getInstance().cleanup();
 }
 
 // if you want a different context, modify the value of glContextAttrs

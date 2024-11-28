@@ -61,7 +61,7 @@ void DemoScene::update(float deltaTime) {
 }
 
 void DemoScene::onExit() {
-    AudioSystem::getInstance()->stopAll();
+    AudioSystem::getInstance().stopAll();
     Scene::onExit();
 }
 

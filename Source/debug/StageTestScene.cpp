@@ -143,7 +143,7 @@ void StageTestScene::loadStage(int stageNo) {
 }
 
 void StageTestScene::unloadStage() {
-    AudioSystem::getInstance()->stopAll();
+    AudioSystem::getInstance().stopAll();
     while (!scriptNodes.empty()) {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();

@@ -5,21 +5,26 @@
 #ifndef INC_2DFM_PLAYER_AUDIOSYSTEM_HPP
 #define INC_2DFM_PLAYER_AUDIOSYSTEM_HPP
 
+#include <Object.h>
+#include <Scheduler.h>
 #include <audio/AudioMacros.h>
 #include <audio/alconfig.h>
-#include <Scheduler.h>
-#include <Object.h>
 #include <queue>
+
+#include "Singleton.hpp"
 
 class AudioSource;
 class SoundClip;
 
-class AudioSystem : ax::Object {
+class AudioSystem : ax::Object, public Singleton<AudioSystem> {
 public:
+    AudioSystem();
+
     AudioSystem(const AudioSystem &o) = delete;
     AudioSystem & operator=(const AudioSystem &o) = delete;
 
     bool initialize();
+    void cleanup();
 
     /// 播放声音片段，返回当前声音片段的ID
     AUDIO_ID playClip(SoundClip *clip, bool loop, float volume);
@@ -29,11 +34,6 @@ public:
     void stopAll();
 
     void update(float dt);
-
-    static AudioSystem *getInstance();
-protected:
-    AudioSystem();
-    ~AudioSystem() override;
 private:
     ALuint findValidSource();
     void updateForStop();
