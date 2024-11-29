@@ -86,12 +86,12 @@ void StageTestScene::loadStage(int stageNo) {
         }
         scriptNode->addParallaxComp(parallaxComp);
 
-        // if (startItem->isHoriLoop() || startItem->isVertLoop()) {
-        //     auto seamlessComp = utils::createInstance<SeamlessScrollComponent>();
-        //     seamlessComp->setHoriSeamless(startItem->isHoriLoop());
-        //     seamlessComp->setVertSeamless(startItem->isVertLoop());
-        //     scriptNode->addSeamlessComp(seamlessComp);
-        // }
+        if (startItem->isHoriLoop() || startItem->isVertLoop()) {
+            auto seamlessComp = utils::createInstance<SeamlessScrollComponent>();
+            seamlessComp->setHoriSeamless(startItem->isHoriLoop());
+            seamlessComp->setVertSeamless(startItem->isVertLoop());
+            scriptNode->addSeamlessComp(seamlessComp);
+        }
 
         scriptNode->scheduleUpdate();
 

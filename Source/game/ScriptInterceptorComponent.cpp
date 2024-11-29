@@ -135,6 +135,8 @@ void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) 
         spriteComponent->setPosition(cmd->getOffset().x, -cmd->getOffset().y);
         spriteComponent->setVisible(visible);
         spriteComponent->setBlendFunc(blendFunc);
+        spriteComponent->setFlippedX(cmd->isFlipX());
+        spriteComponent->setFlippedY(cmd->isFlipY());
     } else {
         spriteComponent->setTexture(nullptr);
         spriteComponent->setVisible(false);

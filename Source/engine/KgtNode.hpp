@@ -9,6 +9,8 @@
 
 class KgtNode : public ax::Node {
 public:
+    friend class SeamlessScrollComponent;
+
     bool initWithVisibleHeight(int visibleHeight = 640);
     bool init() override { return initWithVisibleHeight(static_cast<int>(_director->getVisibleSize().height)); }
     void update(float delta) override;
@@ -24,7 +26,6 @@ public:
 
     void addParallaxComp(class ParallaxComponent *comp);
     void addSeamlessComp(class SeamlessScrollComponent * comp);
-
 protected:
     ax::Vec2 logicPosition = ax::Vec2::ZERO;
     ax::Sprite *spriteComp = nullptr;

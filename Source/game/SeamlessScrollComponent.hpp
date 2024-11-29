@@ -13,8 +13,9 @@ class SeamlessScrollComponent : public KgtComponent {
 public:
     bool init() override;
     void onAdd() override;
+    void onExit() override;
 
-    void update(float delta) override;
+    void lateUpdate(float delta) override;
 
     void setHoriSeamless(bool v) { horiSeamless = v; }
     void setVertSeamless(bool v) { vertSeamless = v; }
