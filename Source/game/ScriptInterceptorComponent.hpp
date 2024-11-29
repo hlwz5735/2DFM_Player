@@ -6,6 +6,7 @@
 #define SCRIPTINTERCEPTORCOMPONENT_HPP
 
 #include <axmol.h>
+#include "engine/KgtComponent.hpp"
 
 struct CommonResource;
 namespace _2dfm {
@@ -14,7 +15,7 @@ namespace _2dfm {
     struct ColorSet;
 }
 
-class ScriptInterceptorComponent : public ax::Component {
+class ScriptInterceptorComponent : public KgtComponent {
 public:
     bool init() override;
     void onAdd() override;

@@ -6,7 +6,7 @@
 USING_NS_AX;
 
 void StageScriptInterceptor::update(float deltaTime) {
-    Component::update(deltaTime);
+    ScriptInterceptorComponent::update(deltaTime);
     if (!spriteComponent || !stageData) {
         return;
     }

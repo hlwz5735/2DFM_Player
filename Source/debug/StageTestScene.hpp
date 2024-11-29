@@ -20,7 +20,6 @@ public:
 private:
     KgtStage *stage = nullptr;
     class StageCameraNode *cameraNode = nullptr;
-    int cameraSpeed = 5;
     int stageNo = 0;
     std::vector<ax::Node*> scriptNodes;
 };

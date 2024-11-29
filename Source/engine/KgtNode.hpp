@@ -16,11 +16,21 @@ public:
     const ax::Vec2 &getLogicPosition() const { return logicPosition; }
     void setLogicPosition(const ax::Vec2 &pos);
 
+    ax::Sprite *getSprite() const { return spriteComp; }
+    class MoveComponent *getMoveComp() const { return moveComp; }
+    class ParallaxComponent *getParallaxComp() const { return parallaxComp; }
+    class SeamlessScrollComponent *getSeamlessScrollComp() const { return seamlessScrollComp; }
+    class ScriptInterceptorComponent *getInterceptor() const { return interceptorComp; }
+
+    void addParallaxComp(class ParallaxComponent *comp);
+    void addSeamlessComp(class SeamlessScrollComponent * comp);
+
 protected:
     ax::Vec2 logicPosition = ax::Vec2::ZERO;
-    ax::Sprite *spriteComponent = nullptr;
+    ax::Sprite *spriteComp = nullptr;
+    ax::Node *spritePNode = nullptr;
     class MoveComponent *moveComp = nullptr;
-    class ParallaxComponent *parallaxComponent = nullptr;
+    class ParallaxComponent *parallaxComp = nullptr;
     class SeamlessScrollComponent *seamlessScrollComp = nullptr;
     class ScriptInterceptorComponent *interceptorComp = nullptr;
 private:

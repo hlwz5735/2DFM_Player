@@ -36,41 +36,6 @@ bool StageTestScene::init() {
 void StageTestScene::update(float delta) {
     Scene::update(delta);
 
-    auto dpad = Input::getInstance().getDPad();
-    if (dpad == Input::DPadDir::LEFT_DOWN) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x - cameraSpeed,
-            cameraNode->getPosition().y - cameraSpeed);
-    } else if (dpad == Input::DPadDir::DOWN) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x,
-            cameraNode->getPosition().y - cameraSpeed);
-    } else if (dpad == Input::DPadDir::RIGHT_DOWN) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x + cameraSpeed,
-            cameraNode->getPosition().y - cameraSpeed);
-    } else if (dpad == Input::DPadDir::LEFT) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x - cameraSpeed,
-            cameraNode->getPosition().y);
-    } else if (dpad == Input::DPadDir::RIGHT) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x + cameraSpeed,
-            cameraNode->getPosition().y);
-    } else if (dpad == Input::DPadDir::LEFT_UP) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x - cameraSpeed,
-            cameraNode->getPosition().y + cameraSpeed);
-    } else if (dpad == Input::DPadDir::UP) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x,
-            cameraNode->getPosition().y + cameraSpeed);
-    } else if (dpad == Input::DPadDir::RIGHT_UP) {
-        cameraNode->setPosition(
-            cameraNode->getPosition().x + cameraSpeed,
-            cameraNode->getPosition().y + cameraSpeed);
-    }
-
     // 需要注意可能会遇到空场景
     const auto kgt = GameManager::getInstance().getKgtGame();
     if (Input::getInstance().isButtonDown(Input::GameButton::F)) {
@@ -96,6 +61,7 @@ void StageTestScene::loadStage(int stageNo) {
 
     this->stage = readStageFile(fullStageName);
     createTexturesForCommonResource(stage, 0);
+    cameraNode->reset();
 
     for (int i = 1; i < stage->scripts.size(); ++i) {
         const auto &scriptInfo = stage->scripts[i];
@@ -104,8 +70,6 @@ void StageTestScene::loadStage(int stageNo) {
         }
 
         auto scriptNode = utils::createInstance<KgtNode>(&KgtNode::initWithVisibleHeight, GameConfig::stageHeight);
-        scriptNode->setPosition(0, GameConfig::stageHeight / 2);
-
         auto interceptor = utils::createInstance<StageScriptInterceptor>();
         interceptor->setName("StageScriptInterceptor");
         interceptor->setStageData(stage);
@@ -114,26 +78,20 @@ void StageTestScene::loadStage(int stageNo) {
 
         const auto startItem = reinterpret_cast<_2dfm::StageStart *>(stage->scriptItems[scriptInfo.startIdx]);
         auto parallaxComp = utils::createInstance<ParallaxComponent>(&ParallaxComponent::init, cameraNode);
-        parallaxComp->setName("ParallaxComponent");
         if (startItem->isHoriScroll()) {
             parallaxComp->setParallaxX(startItem->horiScroll / 100.f);
-        } else {
-            parallaxComp->setParallaxX(0);
         }
         if (startItem->isVertScroll()) {
             parallaxComp->setParallaxY(startItem->vertScroll / 100.f);
-        } else {
-            parallaxComp->setParallaxY(0);
         }
-        scriptNode->addComponent(parallaxComp);
+        scriptNode->addParallaxComp(parallaxComp);
 
-        if (startItem->isHoriLoop() || startItem->isVertLoop()) {
-            auto seamlessComp = utils::createInstance<SeamlessScrollComponent>();
-            seamlessComp->setName("SeamlessScrollComponent");
-            seamlessComp->setHoriSeamless(startItem->isHoriLoop());
-            seamlessComp->setVertSeamless(startItem->isVertLoop());
-            scriptNode->addComponent(seamlessComp);
-        }
+        // if (startItem->isHoriLoop() || startItem->isVertLoop()) {
+        //     auto seamlessComp = utils::createInstance<SeamlessScrollComponent>();
+        //     seamlessComp->setHoriSeamless(startItem->isHoriLoop());
+        //     seamlessComp->setVertSeamless(startItem->isVertLoop());
+        //     scriptNode->addSeamlessComp(seamlessComp);
+        // }
 
         scriptNode->scheduleUpdate();
 

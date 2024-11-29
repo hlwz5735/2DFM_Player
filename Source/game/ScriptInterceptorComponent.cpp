@@ -8,6 +8,7 @@
 #include "MoveComponent.hpp"
 #include "SeamlessScrollComponent.hpp"
 #include "engine/AudioSystem.hpp"
+#include "engine/KgtNode.hpp"
 #include "engine/SoundClip.hpp"
 
 USING_NS_AX;
@@ -33,8 +34,8 @@ bool ScriptInterceptorComponent::init() {
 
 void ScriptInterceptorComponent::onAdd() {
     Component::onAdd();
-    spriteComponent = dynamic_cast<Sprite *>(_owner->getChildByName("SpriteComponent"));
-    moveComponent = dynamic_cast<MoveComponent *>(_owner->getComponent("MoveComponent"));
+    spriteComponent = getOwner()->getSprite();
+    moveComponent = getOwner()->getMoveComp();
 
     if (!spriteComponent || !moveComponent) {
         throw std::runtime_error("Can't get required components!");

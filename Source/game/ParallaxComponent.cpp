@@ -3,26 +3,24 @@
 //
 
 #include "ParallaxComponent.hpp"
+#include "GameConfig.hpp"
 #include "StageCameraNode.hpp"
+
+USING_NS_AX;
 
 bool ParallaxComponent::init(StageCameraNode *cameraNode) {
     if (!Component::init()) {
         return false;
     }
+    this->setName("ParallaxComponent");
     this->virtualCamera = cameraNode;
     return true;
 }
-void ParallaxComponent::onAdd() {
-    Component::onAdd();
-    originPos = _owner->getPosition();
-}
-void ParallaxComponent::update(float delta) {
-    Component::update(delta);
+
+Vec2 ParallaxComponent::getOffset() const {
     if (!virtualCamera) {
-        return;
+        return Vec2::ZERO;
     }
-    auto cLoc = virtualCamera->getOffset();
-    _owner->setPosition(
-        _owner->getPosition().x - cLoc.x * parallaxScaleX,
-        _owner->getPosition().y - cLoc.y * parallaxScaleY);
+    const auto &cameraPos = virtualCamera->getPosition();
+    return -cameraPos;
 }

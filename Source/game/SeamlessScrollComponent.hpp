@@ -7,9 +7,11 @@
 
 #include <axmol.h>
 
-class SeamlessScrollComponent : public ax::Component {
+#include "engine/KgtComponent.hpp"
+
+class SeamlessScrollComponent : public KgtComponent {
 public:
-    // bool init() override;
+    bool init() override;
     void onAdd() override;
 
     void update(float delta) override;
@@ -25,7 +27,7 @@ private:
     bool horiSeamless = false;
     bool vertSeamless = false;
     ax::Sprite *seedSprite = nullptr;
-    ax::Node *pNode = nullptr;
+    ax::Node *rootNode = nullptr;
 };
 
 #endif //SEAMLESSSCROLLCOMPONENT_HPP

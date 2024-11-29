@@ -5,22 +5,32 @@
 #include "SeamlessScrollComponent.hpp"
 
 #include "GameConfig.hpp"
+#include "engine/KgtNode.hpp"
 
 USING_NS_AX;
 
+bool SeamlessScrollComponent::init() {
+    if (!KgtComponent::init()) {
+        return false;
+    }
+    this->setName("SeamlessScrollComponent");
+    return true;
+}
 void SeamlessScrollComponent::onAdd() {
     Component::onAdd();
-    seedSprite = dynamic_cast<Sprite *>(_owner->getChildByName("SpriteComponent"));
+    seedSprite = getOwner()->getSprite();
     assert(seedSprite != nullptr);
 }
 
 void SeamlessScrollComponent::updateSprite() {
     // 移除旧内容
-    if (pNode) {
-        _owner->removeChild(pNode);
+    if (rootNode) {
+        _owner->removeChild(rootNode);
     }
-    // FIXME: 纹理有可能为空
     auto tex = seedSprite->getSpriteFrame()->getTexture();
+    if (!tex) {
+        return;
+    }
     const auto &r = tex->getContentSizeInPixels();
     seedWidth = r.width;
     seedHeight = r.height;
@@ -46,10 +56,10 @@ void SeamlessScrollComponent::updateSprite() {
     }
 
     if (this->vertSeamless) {
-        if (cy <= 0) {
+        if (cy > 0) {
             do {
-                cy += seedHeight;
-            } while (cy <= 0);
+                cy -= seedHeight;
+            } while (cy > 0);
         }
 
         if (seedHeight >= stageSize.height) {
@@ -58,9 +68,9 @@ void SeamlessScrollComponent::updateSprite() {
             vertSubs = stageSize.height / seedHeight + 2;
         }
     }
+    getOwner()->setLogicPosition(Vec2(cx, cy));
 
-    pNode = utils::createInstance<Node>();
-    pNode->setPosition(cx, cy);
+    rootNode = utils::createInstance<Node>();
 
     for (int i = 0; i < vertSubs; ++i) {
         auto rowNode = utils::createInstance<Node>();
@@ -76,9 +86,9 @@ void SeamlessScrollComponent::updateSprite() {
             tileNode->setBlendFunc(seedSprite->getBlendFunc());
             rowNode->addChild(tileNode);
         }
-        pNode->addChild(rowNode);
+        rootNode->addChild(rowNode);
     }
-    _owner->addChild(pNode);
+    getOwner()->addChild(rootNode);
 }
 
 void SeamlessScrollComponent::update(float delta) {
@@ -88,7 +98,7 @@ void SeamlessScrollComponent::update(float delta) {
     }
     // 越界替换
     if (this->horiSeamless || this->vertSeamless) {
-        auto nodePos = _owner->getPosition();
+        auto nodePos = getOwner()->getLogicPosition();
         int dx = nodePos.x;
         int dy = nodePos.y;
         if (this->horiSeamless) {
@@ -105,6 +115,6 @@ void SeamlessScrollComponent::update(float delta) {
                 dy = dy % seedHeight;
             }
         }
-        _owner->setPosition(dx, dy);
+        getOwner()->setLogicPosition(Vec2(dx, dy));
     }
 }

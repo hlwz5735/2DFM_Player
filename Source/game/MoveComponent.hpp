@@ -1,9 +1,10 @@
 #pragma once
 
-#include <2d/Component.h>
-#include <math/Vec2.h>
+#include <axmol.h>
 
-class MoveComponent : public ax::Component {
+#include "engine/KgtComponent.hpp"
+
+class MoveComponent : public KgtComponent {
 public:
     void update(float deltaTime) override;
 

@@ -7,7 +7,6 @@
 
 void KgtScriptInterceptor::update(float deltaTime) {
     ScriptInterceptorComponent::update(deltaTime);
-    ScriptInterceptorComponent::update(deltaTime);
     if (!spriteComponent || !kgtGame) {
         return;
     }

@@ -7,20 +7,22 @@
 
 #include <axmol.h>
 
-class ParallaxComponent : public ax::Component {
+#include "engine/KgtComponent.hpp"
+
+class ParallaxComponent : public KgtComponent {
 public:
     bool init(class StageCameraNode *cameraNode);
-    void onAdd() override;
-    void update(float delta) override;
 
+    const ax::Vec2 &getParallaxScale() const { return ax::Vec2(parallaxScaleX, parallaxScaleY); }
     void setParallaxX(float v) { parallaxScaleX = v; }
     void setParallaxY(float v) { parallaxScaleY = v; }
+
+    ax::Vec2 getOffset() const;
 private:
     float parallaxScaleX = 1.f;
     float parallaxScaleY = 1.f;
 
     StageCameraNode *virtualCamera = nullptr;
-    ax::Vec2 originPos = ax::Vec2(0, 0);
 };
 
 #endif //PARALLAXCOMPONENT_HPP
