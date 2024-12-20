@@ -31,7 +31,7 @@ bool DemoScene::initWithFile(std::string_view filePath, DemoType demoType) {
 
         const auto interceptor = utils::createInstance<DemoScriptInterceptor>();
         interceptor->setDemoData(demo);
-        interceptor->setRunningScript(i);
+        interceptor->initRunningScript(i);
         scriptNode->addComponent(interceptor);
         scriptNode->scheduleUpdate();
 
@@ -70,7 +70,7 @@ bool DemoScene::initTitle() {
     auto kgtGame = GameManager::getInstance().getKgtGame();
     const auto interceptor = utils::createInstance<KgtScriptInterceptor>();
     interceptor->setKgtGame(kgtGame);
-    interceptor->setRunningScript(kgtGame->titleCursorScriptId); // TODO: 待完善
+    interceptor->initRunningScript(kgtGame->titleCursorScriptId); // TODO: 待完善
     cursorNode->addComponent(interceptor);
     cursorNode->setLogicPosition(kgtGame->getTitleStoryModePos());
     cursorNode->scheduleUpdate();

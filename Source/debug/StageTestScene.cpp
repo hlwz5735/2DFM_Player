@@ -73,7 +73,7 @@ void StageTestScene::loadStage(int stageNo) {
         auto interceptor = utils::createInstance<StageScriptInterceptor>();
         interceptor->setName("StageScriptInterceptor");
         interceptor->setStageData(stage);
-        interceptor->setRunningScript(i);
+        interceptor->initRunningScript(i);
         scriptNode->addComponent(interceptor);
 
         const auto startItem = reinterpret_cast<_2dfm::StageStart *>(stage->scriptItems[scriptInfo.startIdx]);

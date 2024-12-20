@@ -11,7 +11,10 @@ void DemoScriptInterceptor::update(float deltaTime) {
     if (timeWaiting == std::numeric_limits<float>::infinity()) {
         return;
     }
-    if (runningScriptItemIdx == endIdx) {
+    if (runningStack.empty()) {
+        return;
+    }
+    if (runningScriptItemIdx == runningStack.back().scriptItemEndIdx) {
         return;
     }
     if (timeWaiting > 0) {
@@ -26,7 +29,7 @@ void DemoScriptInterceptor::update(float deltaTime) {
         showPicScript = interceptScriptUntilShowPic();
         if (!showPicScript) {
             timeWaiting = std::numeric_limits<float>::infinity();
-            runningScriptItemIdx = endIdx;
+            runningScriptItemIdx = runningStack.back().scriptItemEndIdx;
             return;
         }
         float keepTime = static_cast<float>(showPicScript->keepTime) / 100;

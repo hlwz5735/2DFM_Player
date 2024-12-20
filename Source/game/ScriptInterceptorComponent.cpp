@@ -42,11 +42,29 @@ void ScriptInterceptorComponent::onAdd() {
     }
 }
 
+void ScriptInterceptorComponent::initRunningScript(int scriptIdx) {
+    if (runningStack.empty()) {
+        runningStack.emplace_back(ScriptRunningInfo{});
+    }
+    this->originalScriptIdx = scriptIdx;
+    setRunningScript(scriptIdx);
+}
+
 void ScriptInterceptorComponent::setRunningScript(int scriptIdx) {
     auto &script = getCommonResource()->scripts.at(scriptIdx);
-    startIdx = script.startIdx;
-    endIdx = script.endIdx;
-    runningScriptItemIdx = startIdx;
+    auto &[runningScriptItemIdx, scriptItemStartIdx, scriptItemEndIdx] = runningStack.back();
+
+    scriptItemStartIdx = script.startIdx;
+    scriptItemEndIdx = script.endIdx;
+    runningScriptItemIdx = script.startIdx;
+    this->runningScriptItemIdx = runningScriptItemIdx;
+}
+
+void ScriptInterceptorComponent::pushRunningScript(int scriptIdx) {
+    auto &tail = runningStack.back();
+    tail.runningScriptItemIdx = this->runningScriptItemIdx;
+    runningStack.emplace_back(ScriptRunningInfo{});
+    setRunningScript(scriptIdx);
 }
 
 void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
@@ -57,7 +75,9 @@ void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd
 }
 
 bool ScriptInterceptorComponent::hasNoShowPicItem() const {
-    for (int i = startIdx; i < endIdx; ++i) {
+    auto &[runningScriptItemIdx, scriptItemStartIdx, scriptItemEndIdx] = runningStack.back();
+
+    for (int i = scriptItemStartIdx; i < scriptItemEndIdx; ++i) {
         auto item = getCommonResource()->scriptItems[i];
         if (static_cast<_2dfm::CommonScriptItemTypes>(item->type) == _2dfm::CommonScriptItemTypes::PIC) {
             return false;
@@ -67,12 +87,13 @@ bool ScriptInterceptorComponent::hasNoShowPicItem() const {
 }
 
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
-    for (int i = runningScriptItemIdx + 1; i < endIdx; ++i) {
-        const auto item = getCommonResource()->scriptItems[i];
-        const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
+    auto scriptItemEndIdx = runningStack.back().scriptItemEndIdx;
+    ++runningScriptItemIdx;
 
+    while (runningScriptItemIdx < scriptItemEndIdx) {
+        const auto item = getCommonResource()->scriptItems[runningScriptItemIdx];
+        const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
         if (type == _2dfm::CommonScriptItemTypes::PIC) {
-            runningScriptItemIdx = i;
             return reinterpret_cast<_2dfm::ShowPic *>(item);
         }
         if (type == _2dfm::CommonScriptItemTypes::END) {
@@ -80,7 +101,6 @@ _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
             spriteComponent->setVisible(false);
             return nullptr;
         }
-
         if (type == _2dfm::CommonScriptItemTypes::SOUND) {
             interceptPlaySoundCmd(reinterpret_cast<_2dfm::PlaySoundCmd *>(item));
         } else if (type == _2dfm::CommonScriptItemTypes::COLOR) { // 色
@@ -109,16 +129,37 @@ _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
         } else if (type == _2dfm::CommonScriptItemTypes::JUMP) {
             auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             setRunningScript(jumpCmd->jumpId);
-            i = runningScriptItemIdx + jumpCmd->jumpPos - 1;
+
+            const auto &backInfo = runningStack.back();
+            runningScriptItemIdx = backInfo.scriptItemStartIdx + jumpCmd->jumpPos - 1;
+            scriptItemEndIdx = backInfo.scriptItemEndIdx;
+        } else if (type == _2dfm::CommonScriptItemTypes::CALL) {
+            auto callCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
+            pushRunningScript(callCmd->jumpId);
+
+            const auto &backInfo = runningStack.back();
+            runningScriptItemIdx = backInfo.scriptItemStartIdx + callCmd->jumpPos - 1;
+            scriptItemEndIdx = backInfo.scriptItemEndIdx;
         }
+
+        ++runningScriptItemIdx;
     }
+
+    // 如果走到了最后，目前调用栈仍不为空，弹出旧对象并继续解释执行
+    if (runningStack.size() > 1) {
+        runningStack.pop_back();
+        runningScriptItemIdx = runningStack.back().runningScriptItemIdx;
+        return interceptScriptUntilShowPic();
+    }
+
     // 如果走到了最后，发现从头到尾都没有图片指令，则退出播放
     if (hasNoShowPicItem()) {
         spriteComponent->setVisible(false);
         return nullptr;
     } else {
         // 只要没遇到“完”，就会从头开始
-        runningScriptItemIdx = startIdx;
+        setRunningScript(originalScriptIdx);
+        runningScriptItemIdx = runningStack.back().scriptItemStartIdx;
         return interceptScriptUntilShowPic();
     }
 }

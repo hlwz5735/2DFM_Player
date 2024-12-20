@@ -148,6 +148,7 @@ namespace _2dfm {
         byte alpha;
     };
 
+    /// 跳转和调用脚本都复用这个
     struct JumpCmd {
         byte type;
         uint16_t jumpId;
