@@ -16,9 +16,13 @@ namespace _2dfm {
 }
 
 struct ScriptRunningInfo {
-    int runningScriptItemIdx = 0;
     int scriptItemStartIdx = 0;
     int scriptItemEndIdx = 0;
+    int stashedScriptItemIdx = 0;
+
+    int originalScriptIdx = 0;
+    int originalOffset = 0;
+    int loopCount = 1;
 };
 
 class ScriptInterceptorComponent : public KgtComponent {
@@ -34,8 +38,8 @@ protected:
     bool hasNoShowPicItem() const;
     _2dfm::ShowPic *interceptScriptUntilShowPic();
 
-    void setRunningScript(int scriptIdx);
-    void pushRunningScript(int scriptIdx);
+    void jumpToScriptItem(int scriptIdx, int offset = 0);
+    void pushRunningScript(int scriptIdx, int offset = 0, int loop = 1);
 
     void interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd);
     void interceptShowPicCmd(const _2dfm::ShowPic *cmd);

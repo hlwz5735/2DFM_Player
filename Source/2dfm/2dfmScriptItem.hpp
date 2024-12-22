@@ -154,6 +154,13 @@ namespace _2dfm {
         uint16_t jumpId;
         uint16_t jumpPos;
     };
+
+    struct LoopCmd {
+        byte type;
+        uint8_t loopCount;
+        uint16_t targetScriptId;
+        uint16_t targetPos;
+    };
 #pragma pack(pop)
 
     struct Unknown {

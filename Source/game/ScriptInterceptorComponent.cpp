@@ -44,27 +44,44 @@ void ScriptInterceptorComponent::onAdd() {
 
 void ScriptInterceptorComponent::initRunningScript(int scriptIdx) {
     if (runningStack.empty()) {
-        runningStack.emplace_back(ScriptRunningInfo{});
+        runningStack.emplace_back(ScriptRunningInfo{
+            .originalScriptIdx = scriptIdx,
+            .originalOffset = 0,
+        });
     }
     this->originalScriptIdx = scriptIdx;
-    setRunningScript(scriptIdx);
+    jumpToScriptItem(scriptIdx);
 }
 
-void ScriptInterceptorComponent::setRunningScript(int scriptIdx) {
+void ScriptInterceptorComponent::jumpToScriptItem(int scriptIdx, int offset) {
     auto &script = getCommonResource()->scripts.at(scriptIdx);
-    auto &[runningScriptItemIdx, scriptItemStartIdx, scriptItemEndIdx] = runningStack.back();
+    auto &back = runningStack.back();
 
-    scriptItemStartIdx = script.startIdx;
-    scriptItemEndIdx = script.endIdx;
-    runningScriptItemIdx = script.startIdx;
-    this->runningScriptItemIdx = runningScriptItemIdx;
+    back.scriptItemStartIdx = script.startIdx;
+    back.scriptItemEndIdx = script.endIdx;
+    back.stashedScriptItemIdx = script.startIdx + offset;
+
+    // 设置当前运行脚本的索引
+    this->runningScriptItemIdx = back.stashedScriptItemIdx;
 }
 
-void ScriptInterceptorComponent::pushRunningScript(int scriptIdx) {
+void ScriptInterceptorComponent::pushRunningScript(int scriptIdx, int offset, int loop) {
+    if (loop == 0) {
+        return;
+    }
+    if (runningStack.size() > 255) {
+        throw std::runtime_error("Script stack overflow");
+    }
     auto &tail = runningStack.back();
-    tail.runningScriptItemIdx = this->runningScriptItemIdx;
-    runningStack.emplace_back(ScriptRunningInfo{});
-    setRunningScript(scriptIdx);
+    // 暂存当前运行的脚本下标
+    tail.stashedScriptItemIdx = this->runningScriptItemIdx;
+
+    runningStack.emplace_back(ScriptRunningInfo{
+        .originalScriptIdx = scriptIdx,
+        .originalOffset = offset,
+        .loopCount = loop,
+    });
+    jumpToScriptItem(scriptIdx, offset);
 }
 
 void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
@@ -75,10 +92,11 @@ void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd
 }
 
 bool ScriptInterceptorComponent::hasNoShowPicItem() const {
-    auto &[runningScriptItemIdx, scriptItemStartIdx, scriptItemEndIdx] = runningStack.back();
+    auto commonResource = getCommonResource();
+    auto &originalScript = commonResource->scripts.at(originalScriptIdx);
 
-    for (int i = scriptItemStartIdx; i < scriptItemEndIdx; ++i) {
-        auto item = getCommonResource()->scriptItems[i];
+    for (int i = originalScript.startIdx; i < originalScript.endIdx; ++i) {
+        auto item = commonResource->scriptItems[i];
         if (static_cast<_2dfm::CommonScriptItemTypes>(item->type) == _2dfm::CommonScriptItemTypes::PIC) {
             return false;
         }
@@ -87,10 +105,10 @@ bool ScriptInterceptorComponent::hasNoShowPicItem() const {
 }
 
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
-    auto scriptItemEndIdx = runningStack.back().scriptItemEndIdx;
+processHead:
     ++runningScriptItemIdx;
 
-    while (runningScriptItemIdx < scriptItemEndIdx) {
+    while (runningScriptItemIdx < runningStack.back().scriptItemEndIdx) {
         const auto item = getCommonResource()->scriptItems[runningScriptItemIdx];
         const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
         if (type == _2dfm::CommonScriptItemTypes::PIC) {
@@ -128,28 +146,34 @@ _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
             moveComponent->setVelocity(vel);
         } else if (type == _2dfm::CommonScriptItemTypes::JUMP) {
             auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
-            setRunningScript(jumpCmd->jumpId);
-
-            const auto &backInfo = runningStack.back();
-            runningScriptItemIdx = backInfo.scriptItemStartIdx + jumpCmd->jumpPos - 1;
-            scriptItemEndIdx = backInfo.scriptItemEndIdx;
+            jumpToScriptItem(jumpCmd->jumpId, jumpCmd->jumpPos);
+            continue;
         } else if (type == _2dfm::CommonScriptItemTypes::CALL) {
             auto callCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
-            pushRunningScript(callCmd->jumpId);
-
-            const auto &backInfo = runningStack.back();
-            runningScriptItemIdx = backInfo.scriptItemStartIdx + callCmd->jumpPos - 1;
-            scriptItemEndIdx = backInfo.scriptItemEndIdx;
+            pushRunningScript(callCmd->jumpId, callCmd->jumpPos);
+            continue;
+        } else if (type == _2dfm::CommonScriptItemTypes::LOOP) {
+            auto loopCmd = reinterpret_cast<_2dfm::LoopCmd *>(item);
+            pushRunningScript(loopCmd->targetScriptId, loopCmd->targetPos, loopCmd->loopCount);
+            continue;
         }
 
+        // 程序计数器向后+1
         ++runningScriptItemIdx;
     }
 
-    // 如果走到了最后，目前调用栈仍不为空，弹出旧对象并继续解释执行
+    // 如果走到了最后，且目前调用栈仍有子调用
     if (runningStack.size() > 1) {
-        runningStack.pop_back();
-        runningScriptItemIdx = runningStack.back().runningScriptItemIdx;
-        return interceptScriptUntilShowPic();
+        auto &back = runningStack.back();
+        // 处理循环问题
+        if (--back.loopCount > 0) {
+            jumpToScriptItem(back.originalScriptIdx, back.originalOffset);
+        } else {
+            // 无循环，弹出调用栈，解释指针指回上一个调用点
+            runningStack.pop_back();
+            runningScriptItemIdx = runningStack.back().stashedScriptItemIdx;
+        }
+        goto processHead;
     }
 
     // 如果走到了最后，发现从头到尾都没有图片指令，则退出播放
@@ -158,9 +182,8 @@ _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
         return nullptr;
     } else {
         // 只要没遇到“完”，就会从头开始
-        setRunningScript(originalScriptIdx);
-        runningScriptItemIdx = runningStack.back().scriptItemStartIdx;
-        return interceptScriptUntilShowPic();
+        jumpToScriptItem(originalScriptIdx);
+        goto processHead;
     }
 }
 
