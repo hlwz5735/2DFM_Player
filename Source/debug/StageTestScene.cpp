@@ -80,9 +80,13 @@ void StageTestScene::loadStage(int stageNo) {
         auto parallaxComp = utils::createInstance<ParallaxComponent>(&ParallaxComponent::init, cameraNode);
         if (startItem->isHoriScroll()) {
             parallaxComp->setParallaxX(startItem->horiScroll / 100.f);
+        } else {
+            parallaxComp->setParallaxX(0.f);
         }
         if (startItem->isVertScroll()) {
             parallaxComp->setParallaxY(startItem->vertScroll / 100.f);
+        } else {
+            parallaxComp->setParallaxY(0.f);
         }
         scriptNode->addParallaxComp(parallaxComp);
 
