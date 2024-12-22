@@ -6,10 +6,7 @@
 using _2dfm::ColorBgra;
 
 namespace {
-ColorBgra* buildColorData(int width,
-                                 int height,
-                                 const KgtPalette *palette,
-                                 const void* picData) {
+ColorBgra* buildColorData(int width, int height, const KgtPalette *palette, const void* picData) {
     if (auto pixels = static_cast<ColorBgra*>(malloc(width * height * sizeof(ColorBgra)))) {
             const auto rawData = static_cast<const byte *>(picData);
             for (int y = 0; y < height; ++y) {

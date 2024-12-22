@@ -314,26 +314,22 @@ _2dfm::CommonResourcePart readCommonResourcePart(long *offset, FILE *file) {
 }
 
 KgtPalette *createPalette(_2dfm::ColorBgra* originPalette, bool isPrivate) {
-    auto palette = new KgtPalette;
-    if (isPrivate) {
-        for (int i = 0; i < 256; ++i) {
-            const auto& color = originPalette[i];
-            palette->colors[i] = color;
+    auto palette = new KgtPalette();
 
-            if (color.channel.red == 0 && color.channel.green == 0 && color.channel.blue == 0) {
-                palette->colors[i].channel.alpha = 0;
-            } else {
+    for (int i = 0; i < 256; ++i) {
+        const auto& color = originPalette[i];
+        palette->colors[i] = color;
+
+        if (color.channel.red == 0 && color.channel.green == 0 && color.channel.blue == 0) {
+            palette->colors[i].channel.alpha = 0;
+        } else {
+            if (isPrivate) {
                 palette->colors[i].channel.alpha = 255;
+            } else {
+                palette->colors[i].channel.alpha = color.channel.alpha == 1 ? 255 : 0;
             }
         }
-    } else {
-        for (int i = 0; i < 256; ++i) {
-            auto color = originPalette[i];
-            color.channel.alpha = color.channel.alpha == 1 ? 255 : 0;
-            palette->colors[i] = color;
-        }
     }
-
     return palette;
 }
 

@@ -13,6 +13,9 @@ bool TestPictureScene::init() {
 
     const auto &vs = _director->getVisibleSize();
 
+    auto layer = LayerColor::create(Color4B::MAGENTA);
+    addChild(layer);
+
     sprite = utils::createInstance<Sprite>();
     sprite->setPosition(vs.width / 2, vs.height / 2);
     addChild(sprite);
@@ -22,9 +25,12 @@ bool TestPictureScene::init() {
 
     auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
     auto kgt = readKgtFile(kgtFilePath);
-    createTexturesForCommonResource(kgt, 0);
 
-    this->cr = kgt;
+    auto stageName = std::format("{}/{}.stage", gameConfig.getGameBasePath(), kgt->stageNames[0]);
+    auto stage = readStageFile(stageName);
+    createTexturesForCommonResource(stage, 0);
+
+    this->cr = stage;
 
     auto keyboardListener = EventListenerKeyboard::create();
     keyboardListener->onKeyPressed = AX_CALLBACK_2(TestPictureScene::onKeyPressed, this);
