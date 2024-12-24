@@ -32,7 +32,7 @@ namespace _2dfm {
         END = 5
     };
 
-    enum class ColorSetType {
+    enum class ColorBlendType {
         NORMAL = 0,
         TRANSPARENCY,
         ADD_BLEND,
@@ -139,27 +139,147 @@ namespace _2dfm {
         uint16_t soundIdx;
     };
 
-    struct ColorSet {
+    struct ColorSetCmd {
         byte type;
-        byte colorSetType;
-        byte red;
-        byte green;
-        byte blue;
-        byte alpha;
+        byte colorBlendType;
+        int8_t red;
+        int8_t green;
+        int8_t blue;
+        int8_t alpha;
+
+        ColorBlendType getColorBlendType() const {
+            return static_cast<ColorBlendType>(colorBlendType);
+        }
     };
 
     /// 跳转和调用脚本都复用这个
     struct JumpCmd {
         byte type;
         uint16_t jumpId;
-        uint16_t jumpPos;
+        uint8_t jumpPos;
     };
 
     struct LoopCmd {
         byte type;
         uint8_t loopCount;
         uint16_t targetScriptId;
-        uint16_t targetPos;
+        uint8_t targetPos;
+    };
+
+    struct RandomCmd {
+        byte type;
+        uint16_t randomMaxVal;
+        uint16_t moreThanVal;
+        // 中间有1字节空隙，不知为何
+        byte unknownGap;
+        uint16_t targetScriptId;
+        uint8_t targetPos;
+    };
+
+    /// 变量条件分歧
+    struct VariableCmd {
+        /*
+         * 变量编号规则：
+         * 任务变量A-P: 00-0F
+         * 系统变量A-P: 80-8F
+         * 角色变量A-P: 40-4F（仅限角色变量脚本）
+         * 特定值8个: C0-C7（仅用于条件分歧比较，不可赋值）
+         *  C0 X坐标
+         *  C1 Y坐标
+         *  C2 地图X坐标
+         *  C3 地图Y坐标
+         *  C4 上级X坐标
+         *  C5 上级Y坐标
+         *  C6 时间
+         *  C7 回合数
+         */
+        enum class Operation {
+            NONE, ASSIGNMENT, ADDITION,
+        };
+        enum class Condition {
+            NONE, EQUALS, LESS, GREATER,
+        };
+        byte type;
+        uint16_t targetScriptId;
+        uint8_t targetPos;
+        byte targetVariable;
+        /// 操作标记位
+        byte opFlags;
+        /// 参与运算的变量
+        byte compareVariable;
+        /// 代入或相加的数值
+        int16_t operationValue;
+        /// 条件分歧比较的数值
+        int16_t compareValue;
+
+        Operation getOperation() const {
+            int v = opFlags & 0b0011;
+            switch (v) {
+            case 0:
+                return Operation::NONE;
+            case 1:
+                return Operation::ASSIGNMENT;
+            case 2:
+            default:
+                return Operation::ADDITION;
+            }
+        }
+
+        bool isCompareWithOtherVariable() const {
+            return opFlags & 0b10000000;
+        }
+
+        Condition getCondition() const {
+            int v = opFlags & 0b00001100;
+            switch (v) {
+            case 0:
+                return Condition::NONE;
+            case 4: // 0100b
+                return Condition::EQUALS;
+            case 8: // 1000b
+                return Condition::GREATER;
+            case 12: // 1100b
+            default:
+                return Condition::LESS;
+            }
+        }
+    };
+
+    struct AfterimageCmd {
+        enum class AfterimageColorType {
+            /// 不对残影施加任何颜色效果（包括半透明颜色指定），但50%半透和加法/减法混合不受影响
+            NONE,
+            /// 残影使用固定的颜色+半透明效果
+            FIXED,
+            /// 按残影个数和时间间隔计算残影存活时间，然后按时间线性插值过渡颜色
+            LINEAR_SMOOTH,
+            /// 整体趋势和线性平滑相同，但每隔一帧消失一次（模拟半透明）
+            LINEAR_BLINK,
+            /// 根据颜色分项的方向，每帧进行一次随机取值，如果没有指定透明度，则透明度不参与随机
+            RANDOM,
+        };
+
+        byte type;
+        uint16_t unknownGap;
+        /// 最大残影个数，残影数量超过则销毁最早的残影
+        uint8_t afterimageMaxCount;
+        /// 间隔，0-255，每隔多少时间（百分之一秒）生成一个残影
+        uint8_t afterimageGap;
+        byte colorBlendType;
+        /// 残像颜色模式
+        byte afterimageColorType;
+        int8_t red;
+        int8_t green;
+        int8_t blue;
+        int8_t alpha;
+
+        ColorBlendType getColorBlendType() const {
+            return static_cast<ColorBlendType>(colorBlendType);
+        }
+
+        AfterimageColorType getAfterimageColorType() const {
+            return static_cast<AfterimageColorType>(afterimageColorType);
+        }
     };
 #pragma pack(pop)
 

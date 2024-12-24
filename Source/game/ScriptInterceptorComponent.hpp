@@ -12,7 +12,7 @@ struct CommonResource;
 namespace _2dfm {
     struct PlaySoundCmd;
     struct ShowPic;
-    struct ColorSet;
+    struct ColorSetCmd;
 }
 
 struct ScriptRunningInfo {
@@ -43,7 +43,7 @@ protected:
 
     void interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd);
     void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
-    void interceptColorSetCmd(const _2dfm::ColorSet *cmd);
+    void interceptColorSetCmd(const _2dfm::ColorSetCmd *cmd);
 
     ax::Sprite *spriteComponent = nullptr;
     class MoveComponent *moveComponent = nullptr;
