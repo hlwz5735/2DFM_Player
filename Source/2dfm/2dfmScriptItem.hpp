@@ -176,6 +176,58 @@ namespace _2dfm {
         uint8_t targetPos;
     };
 
+    struct ObjectCmd {
+        byte type;
+        byte flags;
+        uint16_t targetScriptId;
+        uint8_t targetPos;
+        uint16_t targetScriptIdIfExists;
+        uint8_t targetPosIfExists;
+        int16_t posX;
+        int16_t posY;
+        /// 管理号（0-9）
+        uint8_t manageNo;
+        /// 指定的层级
+        int8_t layer;
+
+        /// 拿取图层信息<br>
+        /// 一共可以有127层<br>
+        /// 70～80号是角色用的图层<br>
+        /// >80显示在角色的前面<br>
+        /// <70显示在角色的里面
+        int getLayer() const {
+            switch (flags & 0b0011) {
+            case 0:
+                return 0;
+            case 1:
+                return 127;
+            case 2:
+            default:
+                return layer;
+            }
+        }
+
+        /// 是否挂载为子节点
+        bool isAttachAsChild() const {
+            return flags & 0b00100000;
+        }
+
+        /// 是否无条件出现
+        bool isUnconditionally() const {
+            return flags & 0b0100;
+        }
+
+        /// 是否显示影子
+        bool isShowShadow() const {
+            return flags & 0b1000;
+        }
+
+        /// 是否使用窗口坐标
+        bool isUseWindowPosition() {
+            return flags & 0b01000000;
+        }
+    };
+
     /// 变量条件分歧
     struct VariableCmd {
         /*
