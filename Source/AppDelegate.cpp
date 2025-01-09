@@ -28,7 +28,7 @@
 #include "AudioEngine.h"
 #include "engine/AudioSystem.hpp"
 #include "engine/Input.hpp"
-#include "game/MainScene.hpp"
+#include "game/scenes/MainScene.hpp"
 
 #define USE_AUDIO_ENGINE 0
 

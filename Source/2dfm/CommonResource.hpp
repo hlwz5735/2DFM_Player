@@ -63,4 +63,4 @@ struct CommonResource {
     std::vector<SoundClip *> sounds;
 };
 
-void cleanCommonResource(CommonResource *res);
+// void cleanCommonResource(CommonResource *res);

@@ -36,6 +36,11 @@ void GameStage::update(float delta) {
     // const auto kgt = GameManager::getInstance().getKgtGame();
 }
 
+void GameStage::onExit() {
+    AX_SAFE_DELETE(stage);
+    Node::onExit();
+}
+
 void GameStage::load(int stageNo) {
     auto kgt = GameManager::getInstance().getKgtGame();
     auto stageName = kgt->stageNames[stageNo];
@@ -43,7 +48,7 @@ void GameStage::load(int stageNo) {
         return;
     }
     auto &gameConfig = GameConfig::getInstance();
-    auto fullStageName = std::format("{}/{}.stage", gameConfig.getGameBasePath(), kgt->stageNames[stageNo]);
+    auto fullStageName = std::format("{}/{}.stage", gameConfig.getGameBasePath(), stageName);
 
     this->stage = readStageFile(fullStageName);
     createTexturesForCommonResource(stage, 0);
@@ -90,11 +95,11 @@ void GameStage::load(int stageNo) {
     }
 }
 
-void GameStage::unload(){
+void GameStage::unload() {
     AudioSystem::getInstance().stopAll();
     while (!scriptNodes.empty()) {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();
     }
-    delete stage;
+    AX_SAFE_DELETE(stage);
 }

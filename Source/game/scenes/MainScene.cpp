@@ -1,12 +1,12 @@
 #include "MainScene.hpp"
 #include <axmol.h>
 #include "2dfm/2dfmFileReader.hpp"
-#include "DemoScene.hpp"
-#include "GameManager.hpp"
-#include "MoveComponent.hpp"
+#include "OpenningScene.hpp"
 #include "debug/StageTestScene.hpp"
 #include "debug/TestPictureScene.hpp"
 #include "engine/Input.hpp"
+#include "game/GameConfig.hpp"
+#include "game/GameManager.hpp"
 
 USING_NS_AX;
 
@@ -132,12 +132,7 @@ void MainScene::menuCloseCallback(Object *sender) {
 }
 
 void MainScene::initDebugScenes() {
-    menuItems.emplace_back("正常游戏场景", [] {
-        const auto kgt = GameManager::getInstance().getKgtGame();
-        auto openDemoName =
-            std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
-        return utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
-    });
+    menuItems.emplace_back("正常游戏场景", [] { return utils::createInstance<OpenningScene>(); });
     menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
     menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
 }

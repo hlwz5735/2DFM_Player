@@ -12,8 +12,8 @@ struct KgtStage;
 class GameStage : public ax::Node {
 public:
     bool init() override;
-
     void update(float delta) override;
+    void onExit() override;
 
     void load(int stageNo);
     void unload();

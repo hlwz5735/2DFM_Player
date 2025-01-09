@@ -26,7 +26,7 @@
 #ifndef __MAIN_SCENE_H__
 #define __MAIN_SCENE_H__
 
-#include "GameConfig.hpp"
+#include "game/GameConfig.hpp"
 #include <axmol.h>
 #include <GUI/ScrollView/ScrollView.h>
 

@@ -108,9 +108,10 @@ struct KgtGame : CommonResource {
     /// 游戏角色可选择性
     std::array<byte, _2dfm::maxPlayerNum> playerSelectableInfos{};
 
-    std::string getOpeningDemoName() const;
-    std::string getTitleDemoName() const;
-    std::string getCharSelectionDemoName() const;
+    int getOpeningDemoNo() const { return static_cast<int>(demoConfig.openingDemoId) - 1; }
+    int getTitleDemoNo() const { return static_cast<int>(demoConfig.titleDemoId) - 1; }
+    int getStoryModeCharSelectionDemoNo() const { return static_cast<int>(demoConfig.storyModeCharSelectDemoId) - 1; }
+
     ax::Vec2 getTitleStoryModePos() const;
     ax::Vec2 getTitlePvpModePos() const;
     ax::Vec2 getTitleTeamModePos() const;

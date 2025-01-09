@@ -1,76 +1,33 @@
 //
-// Created by limen on 2024/11/21.
+// Created by limen on 2025/1/9.
 //
 
-#include "DemoScene.hpp"
-#include "2dfm/2dfmFileReader.hpp"
-#include "DemoScriptInterceptor.hpp"
-#include "GameConfig.hpp"
-#include "GameManager.hpp"
-#include "KgtScriptInterceptor.hpp"
-#include "MoveComponent.hpp"
-#include "engine/AudioSystem.hpp"
+#include "TitleScene.hpp"
+
+#include "CharSelectionScene.hpp"
 #include "engine/Input.hpp"
 #include "engine/KgtNode.hpp"
+#include "game/GameConfig.hpp"
+#include "game/GameDemo.hpp"
+#include "game/GameManager.hpp"
+#include "game/KgtScriptInterceptor.hpp"
 
 USING_NS_AX;
 
-bool DemoScene::initWithFile(std::string_view filePath, DemoType demoType) {
+bool TitleScene::init() {
     if (!Scene::init()) {
         return false;
     }
-
-    this->demoType = demoType;
-
-    KgtDemo *demo = readDemoFile(filePath);
-    createTexturesForCommonResource(demo, 0);
-
-    for (int i = 1; i < demo->scripts.size(); ++i) {
-        auto scriptNode = utils::createInstance<KgtNode>();
-        scriptNode->setLogicPosition(Vec2::ZERO);
-
-        const auto interceptor = utils::createInstance<DemoScriptInterceptor>();
-        interceptor->setDemoData(demo);
-        interceptor->initRunningScript(i);
-        scriptNode->addComponent(interceptor);
-        scriptNode->scheduleUpdate();
-
-        this->addChild(scriptNode);
-        scriptNodes.emplace_back(scriptNode);
-    }
-
-    scheduleUpdate();
-
-    if (demoType == DemoType::TITLE) {
-        return initTitle();
-    }
-    return true;
-}
-void DemoScene::update(float deltaTime) {
-    Scene::update(deltaTime);
-    switch (demoType) {
-    case DemoType::OPENING:
-        updateOpening();
-        break;
-    case DemoType::TITLE:
-        updateTitle();
-        break;
-    default:
-        break;
-    }
-}
-
-void DemoScene::onExit() {
-    AudioSystem::getInstance().stopAll();
-    Scene::onExit();
-}
-
-bool DemoScene::initTitle() {
-    cursorNode = utils::createInstance<KgtNode>();
     auto kgtGame = GameManager::getInstance().getKgtGame();
+
+    objDemo = utils::createInstance<GameDemo>();
+    objDemo->load(static_cast<int>(kgtGame->demoConfig.titleDemoId) - 1);
+    addChild(objDemo);
+
+    cursorNode = utils::createInstance<KgtNode>();
     const auto interceptor = utils::createInstance<KgtScriptInterceptor>();
     interceptor->setKgtGame(kgtGame);
-    interceptor->initRunningScript(kgtGame->titleCursorScriptId); // TODO: 待完善
+    interceptor->initRunningScript(kgtGame->titleCursorScriptId);
     cursorNode->addComponent(interceptor);
     cursorNode->setLogicPosition(kgtGame->getTitleStoryModePos());
     cursorNode->scheduleUpdate();
@@ -84,23 +41,17 @@ bool DemoScene::initTitle() {
         cursorIdx = 2;
     }
 
+    scheduleUpdate();
+
     return true;
 }
 
-void DemoScene::updateOpening() {
-    if (Input::getInstance().isAnyAttackButtonDown()) {
-        auto openDemoName = std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(),
-                                        GameManager::getInstance().getKgtGame()->getTitleDemoName());
-        const auto openDemoScene =
-            utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoType::TITLE);
-        _director->replaceScene(openDemoScene);
-    }
-}
-void DemoScene::updateTitle() {
+void TitleScene::update(float deltaTime) {
+    Scene::update(deltaTime);
     if (Input::getInstance().isButtonDown(Input::GameButton::D_RIGHT)) {
-        titleNextMode();
+        moveCursorNext();
     } else if (Input::getInstance().isButtonDown(Input::GameButton::D_LEFT)) {
-        titlePrevMode();
+        moveCursorPrev();
     }
     const auto kgtGame = GameManager::getInstance().getKgtGame();
     switch (cursorIdx) {
@@ -118,14 +69,25 @@ void DemoScene::updateTitle() {
     }
 
     if (Input::getInstance().isAnyAttackButtonDown()) {
-        auto demoName = std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(),
-                                   kgtGame->getCharSelectionDemoName());
-        const auto openDemoScene =
-            utils::createInstance<DemoScene>(&DemoScene::initWithFile, demoName, DemoType::CHAR_SEL);
-        _director->replaceScene(openDemoScene);
+        Scene *nextScene = utils::createInstance<CharSelectionScene>();
+        // switch (cursorIdx) {
+        // case 0:
+        //     nextScene = ;
+        //     break;
+        // case 1:
+        //     nextScene = ;
+        //     break;
+        // case 2:
+        // default:
+        //     nextScene = ;
+        //     break;
+        // }
+        AXLOGI("准备进入角色选择DEMO：%d", cursorIdx);
+        _director->replaceScene(nextScene);
     }
 }
-void DemoScene::titleNextMode() {
+
+void TitleScene::moveCursorNext() {
     const auto kgtGame = GameManager::getInstance().getKgtGame();
 
     if (cursorIdx == 0) {
@@ -148,7 +110,8 @@ void DemoScene::titleNextMode() {
         }
     }
 }
-void DemoScene::titlePrevMode() {
+
+void TitleScene::moveCursorPrev() {
     const auto kgtGame = GameManager::getInstance().getKgtGame();
 
     if (cursorIdx == 0) {
@@ -171,3 +134,4 @@ void DemoScene::titlePrevMode() {
         }
     }
 }
+
