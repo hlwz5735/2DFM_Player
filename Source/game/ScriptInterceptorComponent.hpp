@@ -6,6 +6,8 @@
 #define SCRIPTINTERCEPTORCOMPONENT_HPP
 
 #include <axmol.h>
+
+#include "2dfm/2dfmCommon.hpp"
 #include "engine/KgtComponent.hpp"
 
 struct CommonResource;
@@ -13,6 +15,7 @@ namespace _2dfm {
     struct PlaySoundCmd;
     struct ShowPic;
     struct ColorSetCmd;
+    struct MoveCmd;
 }
 
 struct ScriptRunningInfo {
@@ -36,6 +39,8 @@ public:
 
 protected:
     bool hasNoShowPicItem() const;
+
+    /// 解释执行直到遇到图片脚本（触发等待）
     _2dfm::ShowPic *interceptScriptUntilShowPic();
 
     void jumpToScriptItem(int scriptIdx, int offset = 0);
@@ -44,10 +49,12 @@ protected:
     void interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd);
     void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
     void interceptColorSetCmd(const _2dfm::ColorSetCmd *cmd);
+    void interceptMoveCmd(const _2dfm::MoveCmd *item) const;
 
     ax::Sprite *spriteComponent = nullptr;
     class MoveComponent *moveComponent = nullptr;
 
+    /// 执行栈，用于处理循环和调用指令
     std::vector<ScriptRunningInfo> runningStack;
     int runningScriptItemIdx = 0;
     int originalScriptIdx = 0;

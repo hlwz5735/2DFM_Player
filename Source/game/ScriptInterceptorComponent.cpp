@@ -9,6 +9,7 @@
 #include "SeamlessScrollComponent.hpp"
 #include "engine/AudioSystem.hpp"
 #include "engine/KgtNode.hpp"
+#include "engine/MathUtils.hpp"
 #include "engine/SoundClip.hpp"
 
 USING_NS_AX;
@@ -104,6 +105,28 @@ bool ScriptInterceptorComponent::hasNoShowPicItem() const {
     return true;
 }
 
+void ScriptInterceptorComponent::interceptMoveCmd(const _2dfm::MoveCmd *moveCmd) const {
+    auto vel = ax::Vec2(moveCmd->moveX, moveCmd->moveY) * 0.01f;
+    auto accel = ax::Vec2(moveCmd->accelX, moveCmd->accelY) * 0.01f;
+    auto &oriVel = moveComponent->getVelocity();
+    auto &oriAccel = moveComponent->getAcceleration();
+    if (moveCmd->isAdd()) {
+        // 相加模式
+        vel.x += (moveCmd->isIgnoreMoveX() ? 0 : oriVel.x);
+        vel.y += (moveCmd->isIgnoreMoveY() ? 0 : oriVel.y);
+        accel.x += (moveCmd->isIgnoreAccelX() ? 0 : oriAccel.x);
+        accel.y += (moveCmd->isIgnoreAccelY() ? 0 : oriAccel.y);
+    } else {
+        // 代入模式
+        vel.x = moveCmd->isIgnoreMoveX() ? oriVel.x : vel.x;
+        vel.y = moveCmd->isIgnoreMoveY() ? oriVel.y : vel.y;
+        accel.x = moveCmd->isIgnoreAccelX() ? oriAccel.x : accel.x;
+        accel.y = moveCmd->isIgnoreAccelY() ? oriAccel.y : accel.y;
+    }
+    moveComponent->setAcceleration(accel);
+    moveComponent->setVelocity(vel);
+}
+
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
 processHead:
     ++runningScriptItemIdx;
@@ -124,26 +147,7 @@ processHead:
         } else if (type == _2dfm::CommonScriptItemTypes::COLOR) { // 色
             interceptColorSetCmd(reinterpret_cast<_2dfm::ColorSetCmd *>(item));
         } else if (type == _2dfm::CommonScriptItemTypes::MOVE) {
-            auto moveCmd = reinterpret_cast<_2dfm::MoveCmd *>(item);
-            auto vel       = ax::Vec2(moveCmd->moveX, moveCmd->moveY) * 0.01f;
-            auto accel     = ax::Vec2(moveCmd->accelX, moveCmd->accelY) * 0.01f;
-            auto &oriVel = moveComponent->getVelocity();
-            auto &oriAccel = moveComponent->getAcceleration();
-            if (moveCmd->isAdd()) {
-                // 相加模式
-                vel.x += (moveCmd->isIgnoreMoveX() ? 0 : oriVel.x);
-                vel.y += (moveCmd->isIgnoreMoveY() ? 0 : oriVel.y);
-                accel.x += (moveCmd->isIgnoreAccelX() ? 0 : oriAccel.x);
-                accel.y += (moveCmd->isIgnoreAccelY() ? 0 : oriAccel.y);
-            } else {
-                // 代入模式
-                vel.x = moveCmd->isIgnoreMoveX() ? oriVel.x : vel.x;
-                vel.y = moveCmd->isIgnoreMoveY() ? oriVel.y : vel.y;
-                accel.x = moveCmd->isIgnoreAccelX() ? oriAccel.x : accel.x;
-                accel.y = moveCmd->isIgnoreAccelY() ? oriAccel.y : accel.y;
-            }
-            moveComponent->setAcceleration(accel);
-            moveComponent->setVelocity(vel);
+            interceptMoveCmd(reinterpret_cast<_2dfm::MoveCmd *>(item));
         } else if (type == _2dfm::CommonScriptItemTypes::JUMP) {
             auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             jumpToScriptItem(jumpCmd->jumpId, jumpCmd->jumpPos);
@@ -156,6 +160,13 @@ processHead:
             auto loopCmd = reinterpret_cast<_2dfm::LoopCmd *>(item);
             pushRunningScript(loopCmd->targetScriptId, loopCmd->targetPos, loopCmd->loopCount);
             continue;
+        } else if (type == _2dfm::CommonScriptItemTypes::RANDOM) {
+            auto randomCmd = reinterpret_cast<_2dfm::RandomCmd *>(item);
+            auto hit = doRandom(randomCmd->randomMaxVal, randomCmd->moreThanVal);
+            if (hit) {
+                jumpToScriptItem(randomCmd->targetScriptId, randomCmd->targetPos);
+                continue;
+            }
         }
 
         // 程序计数器向后+1
