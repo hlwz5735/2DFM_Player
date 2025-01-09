@@ -134,33 +134,33 @@ processHead:
     while (runningScriptItemIdx < runningStack.back().scriptItemEndIdx) {
         const auto item = getCommonResource()->scriptItems[runningScriptItemIdx];
         const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
-        if (type == _2dfm::CommonScriptItemTypes::PIC) {
+        if (type == _2dfm::CommonScriptItemTypes::PIC) { // 图
             return reinterpret_cast<_2dfm::ShowPic *>(item);
         }
-        if (type == _2dfm::CommonScriptItemTypes::END) {
+        if (type == _2dfm::CommonScriptItemTypes::END) { // 完
             spriteComponent->setTexture(nullptr);
             spriteComponent->setVisible(false);
             return nullptr;
         }
-        if (type == _2dfm::CommonScriptItemTypes::SOUND) {
+        if (type == _2dfm::CommonScriptItemTypes::SOUND) { // 声
             interceptPlaySoundCmd(reinterpret_cast<_2dfm::PlaySoundCmd *>(item));
         } else if (type == _2dfm::CommonScriptItemTypes::COLOR) { // 色
             interceptColorSetCmd(reinterpret_cast<_2dfm::ColorSetCmd *>(item));
-        } else if (type == _2dfm::CommonScriptItemTypes::MOVE) {
+        } else if (type == _2dfm::CommonScriptItemTypes::MOVE) { // 移
             interceptMoveCmd(reinterpret_cast<_2dfm::MoveCmd *>(item));
-        } else if (type == _2dfm::CommonScriptItemTypes::JUMP) {
+        } else if (type == _2dfm::CommonScriptItemTypes::JUMP) { // 跳
             auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             jumpToScriptItem(jumpCmd->jumpId, jumpCmd->jumpPos);
             continue;
-        } else if (type == _2dfm::CommonScriptItemTypes::CALL) {
+        } else if (type == _2dfm::CommonScriptItemTypes::CALL) { // 调
             auto callCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             pushRunningScript(callCmd->jumpId, callCmd->jumpPos);
             continue;
-        } else if (type == _2dfm::CommonScriptItemTypes::LOOP) {
+        } else if (type == _2dfm::CommonScriptItemTypes::LOOP) { // 循
             auto loopCmd = reinterpret_cast<_2dfm::LoopCmd *>(item);
             pushRunningScript(loopCmd->targetScriptId, loopCmd->targetPos, loopCmd->loopCount);
             continue;
-        } else if (type == _2dfm::CommonScriptItemTypes::RANDOM) {
+        } else if (type == _2dfm::CommonScriptItemTypes::RANDOM) { // 随
             auto randomCmd = reinterpret_cast<_2dfm::RandomCmd *>(item);
             auto hit = doRandom(randomCmd->randomMaxVal, randomCmd->moreThanVal);
             if (hit) {

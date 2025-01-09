@@ -7,21 +7,19 @@
 
 #include <axmol.h>
 
-struct KgtStage;
+class GameStage;
 
-class StageTestScene : public ax::Scene {
+class StageTestScene final : public ax::Scene {
 public:
     bool init() override;
 
     void update(float delta) override;
 
-    void loadStage(int stageNo);
-    void unloadStage();
+    void loadStage(int stageNo) const;
+    void unloadStage() const;
 private:
-    KgtStage *stage = nullptr;
-    class StageCameraNode *cameraNode = nullptr;
+    GameStage *stage = nullptr;
     int stageNo = 0;
-    std::vector<ax::Node*> scriptNodes;
 };
 
 #endif //STAGETESTSCENE_HPP
