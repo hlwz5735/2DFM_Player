@@ -85,8 +85,8 @@ namespace _2dfm {
         std::int16_t selectBoxStartY;
         std::int16_t iconWidth;
         std::int16_t iconHeight;
-        std::int16_t rowNum;
         std::int16_t columnNum;
+        std::int16_t rowNum;
         std::int16_t player1PortraitX;
         std::int16_t player1PortraitY;
         std::int16_t player1PortraitTeamOffsetX;

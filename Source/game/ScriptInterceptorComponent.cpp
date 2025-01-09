@@ -44,13 +44,16 @@ void ScriptInterceptorComponent::onAdd() {
 }
 
 void ScriptInterceptorComponent::initRunningScript(int scriptIdx) {
-    if (runningStack.empty()) {
-        runningStack.emplace_back(ScriptRunningInfo{
-            .originalScriptIdx = scriptIdx,
-            .originalOffset = 0,
-        });
+    if (!runningStack.empty()) {
+        runningStack.clear();
     }
+    runningStack.emplace_back(ScriptRunningInfo{
+        .originalScriptIdx = scriptIdx,
+        .originalOffset = 0,
+    });
     this->originalScriptIdx = scriptIdx;
+    // 立即跳转
+    this->timeWaiting = 0;
     jumpToScriptItem(scriptIdx);
 }
 
@@ -260,8 +263,8 @@ void ScriptInterceptorComponent::interceptColorSetCmd(const _2dfm::ColorSetCmd *
         break;
     }
     // TODO: 颜色叠加暂时关闭
-    /*const ax::Color3B blendColor(convertKgtRgbColorValue(colorSet->red),
-        convertKgtRgbColorValue(colorSet->green),
-        convertKgtRgbColorValue(colorSet->blue));
+    /*const ax::Color3B blendColor(convertKgtRgbColorValue(cmd->red),
+        convertKgtRgbColorValue(cmd->green),
+        convertKgtRgbColorValue(cmd->blue));
     spriteComponent->setColor(blendColor);*/
 }

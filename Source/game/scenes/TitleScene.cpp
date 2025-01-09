@@ -31,8 +31,8 @@ bool TitleScene::init() {
     cursorNode->addComponent(interceptor);
     cursorNode->setLogicPosition(kgtGame->getTitleStoryModePos());
     cursorNode->scheduleUpdate();
-
     this->addChild(cursorNode);
+
     if (kgtGame->projectBaseConfig.enableStoryMode) {
         cursorIdx = 0;
     } else if (kgtGame->projectBaseConfig.enable1V1Mode) {
