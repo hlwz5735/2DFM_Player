@@ -160,4 +160,17 @@ void KgtGame::initBasicScriptInfos() {
     this->pauseScriptId = std::distance(begin, ii);
 }
 
+bool KgtGame::isPlayerInStoryMode(int playerNo) const {
+    if (playerNo >= _2dfm::maxPlayerNum) {
+        return false;
+    }
+    return playerSelectableInfos[playerNo] & 0x01;
+}
+bool KgtGame::isPlayerInPvpMode(int playerNo) const{
+    if (playerNo >= _2dfm::maxPlayerNum) {
+        return false;
+    }
+    return playerSelectableInfos[playerNo] & 0x02;
+}
+
 

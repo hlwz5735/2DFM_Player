@@ -105,6 +105,9 @@ struct KgtGame : CommonResource {
     int teamModePositionScriptId = 0;
     int pauseScriptId = 0;
 
+    /// 游戏角色可选择性
+    std::array<byte, _2dfm::maxPlayerNum> playerSelectableInfos{};
+
     std::string getOpeningDemoName() const;
     std::string getTitleDemoName() const;
     std::string getCharSelectionDemoName() const;
@@ -114,6 +117,9 @@ struct KgtGame : CommonResource {
 
     /// 初始化基础图像脚本信息
     void initBasicScriptInfos();
+
+    bool isPlayerInStoryMode(int playerNo) const;
+    bool isPlayerInPvpMode(int playerNo) const;
 };
 
 void cleanKgtGame(KgtGame *game);

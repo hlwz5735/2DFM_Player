@@ -4,11 +4,13 @@
 #include "KgtGame.hpp"
 #include "KgtDemo.hpp"
 #include "KgtStage.hpp"
+#include "KgtPlayer.hpp"
 #include <string>
 
 KgtGame *readKgtFile(const std::string &filepath);
 KgtDemo *readDemoFile(std::string_view filepath);
 KgtStage *readStageFile(const std::string &filepath);
+KgtPlayer *readPlayerFile(const std::string &filepath);
 
 void createTexturesForCommonResource(CommonResource *cr, int paletteNo = 0);
 

@@ -113,6 +113,10 @@ KgtGame *readKgtFile(const std::string& filepath) {
     _2dfm::CharSelectConfig csc;
     fread(&csc, sizeof(_2dfm::CharSelectConfig), 1, file);
 
+    // 角色可选择性信息
+    byte playerSelectableInfos[_2dfm::maxPlayerNum];
+    fread(playerSelectableInfos, sizeof(byte), _2dfm::maxPlayerNum, file);
+
     // 拼装数据
     auto result = new KgtGame;
     result->projectName = header.name.name;
@@ -163,6 +167,11 @@ KgtGame *readKgtFile(const std::string& filepath) {
     result->charSelectConfig.player2PortraitPos = ax::Vec2(csc.player2PortraitX, csc.player2PortraitY);
     result->charSelectConfig.player2PortraitOffset = ax::Vec2(csc.player2PortraitTeamOffsetX, csc.player2PortraitTeamOffsetY);
 
+    // 角色可选择性信息
+    for (auto i = 0; i < _2dfm::maxPlayerNum; ++i) {
+        result->playerSelectableInfos[i] = playerSelectableInfos[i];
+    }
+
     // 资源清理
     fclose(file);
     free(playerNames);
@@ -207,12 +216,12 @@ KgtDemo *readDemoFile(const std::string_view filepath) {
     return result;
 }
 
-KgtStage * readStageFile(const std::string &filepath){
+KgtStage *readStageFile(const std::string &filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
     auto file = fopen(filepath.c_str(), "rb");
     if (!file) {
-        throw std::runtime_error("open demo file failed");
+        throw std::runtime_error("open stage file failed");
     }
     // 读入文件头
     fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
@@ -231,6 +240,40 @@ KgtStage * readStageFile(const std::string &filepath){
     result->stageName = header.name.name;
     setCommonResource(result, commonResource);
     result->bgmSoundId = config.bgmSoundId;
+
+    // 资源清理
+    fclose(file);
+    freeCommonResourcePart(&commonResource);
+
+    return result;
+}
+
+KgtPlayer *readPlayerFile(const std::string &filepath) {
+    _2dfm::KgtFileHeader header;
+    // 打开文件
+    auto file = fopen(filepath.c_str(), "rb");
+    if (!file) {
+        throw std::runtime_error("open player file failed");
+    }
+    // 读入文件头
+    fread(&header, _2dfm::KGT_FILE_HEADER_SIZE, 1, file);
+    long offset = ftell(file);
+
+    // 读入公共资源部分
+    auto commonResource = readCommonResourcePart(&offset, file);
+    fseek(file, offset + 4, SEEK_SET);
+
+    // 读入角色文件特有数据
+    // TODO: 受伤动作绑定
+    // TODO: 投掷动作绑定
+    // TODO: 出招指令信息
+    // TODO: AI出招条目
+    // TODO: 故事条目信息
+
+    auto result = new KgtPlayer;
+    // 资源拼接部分
+    result->playerName = header.name.name;
+    setCommonResource(result, commonResource);
 
     // 资源清理
     fclose(file);
