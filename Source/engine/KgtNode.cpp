@@ -5,6 +5,7 @@
 #include <axmol.h>
 #include "game/MoveComponent.hpp"
 #include "game/ParallaxComponent.hpp"
+#include "game/ScriptInterceptorComponent.hpp"
 #include "game/SeamlessScrollComponent.hpp"
 
 USING_NS_AX;
@@ -39,34 +40,16 @@ void KgtNode::update(float delta) {
     transOffset.y = -transOffset.y;
     spritePNode->setPosition(spritePNode->getPosition() + transOffset);
 
-    // 处理无缝滚动
-    if (seamlessScrollComp) {
-        seamlessScrollComp->lateUpdate(delta);
-    }
-
-    // 处理视口变换
-    if (parallaxComp) {
-        auto cameraOffset = parallaxComp->getOffset();
-        auto &parallaxScale = parallaxComp->getParallaxScale();
-        auto virtualHeight = visibleHeight / 2 * (1 + parallaxScale.y);
-        setPosition(
-            cameraOffset.x * parallaxScale.x,
-            virtualHeight + cameraOffset.y * parallaxScale.y);
-    } else {
-        setPosition(logicPosition.x, visibleHeight - logicPosition.y);
-    }
+    setPosition(logicPosition.x, visibleHeight - logicPosition.y);
 }
 
 void KgtNode::setLogicPosition(const Vec2 &pos) {
     logicPosition = pos;
 }
-void KgtNode::addParallaxComp(class ParallaxComponent *comp) {
-    ASSERT(parallaxComp == nullptr, "ParallaxComponent should be set only once.");
-    parallaxComp = comp;
-    addComponent(parallaxComp);
-}
-void KgtNode::addSeamlessComp(class SeamlessScrollComponent *comp) {
-    ASSERT(seamlessScrollComp == nullptr, "SeamlessScrollComponent should be set only once.");
-    seamlessScrollComp = comp;
-    addComponent(seamlessScrollComp);
+
+void KgtNode::addInterceptor(ScriptInterceptorComponent *p) {
+    AXASSERT(this->interceptorComp == nullptr, "Interceptor already set");
+    p->setName("ScriptInterceptorComponent");
+    this->addComponent(p);
+    interceptorComp = p;
 }

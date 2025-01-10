@@ -48,7 +48,7 @@ void GameDemo::load(int demoNo) {
         const auto interceptor = utils::createInstance<DemoScriptInterceptor>();
         interceptor->setDemoData(demo);
         interceptor->initRunningScript(i);
-        scriptNode->addComponent(interceptor);
+        scriptNode->addInterceptor(interceptor);
         scriptNode->scheduleUpdate();
 
         this->addChild(scriptNode);

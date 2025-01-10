@@ -6,10 +6,10 @@
 class DemoScriptInterceptor : public ScriptInterceptorComponent {
 public:
     void update(float deltaTime) override;
-    void setDemoData(KgtDemo *data) { demoData = data; }
 
     const CommonResource *getCommonResource() const override { return demoData; }
 
+    void setDemoData(KgtDemo *data);
 private:
     KgtDemo *demoData = nullptr;
     /// 播放时间（到达上限后自动结束）

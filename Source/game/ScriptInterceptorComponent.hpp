@@ -37,6 +37,9 @@ public:
 
     virtual const CommonResource *getCommonResource() const = 0;
 
+    /// 停止解析执行
+    virtual void stop();
+
 protected:
     bool hasNoShowPicItem() const;
 
@@ -47,7 +50,7 @@ protected:
     void pushRunningScript(int scriptIdx, int offset = 0, int loop = 1);
 
     void interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd);
-    void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
+    virtual void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
     void interceptColorSetCmd(const _2dfm::ColorSetCmd *cmd);
     void interceptMoveCmd(const _2dfm::MoveCmd *item) const;
 

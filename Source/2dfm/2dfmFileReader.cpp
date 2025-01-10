@@ -18,7 +18,7 @@ namespace {
             }
             KgtScript kgtScript {
                     static_cast<ScriptSpecialFlag>(s->flags),
-                    gb2312ToUtf8(s->scriptName),
+                    gbkToUtf8(s->scriptName),
                     static_cast<int>(s->scriptIndex),
                     endIndex
             };
@@ -124,26 +124,26 @@ KgtGame *readKgtFile(const std::string& filepath) {
 
     result->playerNames.reserve(_2dfm::maxPlayerNum);
     for (auto playerName = playerNames; playerName != playerNames + _2dfm::maxPlayerNum; ++playerName) {
-        result->playerNames.emplace_back(gb2312ToUtf8(playerName->name));
+        result->playerNames.emplace_back(gbkToUtf8(playerName->name));
     }
     result->stageNames.reserve(_2dfm::maxStageNum);
     for (auto stageName = stageNames; stageName != stageNames + _2dfm::maxStageNum; ++stageName) {
-        result->stageNames.emplace_back(gb2312ToUtf8(stageName->name));
+        result->stageNames.emplace_back(gbkToUtf8(stageName->name));
     }
     result->demoNames.reserve(_2dfm::maxDemoNum);
     for (auto demoName = demoNames; demoName != demoNames + _2dfm::maxDemoNum; ++demoName) {
-        result->demoNames.emplace_back(gb2312ToUtf8(demoName->name));
+        result->demoNames.emplace_back(gbkToUtf8(demoName->name));
     }
     result->reactions.reserve(_2dfm::maxReactionNum);
     for (auto reactionItem = reactionItems; reactionItem != reactionItems + _2dfm::maxReactionNum; ++reactionItem) {
         Reaction r;
-        r.name = gb2312ToUtf8(reactionItem->reactionName);
+        r.name = gbkToUtf8(reactionItem->reactionName);
         r.isHurtAction = static_cast<bool>(reactionItem->isHurtAction);
         result->reactions.emplace_back(r);
     }
     result->throwReactions.reserve(_2dfm::maxThrowReactionNum);
     for (auto reaction = throwReactions; reaction != throwReactions + _2dfm::maxThrowReactionNum; ++reaction) {
-        result->throwReactions.emplace_back(gb2312ToUtf8(reaction->name));
+        result->throwReactions.emplace_back(gbkToUtf8(reaction->name));
     }
     result->recoverTimeConfig = recoverTimeConfig;
     result->demoConfig = demoConfig;

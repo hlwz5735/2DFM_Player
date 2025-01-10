@@ -2,6 +2,8 @@
 #include "2dfm/2dfmScriptItem.hpp"
 #include "2dfm/KgtStage.hpp"
 #include "MoveComponent.hpp"
+#include "SeamlessScrollComponent.hpp"
+#include "StageNode.hpp"
 
 USING_NS_AX;
 
@@ -39,5 +41,24 @@ void StageScriptInterceptor::update(float deltaTime) {
     }
     if (showPicScript) {
         this->interceptShowPicCmd(showPicScript);
+    }
+}
+
+void StageScriptInterceptor::setStageData(KgtStage *stage) {
+    this->stop();
+    this->stageData = stage;
+}
+
+void StageScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
+    ScriptInterceptorComponent::interceptShowPicCmd(cmd);
+
+    if (auto owner = dynamic_cast<StageNode *>(_owner)) {
+        auto oldTex = spriteComponent->getTexture();
+        auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
+
+        auto seamlessComp = owner->getSeamlessScrollComp();
+        if (seamlessComp && oldTex != tex) {
+            seamlessComp->updateSprite();
+        }
     }
 }

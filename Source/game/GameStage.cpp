@@ -11,6 +11,7 @@
 #include "ParallaxComponent.hpp"
 #include "SeamlessScrollComponent.hpp"
 #include "StageCameraNode.hpp"
+#include "StageNode.hpp"
 #include "StageScriptInterceptor.hpp"
 #include "engine/AudioSystem.hpp"
 #include "engine/KgtNode.hpp"
@@ -60,12 +61,11 @@ void GameStage::load(int stageNo) {
             continue;
         }
 
-        auto scriptNode = utils::createInstance<KgtNode>(&KgtNode::initWithVisibleHeight, GameConfig::stageHeight);
+        auto scriptNode = utils::createInstance<StageNode>(&StageNode::initWithVisibleHeight, GameConfig::stageHeight);
         auto interceptor = utils::createInstance<StageScriptInterceptor>();
-        interceptor->setName("StageScriptInterceptor");
         interceptor->setStageData(stage);
         interceptor->initRunningScript(i);
-        scriptNode->addComponent(interceptor);
+        scriptNode->addInterceptor(interceptor);
 
         const auto startItem = reinterpret_cast<_2dfm::StageStart *>(stage->scriptItems[scriptInfo.startIdx]);
         auto parallaxComp = utils::createInstance<ParallaxComponent>(&ParallaxComponent::init, cameraNode);

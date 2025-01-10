@@ -28,7 +28,7 @@ bool TitleScene::init() {
     const auto interceptor = utils::createInstance<KgtScriptInterceptor>();
     interceptor->setKgtGame(kgtGame);
     interceptor->initRunningScript(kgtGame->titleCursorScriptId);
-    cursorNode->addComponent(interceptor);
+    cursorNode->addInterceptor(interceptor);
     cursorNode->setLogicPosition(kgtGame->getTitleStoryModePos());
     cursorNode->scheduleUpdate();
     this->addChild(cursorNode);
@@ -82,7 +82,6 @@ void TitleScene::update(float deltaTime) {
         //     nextScene = ;
         //     break;
         // }
-        AXLOGI("准备进入角色选择DEMO：%d", cursorIdx);
         _director->replaceScene(nextScene);
     }
 }

@@ -61,6 +61,12 @@ struct CommonResource {
     std::array<KgtPalette *, 8> sharedPalettes;
     /// 声音信息
     std::vector<SoundClip *> sounds;
+
+    std::vector<KgtScript>::iterator findNextWithFlag(
+        std::vector<KgtScript>::iterator it,
+        std::vector<KgtScript>::iterator end,
+        ScriptSpecialFlag flag
+    );
 };
 
 // void cleanCommonResource(CommonResource *res);

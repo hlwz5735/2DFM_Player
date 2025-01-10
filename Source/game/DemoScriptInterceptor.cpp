@@ -43,3 +43,8 @@ void DemoScriptInterceptor::update(float deltaTime) {
         this->interceptShowPicCmd(showPicScript);
     }
 }
+
+void DemoScriptInterceptor::setDemoData(KgtDemo *data) {
+    this->stop();
+    this->demoData = data;
+}

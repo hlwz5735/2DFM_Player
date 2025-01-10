@@ -13,7 +13,7 @@ class ParallaxComponent : public KgtComponent {
 public:
     bool init(class StageCameraNode *cameraNode);
 
-    const ax::Vec2 &getParallaxScale() const { return ax::Vec2(parallaxScaleX, parallaxScaleY); }
+    const ax::Vec2 getParallaxScale() const { return ax::Vec2(parallaxScaleX, parallaxScaleY); }
     void setParallaxX(float v) { parallaxScaleX = v; }
     void setParallaxY(float v) { parallaxScaleY = v; }
 

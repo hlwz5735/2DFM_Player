@@ -14,6 +14,9 @@ class PlayerScriptInterceptor : public ScriptInterceptorComponent {
 public:
     void update(float delta) override;
 
+    const CommonResource *getCommonResource() const override { return playerData; }
+
+    void setPlayerData(KgtPlayer *playerData);
 private:
     KgtPlayer *playerData = nullptr;
 };

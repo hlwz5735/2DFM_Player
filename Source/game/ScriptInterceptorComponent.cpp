@@ -95,6 +95,11 @@ void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd
     }
 }
 
+void ScriptInterceptorComponent::stop() {
+    this->timeWaiting = std::numeric_limits<float>::infinity();
+    this->runningStack.clear();
+}
+
 bool ScriptInterceptorComponent::hasNoShowPicItem() const {
     auto commonResource = getCommonResource();
     auto &originalScript = commonResource->scripts.at(originalScriptIdx);
@@ -202,8 +207,7 @@ processHead:
 }
 
 void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
-    auto oldTex = spriteComponent->getTexture();
-    auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
+    const auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
     if (tex) {
         const auto blendFunc = spriteComponent->getBlendFunc();
         const auto visible = spriteComponent->isVisible();
@@ -218,10 +222,6 @@ void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) 
     } else {
         spriteComponent->setTexture(nullptr);
         spriteComponent->setVisible(false);
-    }
-    auto seamlessComp = dynamic_cast<SeamlessScrollComponent *>(_owner->getComponent("SeamlessScrollComponent"));
-    if (seamlessComp && oldTex != tex) {
-        seamlessComp->updateSprite();
     }
 }
 

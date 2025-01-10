@@ -2,18 +2,6 @@
 
 #include "2dfmScriptItem.hpp"
 
-namespace {
-    std::vector<KgtScript>::iterator findNextWithFlag(std::vector<KgtScript>::iterator it, std::vector<KgtScript>::iterator end, ScriptSpecialFlag flag) {
-        while (it != end) {
-            if (it->flags == flag) {
-                return it;
-            }
-            ++it;
-        }
-        return end;
-    }
-}
-
 KgtGame::~KgtGame() {}
 
 ax::Vec2 KgtGame::getTitleStoryModePos() const {

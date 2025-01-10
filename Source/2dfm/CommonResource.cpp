@@ -20,3 +20,17 @@ CommonResource::~CommonResource() {
     }
     this->sounds.clear();
 }
+
+std::vector<KgtScript>::iterator CommonResource::findNextWithFlag(
+    std::vector<KgtScript>::iterator it,
+    std::vector<KgtScript>::iterator end,
+    ScriptSpecialFlag flag
+) {
+    while (it != end) {
+        if (it->flags == flag) {
+            return it;
+        }
+        ++it;
+    }
+    return end;
+}

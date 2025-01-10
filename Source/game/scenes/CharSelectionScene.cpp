@@ -4,19 +4,27 @@
 
 #include "CharSelectionScene.hpp"
 
+#include "2dfm/2dfmFileReader.hpp"
 #include "2dfm/KgtGame.hpp"
+#include "2dfm/KgtPlayer.hpp"
 #include "engine/Input.hpp"
 #include "engine/KgtNode.hpp"
+#include "game/GameConfig.hpp"
 #include "game/GameDemo.hpp"
 #include "game/GameManager.hpp"
 #include "game/KgtScriptInterceptor.hpp"
+#include "game/PlayerNode.hpp"
+#include "game/PlayerScriptInterceptor.hpp"
 
 USING_NS_AX;
+
+constexpr int CachedPlayerCount = 5;
 
 bool CharSelectionScene::init() {
     if (!Scene::init()) {
         return false;
     }
+    cachedReadPlayers.reserve(CachedPlayerCount);
     const auto kgtGame = GameManager::getInstance().getKgtGame();
 
     rowCount = kgtGame->charSelectConfig.rowCount;
@@ -30,6 +38,7 @@ bool CharSelectionScene::init() {
     addChild(objDemo);
 
     addCursorObj(1);
+    addPlayerShowcaseObj(1);
 
     scheduleUpdate();
     return true;
@@ -54,13 +63,22 @@ void CharSelectionScene::update(float delta) {
     objP1Cursor->setLogicPosition(cursorInitialPos + Vec2(colNo * boxSize.width, rowNo * boxSize.height));
 
     if (Input::getInstance().isAnyAttackButtonDown()) {
-        if (auto interceptor =
-            dynamic_cast<KgtScriptInterceptor *>(objP1Cursor->getComponent("GameScriptInterceptor"))
-        ) {
-            auto kgtGame = GameManager::getInstance().getKgtGame();
+        auto kgtGame = GameManager::getInstance().getKgtGame();
+        if (!kgtGame->isPlayerInStoryMode(p1Idx)) {
+            return;
+        }
+        if (auto interceptor = objP1Cursor->getInterceptor()) {
             interceptor->initRunningScript(kgtGame->player1CharSelConfirmCursorScriptId);
         }
     }
+}
+void CharSelectionScene::onExit() {
+    while (!cachedReadPlayers.empty()) {
+        auto p = cachedReadPlayers.back();
+        delete p;
+        cachedReadPlayers.pop_back();
+    }
+    Scene::onExit();
 }
 
 void CharSelectionScene::addCursorObj(int playerNo) {
@@ -71,8 +89,7 @@ void CharSelectionScene::addCursorObj(int playerNo) {
     interceptor->setKgtGame(kgtGame);
     interceptor->initRunningScript(playerNo == 1 ? kgtGame->player1CharSelCursorScriptId
                                                  : kgtGame->player2CharSelCursorScriptId);
-    interceptor->setName("GameScriptInterceptor");
-    pCursor->addComponent(interceptor);
+    pCursor->addInterceptor(interceptor);
     pCursor->setLogicPosition(cursorInitialPos);
     pCursor->scheduleUpdate();
     this->addChild(pCursor);
@@ -84,6 +101,28 @@ void CharSelectionScene::addCursorObj(int playerNo) {
     }
 }
 
+void CharSelectionScene::addPlayerShowcaseObj(int playerNo) {
+    auto pNode = utils::createInstance<PlayerNode>();
+    const auto interceptor = utils::createInstance<PlayerScriptInterceptor>();
+    // 光标默认停在第1个角色上
+    auto player = this->readPlayer(0);
+    if (player->portraitScriptId != 0) {
+        interceptor->setPlayerData(player);
+        interceptor->initRunningScript(player->portraitScriptId);
+    } else {
+        interceptor->setPlayerData(nullptr);
+    }
+    pNode->addInterceptor(interceptor);
+    pNode->scheduleUpdate();
+    this->addChild(pNode);
+
+    auto kgtGame = GameManager::getInstance().getKgtGame();
+    if (playerNo == 1) {
+        pNode->setLogicPosition(kgtGame->charSelectConfig.player1PortraitPos);
+        objP1Showcase = pNode;
+    }
+}
+
 void CharSelectionScene::moveP1CursorRight() {
     int colNo = p1Idx % columnCount;
     if (colNo + 1 == columnCount) {
@@ -91,6 +130,7 @@ void CharSelectionScene::moveP1CursorRight() {
     } else {
         ++p1Idx;
     }
+    afterCursorMove(1);
 }
 
 void CharSelectionScene::moveP1CursorLeft() {
@@ -100,6 +140,7 @@ void CharSelectionScene::moveP1CursorLeft() {
     } else {
         --p1Idx;
     }
+    afterCursorMove(1);
 }
 
 void CharSelectionScene::moveP1CursorUp() {
@@ -111,6 +152,7 @@ void CharSelectionScene::moveP1CursorUp() {
     } else {
         p1Idx = (rowNo - 1) * columnCount + colNo;
     }
+    afterCursorMove(1);
 }
 
 void CharSelectionScene::moveP1CursorDown() {
@@ -122,4 +164,43 @@ void CharSelectionScene::moveP1CursorDown() {
     } else {
         p1Idx = (rowNo + 1) * columnCount + colNo;
     }
+    afterCursorMove(1);
+}
+
+void CharSelectionScene::afterCursorMove(int playerNo) {
+    auto kgtGame = GameManager::getInstance().getKgtGame();
+    if (playerNo == 1) {
+        if (auto interceptor = dynamic_cast<PlayerScriptInterceptor *>(objP1Showcase->getInterceptor())) {
+            if (kgtGame->isPlayerInStoryMode(p1Idx)) {
+                auto player = readPlayer(p1Idx);
+                if (player->portraitScriptId != 0) {
+                    interceptor->setPlayerData(player);
+                    interceptor->initRunningScript(player->portraitScriptId);
+                } else {
+                    interceptor->setPlayerData(nullptr);
+                }
+            } else {
+                interceptor->setPlayerData(nullptr);
+            }
+        }
+    }
+}
+
+KgtPlayer *CharSelectionScene::readPlayer(int playerId) {
+    auto kgtGame = GameManager::getInstance().getKgtGame();
+    auto playerName = kgtGame->playerNames[playerId];
+    auto i = std::find_if(cachedReadPlayers.begin(), cachedReadPlayers.end(), [&playerName](const KgtPlayer *p) {
+        return p->playerName == playerName;
+    });
+    if (i != cachedReadPlayers.end()) {
+        return *i;
+    }
+
+    // TODO: 目前尚未使用 CachedPlayerCount 限制读取玩家数据的数量
+    auto fullFilePath = std::format("{}/{}.player", GameConfig::getInstance().getGameBasePath(), playerName);
+    auto player = readPlayerFile(fullFilePath);
+    player->initBasicScriptInfos();
+    createTexturesForCommonResource(player, 0);
+    cachedReadPlayers.emplace_back(player);
+    return player;
 }

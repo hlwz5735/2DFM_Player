@@ -123,6 +123,4 @@ struct KgtGame : CommonResource {
     bool isPlayerInPvpMode(int playerNo) const;
 };
 
-void cleanKgtGame(KgtGame *game);
-
 #endif //INC_2DFM_PLAYER_KGTGAME_HPP
