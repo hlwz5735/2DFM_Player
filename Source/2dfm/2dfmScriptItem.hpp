@@ -223,8 +223,21 @@ namespace _2dfm {
         }
 
         /// 是否使用窗口坐标
-        bool isUseWindowPosition() {
+        bool isUseWindowPosition() const {
             return flags & 0b01000000;
+        }
+
+        int getManageNo() const {
+            if (isUnconditionally()) {
+                return -1;
+            } else if (manageNo >= 0 && manageNo < 10) {
+                return manageNo;
+            }
+            return -1;
+        }
+
+        ax::Vec2 getPosition() const {
+            return ax::Vec2(posX, posY);
         }
     };
 

@@ -11,11 +11,13 @@
 #include "engine/KgtComponent.hpp"
 
 struct CommonResource;
+
 namespace _2dfm {
     struct PlaySoundCmd;
     struct ShowPic;
     struct ColorSetCmd;
     struct MoveCmd;
+    struct ObjectCmd;
 }
 
 struct ScriptRunningInfo {
@@ -33,7 +35,7 @@ public:
     bool init() override;
     void onAdd() override;
 
-    void initRunningScript(int scriptIdx);
+    void initRunningScript(int scriptIdx, int offset = 0);
 
     virtual const CommonResource *getCommonResource() const = 0;
 
@@ -52,7 +54,8 @@ protected:
     void interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd);
     virtual void interceptShowPicCmd(const _2dfm::ShowPic *cmd);
     void interceptColorSetCmd(const _2dfm::ColorSetCmd *cmd);
-    void interceptMoveCmd(const _2dfm::MoveCmd *item) const;
+    void interceptMoveCmd(const _2dfm::MoveCmd *cmd) const;
+    virtual void interceptObjectCmd(const _2dfm::ObjectCmd *cmd) const;
 
     ax::Sprite *spriteComponent = nullptr;
     class MoveComponent *moveComponent = nullptr;

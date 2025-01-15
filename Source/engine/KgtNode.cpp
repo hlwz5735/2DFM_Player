@@ -4,9 +4,7 @@
 #include "KgtNode.hpp"
 #include <axmol.h>
 #include "game/MoveComponent.hpp"
-#include "game/ParallaxComponent.hpp"
 #include "game/ScriptInterceptorComponent.hpp"
-#include "game/SeamlessScrollComponent.hpp"
 
 USING_NS_AX;
 
@@ -41,6 +39,16 @@ void KgtNode::update(float delta) {
     spritePNode->setPosition(spritePNode->getPosition() + transOffset);
 
     setPosition(logicPosition.x, visibleHeight - logicPosition.y);
+}
+
+void KgtNode::destroy() {
+    if (auto interceptor = getInterceptor()) {
+        interceptor->stop();
+    }
+    // 如果挂载到了父节点，从父节点中移除
+    if (_parent) {
+        _parent->removeChild(this);
+    }
 }
 
 void KgtNode::setLogicPosition(const Vec2 &pos) {

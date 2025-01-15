@@ -17,8 +17,12 @@ public:
     const CommonResource *getCommonResource() const override { return playerData; }
 
     void setPlayerData(KgtPlayer *playerData);
+    class PlayerNode *getPlayerNode() const;
+protected:
+    void interceptObjectCmd(const _2dfm::ObjectCmd *cmd) const override;
 private:
     KgtPlayer *playerData = nullptr;
+    mutable class PlayerNode *playerNode = nullptr;
 };
 
 

@@ -170,6 +170,7 @@ void CharSelectionScene::moveP1CursorDown() {
 void CharSelectionScene::afterCursorMove(int playerNo) {
     auto kgtGame = GameManager::getInstance().getKgtGame();
     if (playerNo == 1) {
+        objP1Showcase->destroyManagedObjects();
         if (auto interceptor = dynamic_cast<PlayerScriptInterceptor *>(objP1Showcase->getInterceptor())) {
             if (kgtGame->isPlayerInStoryMode(p1Idx)) {
                 auto player = readPlayer(p1Idx);

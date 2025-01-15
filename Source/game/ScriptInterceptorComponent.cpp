@@ -6,7 +6,6 @@
 #include "2dfm/2dfmScriptItem.hpp"
 #include "2dfm/CommonResource.hpp"
 #include "MoveComponent.hpp"
-#include "SeamlessScrollComponent.hpp"
 #include "engine/AudioSystem.hpp"
 #include "engine/KgtNode.hpp"
 #include "engine/MathUtils.hpp"
@@ -43,18 +42,18 @@ void ScriptInterceptorComponent::onAdd() {
     }
 }
 
-void ScriptInterceptorComponent::initRunningScript(int scriptIdx) {
+void ScriptInterceptorComponent::initRunningScript(int scriptIdx, int offset) {
     if (!runningStack.empty()) {
         runningStack.clear();
     }
     runningStack.emplace_back(ScriptRunningInfo{
         .originalScriptIdx = scriptIdx,
-        .originalOffset = 0,
+        .originalOffset = offset,
     });
     this->originalScriptIdx = scriptIdx;
     // 立即跳转
     this->timeWaiting = 0;
-    jumpToScriptItem(scriptIdx);
+    jumpToScriptItem(scriptIdx, offset);
 }
 
 void ScriptInterceptorComponent::jumpToScriptItem(int scriptIdx, int offset) {
@@ -135,6 +134,10 @@ void ScriptInterceptorComponent::interceptMoveCmd(const _2dfm::MoveCmd *moveCmd)
     moveComponent->setVelocity(vel);
 }
 
+void ScriptInterceptorComponent::interceptObjectCmd(const _2dfm::ObjectCmd *cmd) const {
+    // 暂时不做实现
+}
+
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
 processHead:
     ++runningScriptItemIdx;
@@ -175,6 +178,8 @@ processHead:
                 jumpToScriptItem(randomCmd->targetScriptId, randomCmd->targetPos);
                 continue;
             }
+        } else if (type == _2dfm::CommonScriptItemTypes::OBJECT) { // 物
+            interceptObjectCmd(reinterpret_cast<_2dfm::ObjectCmd *>(item));
         }
 
         // 程序计数器向后+1

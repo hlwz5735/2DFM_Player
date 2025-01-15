@@ -16,6 +16,7 @@ public:
     virtual bool initWithVisibleHeight(int visibleHeight = 640);
     bool init() override { return initWithVisibleHeight(static_cast<int>(_director->getVisibleSize().height)); }
     void update(float delta) override;
+    void destroy();
 
     const ax::Vec2 &getLogicPosition() const { return logicPosition; }
     void setLogicPosition(const ax::Vec2 &pos);
