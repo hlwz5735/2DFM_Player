@@ -3,7 +3,7 @@
 //
 
 #include "PlayerNode.hpp"
-
+#include "GameManager.hpp"
 #include "MoveComponent.hpp"
 #include "ScriptInterceptorComponent.hpp"
 
@@ -26,6 +26,7 @@ bool PlayerNode::initWithVisibleHeight(int visibleHeight) {
     spriteComp->setName("SpriteComponent");
     spriteComp->setPosition(Vec2::ZERO);
     spriteComp->setAnchorPoint(Vec2(0.5f, 0));
+    spriteComp->setProgramStateByProgramId(GameManager::getInstance().getCustomShaderProgramId());
     spritePNode->addChild(spriteComp);
 
     for (int i = 0; i < 10; ++i) {

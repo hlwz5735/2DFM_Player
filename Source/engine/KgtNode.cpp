@@ -2,9 +2,10 @@
 // Created by limen on 2024/11/23.
 //
 #include "KgtNode.hpp"
-#include <axmol.h>
+#include "game/GameManager.hpp"
 #include "game/MoveComponent.hpp"
 #include "game/ScriptInterceptorComponent.hpp"
+#include <axmol.h>
 
 USING_NS_AX;
 
@@ -25,6 +26,7 @@ bool KgtNode::initWithVisibleHeight(int visibleHeight) {
     spriteComp->setName("SpriteComponent");
     spriteComp->setPosition(Vec2::ZERO);
     spriteComp->setAnchorPoint(Vec2(0, 1));
+    spriteComp->setProgramStateByProgramId(GameManager::getInstance().getCustomShaderProgramId());
     spritePNode->addChild(spriteComp);
 
     return true;

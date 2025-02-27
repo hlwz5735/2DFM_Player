@@ -14,9 +14,10 @@
 USING_NS_AX;
 
 namespace {
-uint8_t convertKgtRgbColorValue(byte rawByte) {
+float convertKgtRgbColorValue(byte rawByte) {
+    // 原范围[-32 - 32]
     const int8_t val = *(reinterpret_cast<char *>(&rawByte));
-    return static_cast<uint8_t>(val + 32);
+    return static_cast<float>(val) / 32.f;
 }
 
 uint8_t convertKgtOpacityColorValue(byte rawByte) {
@@ -139,10 +140,12 @@ void ScriptInterceptorComponent::interceptObjectCmd(const _2dfm::ObjectCmd *cmd)
 }
 
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
+    // 添加一个跳转计数，如果都跳转了255次还没遇到“图”或者“停”，那就别扯犊子了，退出解释执行
+    unsigned jumpCount = 0;
 processHead:
     ++runningScriptItemIdx;
 
-    while (runningScriptItemIdx < runningStack.back().scriptItemEndIdx) {
+    while (runningScriptItemIdx < runningStack.back().scriptItemEndIdx && jumpCount < 255) {
         const auto item = getCommonResource()->scriptItems[runningScriptItemIdx];
         const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
         if (type == _2dfm::CommonScriptItemTypes::PIC) { // 图
@@ -162,6 +165,7 @@ processHead:
         } else if (type == _2dfm::CommonScriptItemTypes::JUMP) { // 跳
             auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             jumpToScriptItem(jumpCmd->jumpId, jumpCmd->jumpPos);
+            ++jumpCount;
             continue;
         } else if (type == _2dfm::CommonScriptItemTypes::CALL) { // 调
             auto callCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
@@ -267,9 +271,13 @@ void ScriptInterceptorComponent::interceptColorSetCmd(const _2dfm::ColorSetCmd *
         spriteComponent->setOpacity(255);
         break;
     }
-    // TODO: 颜色叠加暂时关闭
-    /*const ax::Color3B blendColor(convertKgtRgbColorValue(cmd->red),
+
+    float colorArr[3] = {
+        convertKgtRgbColorValue(cmd->red),
         convertKgtRgbColorValue(cmd->green),
-        convertKgtRgbColorValue(cmd->blue));
-    spriteComponent->setColor(blendColor);*/
+        convertKgtRgbColorValue(cmd->blue)
+    };
+    auto ps = spriteComponent->getProgramState();
+    auto loc = ps->getUniformLocation("_2dfmColor");
+    spriteComponent->getProgramState()->setUniform(loc, &colorArr[0], sizeof(colorArr));
 }
