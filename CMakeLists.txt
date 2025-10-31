@@ -199,8 +199,10 @@ if (NOT _AX_USE_PREBUILT)
     target_link_libraries(${APP_NAME} ${_AX_CORE_LIB})
 endif()
 
-target_link_libraries(${APP_NAME} Iconv libsndfile)
+target_link_libraries(${APP_NAME} libsndfile_ext)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(${APP_NAME} Iconv libsndfile)
     add_custom_command(TARGET ${APP_NAME}
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different

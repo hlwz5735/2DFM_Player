@@ -8,10 +8,11 @@
 #include <Object.h>
 #include <Scheduler.h>
 #include <audio/AudioMacros.h>
-#include <audio/alconfig.h>
+#include <al.h>
 #include <queue>
 
 #include "Singleton.hpp"
+#include "oal_port.h"
 
 class AudioSource;
 class SoundClip;

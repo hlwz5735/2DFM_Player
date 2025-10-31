@@ -5,7 +5,8 @@
 #ifndef AUDIOSOURCE_HPP
 #define AUDIOSOURCE_HPP
 
-#include <audio/alconfig.h>
+// #include <audio/alconfig.h>
+#include <al.h>
 
 class SoundClip;
 class AudioSource {

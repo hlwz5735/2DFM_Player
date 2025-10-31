@@ -6,6 +6,7 @@
 
 #include "GameConfig.hpp"
 #include "engine/KgtNode.hpp"
+#include <axmol.h>
 
 USING_NS_AX;
 
@@ -21,7 +22,7 @@ void SeamlessScrollComponent::onAdd() {
     seedSprite = getOwner()->getSprite();
     seedSprite->retain();
     getOwner()->spritePNode->removeChild(seedSprite);
-    ASSERT(seedSprite != nullptr);
+    AXASSERT(seedSprite != nullptr, "seedSprite can't be null.");
 }
 void SeamlessScrollComponent::onExit() {
     KgtComponent::onExit();

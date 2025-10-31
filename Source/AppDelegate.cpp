@@ -60,17 +60,28 @@ void AppDelegate::initGLContextAttrs() {
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
+    // Enable logging output colored text style and prefix timestamp
+    ax::setLogFmtFlag(ax::LogFmtFlag::Full);
+
+    // whether enable global SDF font render support, since axmol-2.0.1
+    FontFreeType::setGlobalSDFEnabled(true);
+
     // initialize director
     auto director = Director::getInstance();
-    auto glView = director->getGLView();
-    if (!glView) {
+    auto renderView = director->getRenderView();
+    if (!renderView) {
 #if (AX_TARGET_PLATFORM == AX_PLATFORM_WIN32) || (AX_TARGET_PLATFORM == AX_PLATFORM_MAC) || \
     (AX_TARGET_PLATFORM == AX_PLATFORM_LINUX)
-        glView = GLViewImpl::createWithRect(title, Rect(0, 0, designResolutionSize.width, designResolutionSize.height), 2, true);
+        renderView = RenderViewImpl::createWithRect(
+            title,
+            Rect(0, 0, designResolutionSize.width, designResolutionSize.height),
+            2,
+            true
+        );
 #else
-        glView = GLViewImpl::create(title);
+        renderView = RenderViewImpl::create(title);
 #endif
-        director->setGLView(glView);
+        director->setRenderView(renderView);
     }
 
     AudioSystem::getInstance();
@@ -78,11 +89,14 @@ bool AppDelegate::applicationDidFinishLaunching() {
     // turn on display FPS
     director->setStatsDisplay(true);
 
-    // set FPS. the default value is 1.0/60 if you don't call this
+#ifdef AX_PLATFORM_PC
+    director->setAnimationInterval(1.0f / glfwGetVideoMode(glfwGetPrimaryMonitor())->refreshRate);
+#else
     director->setAnimationInterval(1.0f / 60);
+#endif
 
     // Set the design resolution
-    glView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height,
+    renderView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height,
                                     ResolutionPolicy::SHOW_ALL);
     director->setClearColor(Color4F::BLACK);
     // create a scene. it's an autorelease object

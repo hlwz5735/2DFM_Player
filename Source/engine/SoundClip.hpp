@@ -1,7 +1,8 @@
 #pragma once
 
-#include <alconfig.h>
+// #include <alconfig.h>
 #include <cstdint>
+#include <al.h>
 
 namespace _2dfm {
 class Sound;
