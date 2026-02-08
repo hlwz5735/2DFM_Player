@@ -33,12 +33,12 @@ void StageNode::update(float delta) {
     }
 }
 
-void StageNode::addParallaxComp(class ParallaxComponent *comp) {
+void StageNode::addParallaxComp(ParallaxComponent *comp) {
     AXASSERT(parallaxComp == nullptr, "ParallaxComponent should be set only once.");
     parallaxComp = comp;
     addComponent(parallaxComp);
 }
-void StageNode::addSeamlessComp(class SeamlessScrollComponent *comp) {
+void StageNode::addSeamlessComp(SeamlessScrollComponent *comp) {
     AXASSERT(seamlessScrollComp == nullptr, "SeamlessScrollComponent should be set only once.");
     seamlessScrollComp = comp;
     addComponent(seamlessScrollComp);

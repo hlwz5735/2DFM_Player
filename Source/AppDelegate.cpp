@@ -66,7 +66,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     if (!glView) {
 #if (AX_TARGET_PLATFORM == AX_PLATFORM_WIN32) || (AX_TARGET_PLATFORM == AX_PLATFORM_MAC) || \
     (AX_TARGET_PLATFORM == AX_PLATFORM_LINUX)
-        glView = GLViewImpl::createWithRect(title, Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+        glView = GLViewImpl::createWithRect(title, Rect(0, 0, designResolutionSize.width, designResolutionSize.height), 2, true);
 #else
         glView = GLViewImpl::create(title);
 #endif
