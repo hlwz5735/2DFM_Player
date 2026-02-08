@@ -55,8 +55,15 @@ void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &
 
     // 声音片段
     result->sounds.reserve(commonResource.soundCount);
+    result->sounds_.reserve(commonResource.soundCount);
     for (auto s : commonResource.sounds) {
         result->sounds.emplace_back(SoundClip::from2dfmSound(s));
+        auto copySound = new _2dfm::Sound();
+        copySound->header = s->header;
+        auto content = reinterpret_cast<byte *>(malloc(s->header.size));
+        std::memcpy(content, s->content, s->header.size);
+        copySound->content = content;
+        result->sounds_.emplace_back(copySound);
     }
 }
 

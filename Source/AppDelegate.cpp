@@ -28,9 +28,10 @@
 #include "AudioEngine.h"
 #include "engine/AudioSystem.hpp"
 #include "engine/Input.hpp"
+#include "engine/KgtFileUtil.hpp"
 #include "game/scenes/MainScene.hpp"
 
-#define USE_AUDIO_ENGINE 0
+#define USE_AUDIO_ENGINE 1
 
 #if USE_AUDIO_ENGINE
 #    include "audio/AudioEngine.h"
@@ -74,6 +75,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     }
 
     AudioSystem::getInstance();
+    FileUtils::getInstance()->setDelegate(KgtFileUtil::create());
 
     // turn on display FPS
     director->setStatsDisplay(true);

@@ -61,6 +61,7 @@ struct CommonResource {
     std::array<KgtPalette *, 8> sharedPalettes;
     /// 声音信息
     std::vector<SoundClip *> sounds;
+    std::vector<_2dfm::Sound *> sounds_;
 
     std::vector<KgtScript>::iterator findNextWithFlag(
         std::vector<KgtScript>::iterator it,

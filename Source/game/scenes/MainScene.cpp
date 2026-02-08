@@ -3,6 +3,7 @@
 #include "2dfm/2dfmFileReader.hpp"
 #include "OpenningScene.hpp"
 #include "debug/StageTestScene.hpp"
+#include "debug/TestAudioEngineScene.hpp"
 #include "debug/TestPictureScene.hpp"
 #include "engine/Input.hpp"
 #include "game/GameConfig.hpp"
@@ -136,6 +137,7 @@ void MainScene::initDebugScenes() {
     menuItems.emplace_back("正常游戏场景", [] { return utils::createInstance<OpenningScene>(); });
     menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
     menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
+    menuItems.emplace_back("AudioEngine 测试", []() { return ax::utils::createInstance<TestAudioEngineScene>(); });
 }
 
 void MainScene::scrollViewDidScroll(extension::ScrollView *view) {
