@@ -7,8 +7,70 @@
 #include "engine/Input.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameManager.hpp"
+#include "ui/axmol-ui.h"
 
 USING_NS_AX;
+
+namespace {
+class OpenKgtFileLayer : public Layer {
+public:
+    bool init() override;
+};
+
+bool OpenKgtFileLayer::init() {
+    if (!Layer::init()) {
+        return false;
+    }
+
+    const auto visibleSize = _director->getVisibleSize();
+    TTFConfig ttfConfig("fonts/msyh.ttc", 20);
+
+    auto label = Label::createWithTTF(ttfConfig, "Open Kgt File");
+
+    auto inputField = ui::TextFieldEx::create("Please enter...", "fonts/msyh.ttc", 20);
+    inputField->setString("./Game.kgt");
+    inputField->setContentSize(inputField->getRenderLabel()->getContentSize());
+
+    // 为 inputField 添加触摸事件监听器
+    inputField->enableIME(nullptr);
+    inputField->setEnabled(true);
+
+    label->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2 + 50));
+    inputField->setPosition(Vec2(12, visibleSize.height / 2 - 50));
+
+    this->addChild(label);
+    this->addChild(inputField);
+
+    auto btn = ui::Button::create("CloseNormal.png", "CloseSelected.png");
+    btn->addClickEventListener([this, inputField](Object* sender) {
+        // 处理按钮点击事件，例如加载 kgt 文件
+        std::string kgtPath = std::string(inputField->getString());
+        AXLOG("Selected kgt file: %s", kgtPath.c_str());
+        try {
+            auto kgt = readKgtFile(kgtPath);
+            createTexturesForCommonResource(kgt, 0);
+            kgt->initBasicScriptInfos();
+            GameManager::getInstance().init();
+            GameManager::getInstance().setKgtGame(kgt);
+
+            auto parent = dynamic_cast<MainScene *>(this->getParent());
+            parent->chuantongxiangyan();
+        } catch (...) {
+            AXLOGE("Failed to read kgt file");
+        }
+    });
+    btn->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2 - 100));
+    this->addChild(btn);
+        
+    return true;
+}
+}  // namespace
+
+static void initDebugScenes(std::vector<std::pair<std::string, std::function<ax::Scene *()>>> &menuItems) {
+    menuItems.emplace_back("正常游戏场景", [] { return utils::createInstance<OpenningScene>(); });
+    menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
+    menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
+}
 
 // Print useful error message instead of segfaulting when files are not there.
 static void problemLoading(const char *filename) {
@@ -28,8 +90,69 @@ bool MainScene::init() {
         return false;
     }
 
-    this->initDebugScenes();
+    initDebugScenes(this->menuItems);
 
+    // 此处开始是正式加载逻辑
+    GameConfig::getInstance().readAndInit();
+    const auto &gameConfig = GameConfig::getInstance();
+    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+    try {
+        auto kgt = readKgtFile(kgtFilePath);
+        createTexturesForCommonResource(kgt, 0);
+        kgt->initBasicScriptInfos();
+        GameManager::getInstance().init();
+        GameManager::getInstance().setKgtGame(kgt);
+
+        this->initMenuLayer();
+    } catch (...) {
+        AXLOGE("Failed to read kgt file");
+
+        auto newLayer = utils::createInstance<OpenKgtFileLayer>();
+        if (!newLayer) {
+            return false;
+        }
+        this->currentLayer = newLayer;
+        this->addChild(newLayer);
+    }
+
+    return true;
+}
+
+void MainScene::onEnterTransitionDidFinish() {
+    Scene::onEnterTransitionDidFinish();
+    const auto kgt = GameManager::getInstance().getKgtGame();
+    if (kgt == nullptr) {
+        AXLOGE("KGT is null");
+        return;
+    }
+
+    // auto openDemoName =
+    // std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
+    // const auto openDemoScene =
+    //     utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
+    // _director->replaceScene(openDemoScene);
+}
+
+void MainScene::menuCloseCallback(Object *sender) {
+    // Close the axmol game scene and quit the application
+    _director->end();
+
+    /*To navigate back to native iOS screen(if present) without quitting the application  ,do not use
+     * _director->end() as given above,instead trigger a custom event created in RootViewController.mm
+     * as below*/
+
+    // EventCustom customEndEvent("game_scene_close_event");
+    //_eventDispatcher->dispatchEvent(&customEndEvent);
+}
+
+void MainScene::scrollViewDidScroll(extension::ScrollView *view) {
+    ScrollViewDelegate::scrollViewDidScroll(view);
+}
+
+void MainScene::scrollViewDidZoom(extension::ScrollView *view) {
+    ScrollViewDelegate::scrollViewDidZoom(view);
+}
+void MainScene::initMenuLayer() {
     const auto safeArea = _director->getSafeAreaRect();
     const auto visibleSize = _director->getVisibleSize();
     const auto safeOrigin = safeArea.origin;
@@ -86,62 +209,5 @@ bool MainScene::init() {
     auto scrollView = extension::ScrollView::create(Size(visibleSize.width, visibleSize.height), layer);
     scrollView->setDelegate(this);
     this->addChild(scrollView);
-
-    // 此处开始是正式加载逻辑
-    GameConfig::getInstance().readAndInit();
-    const auto &gameConfig = GameConfig::getInstance();
-    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
-    try {
-        auto kgt = readKgtFile(kgtFilePath);
-        createTexturesForCommonResource(kgt, 0);
-        kgt->initBasicScriptInfos();
-        GameManager::getInstance().init();
-        GameManager::getInstance().setKgtGame(kgt);
-    } catch (...) {
-        AXLOGE("Failed to read kgt file");
-        return false;
-    }
-
-    return true;
-}
-
-void MainScene::onEnterTransitionDidFinish() {
-    Scene::onEnterTransitionDidFinish();
-    const auto kgt = GameManager::getInstance().getKgtGame();
-    if (kgt == nullptr) {
-        AXLOGE("KGT is null");
-        return;
-    }
-
-    // auto openDemoName =
-    // std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
-    // const auto openDemoScene =
-    //     utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
-    // _director->replaceScene(openDemoScene);
-}
-
-void MainScene::menuCloseCallback(Object *sender) {
-    // Close the axmol game scene and quit the application
-    _director->end();
-
-    /*To navigate back to native iOS screen(if present) without quitting the application  ,do not use
-     * _director->end() as given above,instead trigger a custom event created in RootViewController.mm
-     * as below*/
-
-    // EventCustom customEndEvent("game_scene_close_event");
-    //_eventDispatcher->dispatchEvent(&customEndEvent);
-}
-
-void MainScene::initDebugScenes() {
-    menuItems.emplace_back("正常游戏场景", [] { return utils::createInstance<OpenningScene>(); });
-    menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
-    menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
-}
-
-void MainScene::scrollViewDidScroll(extension::ScrollView *view) {
-    ScrollViewDelegate::scrollViewDidScroll(view);
-}
-
-void MainScene::scrollViewDidZoom(extension::ScrollView *view) {
-    ScrollViewDelegate::scrollViewDidZoom(view);
+    this->currentLayer = scrollView;
 }

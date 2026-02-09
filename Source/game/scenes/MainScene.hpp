@@ -39,10 +39,13 @@ public:
 
     void scrollViewDidScroll(ax::extension::ScrollView *view) override;
     void scrollViewDidZoom(ax::extension::ScrollView *view) override;
+
+    void chuantongxiangyan() { AXLOG("wangyuanlaigenhuazi."); }
 private:
-    void initDebugScenes();
+    void initMenuLayer();
 
     std::vector<std::pair<std::string, std::function<ax::Scene *()>>> menuItems;
+    ax::Layer *currentLayer = nullptr;
 };
 
 #endif  // __MAIN_SCENE_H__
