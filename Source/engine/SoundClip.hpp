@@ -1,7 +1,9 @@
 #pragma once
 
-#include <alconfig.h>
 #include <cstdint>
+#include <string>
+
+#include "2dfm/2dfmCommon.hpp"
 
 namespace _2dfm {
 class Sound;
@@ -9,16 +11,16 @@ class Sound;
 
 class SoundClip {
 public:
-    SoundClip(ALuint bufferId): alBufferId(bufferId) {}
+    SoundClip(_2dfm::Sound *sound, std::string vfp): rawSoundPtr(sound), virtualFilePath(vfp) {}
     ~SoundClip();
 
-    static SoundClip *from2dfmSound(_2dfm::Sound *sound);
+    int64_t getSize() const;
+    bool isLoop() const;
 
-    int64_t getSize() const { return size; }
-    bool isLoop() const { return loop; }
-    ALuint getAlBufferId() const { return alBufferId; }
+    const std::string &getVirtualFilePath() const { return virtualFilePath; }
+
+    _2dfm::Sound *getRawSoundPtr() const { return rawSoundPtr; }
 private:
-    ALuint alBufferId;
-    int64_t size = 0;
-    bool loop = false;
+    std::string virtualFilePath;
+    _2dfm::Sound *rawSoundPtr;
 };

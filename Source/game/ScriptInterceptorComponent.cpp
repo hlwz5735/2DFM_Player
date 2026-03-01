@@ -3,10 +3,11 @@
 //
 
 #include "ScriptInterceptorComponent.hpp"
+
 #include "2dfm/2dfmScriptItem.hpp"
 #include "2dfm/CommonResource.hpp"
+#include "AudioEngine.h"
 #include "MoveComponent.hpp"
-#include "engine/AudioSystem.hpp"
 #include "engine/KgtNode.hpp"
 #include "engine/MathUtils.hpp"
 #include "engine/SoundClip.hpp"
@@ -91,7 +92,7 @@ void ScriptInterceptorComponent::pushRunningScript(int scriptIdx, int offset, in
 void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd *cmd) {
     auto soundClip = getCommonResource()->sounds.at(cmd->soundIdx);
     if (soundClip) {
-        AudioSystem::getInstance().playClip(soundClip, soundClip->isLoop(), 1.f);
+        ax::AudioEngine::play2d(soundClip->getVirtualFilePath(), soundClip->isLoop(), 1.f);
     }
 }
 

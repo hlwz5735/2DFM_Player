@@ -25,8 +25,6 @@
 
 #include "AppDelegate.h"
 
-#include "AudioEngine.h"
-#include "engine/AudioSystem.hpp"
 #include "engine/Input.hpp"
 #include "engine/KgtFileUtil.hpp"
 #include "game/scenes/MainScene.hpp"
@@ -34,7 +32,7 @@
 #define USE_AUDIO_ENGINE 1
 
 #if USE_AUDIO_ENGINE
-#    include "audio/AudioEngine.h"
+    #include "audio/AudioEngine.h"
 #endif
 
 USING_NS_AX;
@@ -48,7 +46,6 @@ AppDelegate::AppDelegate() {}
 AppDelegate::~AppDelegate() {
     // GameConfig::getInstance().save();
     Input::getInstance().cleanup();
-    AudioSystem::getInstance().cleanup();
 }
 
 // if you want a different context, modify the value of glContextAttrs
@@ -74,14 +71,13 @@ bool AppDelegate::applicationDidFinishLaunching() {
         director->setGLView(glView);
     }
 
-    AudioSystem::getInstance();
     FileUtils::getInstance()->setDelegate(KgtFileUtil::create());
 
     // turn on display FPS
     director->setStatsDisplay(true);
 
     // set FPS. the default value is 1.0/60 if you don't call this
-    director->setAnimationInterval(1.0f / 60);
+    director->setAnimationInterval(1.0f / 100);
 
     // Set the design resolution
     glView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height,

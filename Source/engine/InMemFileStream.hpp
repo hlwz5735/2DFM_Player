@@ -7,6 +7,9 @@
 #include "IFileStream.h"
 #include "2dfm/2dfmCommon.hpp"
 
+/**
+ * 内存文件流对象，主要用于直接从 KGT / PLAYER 等文件中读取音频等信息时使用
+ */
 class InMemFileStream : public ax::IFileStream {
 public:
     InMemFileStream() = default;

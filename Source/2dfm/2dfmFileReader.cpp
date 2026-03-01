@@ -1,9 +1,15 @@
 #include "2dfmFileReader.hpp"
 #include "2dfmCommon.hpp"
 #include "KgtPalette.hpp"
-#include "engine/SoundClip.hpp"
 #include "engine/MyString.hpp"
+#include "engine/SoundClip.hpp"
+
 #include <axmol.h>
+
+#include <string>
+
+#include "game/GameConfig.hpp"
+#include "game/GameManager.hpp"
 
 namespace {
     void readScripts(CommonResource *result, byte *rawData, int scriptCount, int itemCount) {
@@ -55,15 +61,29 @@ void setCommonResource(CommonResource *result, const _2dfm::CommonResourcePart &
 
     // 声音片段
     result->sounds.reserve(commonResource.soundCount);
-    result->sounds_.reserve(commonResource.soundCount);
-    for (auto s : commonResource.sounds) {
-        result->sounds.emplace_back(SoundClip::from2dfmSound(s));
+    std::string fmtTemplate;
+    if (typeid(*result) == typeid(KgtGame)) {
+        fmtTemplate = "kgt/{}/sound/{}.wav";
+    } else if (typeid(*result) == typeid(KgtDemo)) {
+        fmtTemplate = "demo/{}/sound/{}.wav";
+    } else if (typeid(*result) == typeid(KgtPlayer)) {
+        fmtTemplate = "player/{}/sound/{}.wav";
+    } else {
+        fmtTemplate = "stage/{}/sound/{}.wav";
+    }
+    for (size_t i = 0; i < commonResource.sounds.size(); ++i) {
+        auto s = commonResource.sounds[i];
+
+        // TODO: 理论上这一次拷贝是多余的，可以用 shared_ptr 来优化
         auto copySound = new _2dfm::Sound();
         copySound->header = s->header;
         auto content = reinterpret_cast<byte *>(malloc(s->header.size));
         std::memcpy(content, s->content, s->header.size);
         copySound->content = content;
-        result->sounds_.emplace_back(copySound);
+
+        SoundClip *sc = new SoundClip(copySound, std::vformat(fmtTemplate, std::make_format_args(result->serialNo, i)));
+
+        result->sounds.emplace_back(sc);
     }
 }
 
@@ -126,6 +146,7 @@ KgtGame *readKgtFile(const std::string& filepath) {
 
     // 拼装数据
     auto result = new KgtGame;
+    result->serialNo = 0;
     result->projectName = header.name.name;
     setCommonResource(result, commonResource);
 
@@ -191,10 +212,18 @@ KgtGame *readKgtFile(const std::string& filepath) {
     return result;
 }
 
-KgtDemo *readDemoFile(const std::string_view filepath) {
+KgtGame *readKgtFile() {
+    const GameConfig &gameConfig = GameConfig::getInstance();
+    // gameConfig.readAndInit();
+
+    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+    return readKgtFile(kgtFilePath);
+}
+
+KgtDemo *readDemoFile(int demoNo, const std::string &filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
-    auto file = fopen(filepath.data(), "rb");
+    auto file = fopen(filepath.c_str(), "rb");
     if (!file) {
         throw std::runtime_error("open demo file failed");
     }
@@ -213,6 +242,7 @@ KgtDemo *readDemoFile(const std::string_view filepath) {
     auto result = new KgtDemo;
     // 资源拼接部分
     result->demoName = header.name.name;
+    result->serialNo = demoNo;
     setCommonResource(result, commonResource);
     result->config = config;
 
@@ -223,7 +253,18 @@ KgtDemo *readDemoFile(const std::string_view filepath) {
     return result;
 }
 
-KgtStage *readStageFile(const std::string &filepath) {
+KgtDemo *readDemoByNo(int demoNo) {
+    auto kgt = GameManager::getInstance().getKgtGame();
+    auto demoName = kgt->demoNames[demoNo];
+    if (demoName.empty()) {
+        return nullptr;
+    }
+    auto &gameConfig = GameConfig::getInstance();
+    const auto fullDemoName = std::format("{}/{}.demo", gameConfig.getGameBasePath(), demoName);
+    return readDemoFile(demoNo, fullDemoName);
+}
+
+KgtStage *readStageFile(int stageNo, const std::string &filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
     auto file = fopen(filepath.c_str(), "rb");
@@ -244,6 +285,7 @@ KgtStage *readStageFile(const std::string &filepath) {
 
     auto result = new KgtStage;
     // 资源拼接部分
+    result->serialNo = stageNo;
     result->stageName = header.name.name;
     setCommonResource(result, commonResource);
     result->bgmSoundId = config.bgmSoundId;
@@ -255,7 +297,18 @@ KgtStage *readStageFile(const std::string &filepath) {
     return result;
 }
 
-KgtPlayer *readPlayerFile(const std::string &filepath) {
+KgtStage *readStageByNo(int stageNo) {
+    auto kgt = GameManager::getInstance().getKgtGame();
+    auto stageName = kgt->stageNames[stageNo];
+    if (stageName.empty()) {
+        return nullptr;
+    }
+    auto &gameConfig = GameConfig::getInstance();
+    const auto fullStageName = std::format("{}/{}.stage", gameConfig.getGameBasePath(), stageName);
+    return readStageFile(stageNo, fullStageName);
+}
+
+KgtPlayer *readPlayerFile(int playerNo, const std::string &filepath) {
     _2dfm::KgtFileHeader header;
     // 打开文件
     auto file = fopen(filepath.c_str(), "rb");
@@ -279,6 +332,7 @@ KgtPlayer *readPlayerFile(const std::string &filepath) {
 
     auto result = new KgtPlayer;
     // 资源拼接部分
+    result->serialNo = playerNo;
     result->playerName = header.name.name;
     setCommonResource(result, commonResource);
 
@@ -287,6 +341,17 @@ KgtPlayer *readPlayerFile(const std::string &filepath) {
     freeCommonResourcePart(&commonResource);
 
     return result;
+}
+
+KgtPlayer *readPlayerByNo(int playerNo) {
+    auto kgt = GameManager::getInstance().getKgtGame();
+    auto playerName = kgt->demoNames[playerNo];
+    if (playerName.empty()) {
+        return nullptr;
+    }
+    auto &gameConfig = GameConfig::getInstance();
+    const auto fullPlayerName = std::format("{}/{}.player", gameConfig.getGameBasePath(), playerName);
+    return readPlayerFile(playerNo, fullPlayerName);
 }
 
 void createTexturesForCommonResource(CommonResource *cr, int paletteNo) {

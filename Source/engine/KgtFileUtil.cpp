@@ -11,6 +11,7 @@
 #include <string_view>
 
 #include "2dfm/KgtGame.hpp"
+#include "2dfm/KgtStage.hpp"
 #include "SoundClip.hpp"
 
 namespace {
@@ -153,9 +154,21 @@ void KgtFileUtil::setGameRootPath(std::string gameRootPath) {
 bool KgtFileUtil::isFileExist(std::string_view filename) const {
     try {
         auto entry = parseFileEntry(filename);
-        if (entry.type == FileType::KGT) {
-            return true;
+        const auto &gameManager = GameManager::getInstance();
+        const auto kgt = gameManager.getKgtGame();
+        if (kgt == nullptr) {
+            return false;
         }
+        if (entry.type == FileType::KGT) {
+            return kgt != nullptr;
+        }
+        if (entry.type == FileType::DEMO) {
+            return entry.resourceIndex >= 0 && entry.resourceIndex < kgt->demoNames.size();
+        }
+        if (entry.type == FileType::PLAYER) {
+            return entry.resourceIndex >= 0 && entry.resourceIndex < kgt->playerNames.size();
+        }
+        return entry.resourceIndex >= 0 && entry.resourceIndex < kgt->stageNames.size();
     } catch (...) {
         AXLOG("In catch: [%.*s]\n", (int)filename.size(), filename.data());
         return FileUtilsWin32::isFileExist(filename);
@@ -196,15 +209,21 @@ std::unique_ptr<ax::IFileStream> KgtFileUtil::openFileStream(
         auto entry = parseFileEntry(filePath);
         InMemFileStream inMemFileStream;
 
-        if (entry.type == FileType::KGT) {
-            auto kgtGame = GameManager::getInstance().getKgtGame();
-            if (entry.resourceType == ResourceType::SOUND) {
-                auto c = kgtGame->sounds_[entry.resourceIndex];
-                auto dataVec = std::vector<byte>(c->header.size);
-                std::memcpy(dataVec.data(), c->content, c->header.size);
-                inMemFileStream.setBuffer(dataVec);
-                return std::make_unique<InMemFileStream>(std::move(inMemFileStream));
+        if (entry.resourceType == ResourceType::SOUND) {
+            _2dfm::Sound *sc;
+            if (entry.type == FileType::KGT) {
+                auto kgtGame = GameManager::getInstance().getKgtGame();
+                sc = kgtGame->sounds[entry.resourceIndex]->getRawSoundPtr();
+            } else if (entry.type == FileType::STAGE) {
+                auto kgtStage = GameManager::getInstance().getKgtStage();
+                sc = kgtStage->sounds[entry.resourceIndex]->getRawSoundPtr();
+            } else {
+                return nullptr;
             }
+            auto dataVec = std::vector<byte>(sc->header.size);
+            std::memcpy(dataVec.data(), sc->content, sc->header.size);
+            inMemFileStream.setBuffer(dataVec);
+            return std::make_unique<InMemFileStream>(std::move(inMemFileStream));
         }
 
         return nullptr;

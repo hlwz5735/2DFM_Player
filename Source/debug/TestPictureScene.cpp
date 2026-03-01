@@ -4,6 +4,8 @@
 #include "game/GameConfig.hpp"
 #include <axmol.h>
 
+#include "game/GameManager.hpp"
+
 USING_NS_AX;
 
 bool TestPictureScene::init() {
@@ -20,14 +22,15 @@ bool TestPictureScene::init() {
     sprite->setPosition(vs.width / 2, vs.height / 2);
     addChild(sprite);
 
-    GameConfig gameConfig;
+    GameConfig &gameConfig = GameConfig::getInstance();
     gameConfig.readAndInit();
 
-    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
-    auto kgt = readKgtFile(kgtFilePath);
+    auto kgt = readKgtFile();
 
-    auto stageName = std::format("{}/{}.stage", gameConfig.getGameBasePath(), kgt->stageNames[0]);
-    auto stage = readStageFile(stageName);
+    GameManager &gm = GameManager::getInstance();
+    gm.setKgtGame(kgt);
+
+    auto stage = readStageByNo(0);
     createTexturesForCommonResource(stage, 0);
 
     this->cr = stage;

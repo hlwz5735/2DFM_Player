@@ -6,6 +6,8 @@
 #include <axmol.h>
 #include <AudioEngine.h>
 
+#include "engine/SoundClip.hpp"
+
 USING_NS_AX;
 
 bool TestAudioEngineScene::init() {
@@ -28,8 +30,7 @@ bool TestAudioEngineScene::init() {
     GameConfig gameConfig;
     gameConfig.readAndInit();
 
-    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
-    auto kgt = readKgtFile(kgtFilePath);
+    auto kgt = readKgtFile();
     this->cr = kgt;
 
     auto keyboardListener = EventListenerKeyboard::create();
@@ -43,7 +44,7 @@ bool TestAudioEngineScene::init() {
 
 void TestAudioEngineScene::update(float delta) {
     Scene::update(delta);
-    const auto s = cr->sounds_.at(soundNo);
+    const auto s = cr->sounds.at(soundNo)->getRawSoundPtr();
 
     if (s == nullptr) {
         if (playingSound != nullptr) {
@@ -56,8 +57,8 @@ void TestAudioEngineScene::update(float delta) {
     std::string soundPath = std::format("kgt/0/sound/{}.wav", soundNo);
     AXLOG("Loading: %s", soundPath.c_str());
     if (playingSound != s) {
-        AXLOG("Playing soundNo: %d/%d", soundNo, cr->sounds_.size());
-        label->setString(std::format("{}/{}, {}, {}", soundNo, cr->sounds_.size(), gbkToUtf8(s->header.name), s->header.size));
+        AXLOG("Playing soundNo: %d/%d", soundNo, cr->sounds.size());
+        label->setString(std::format("{}/{}, {}, {}", soundNo, cr->sounds.size() - 1, gbkToUtf8(s->header.name), s->header.size));
         AudioEngine::play2d(soundPath);
         playingSound = s;
     }
@@ -67,13 +68,13 @@ void TestAudioEngineScene::onKeyPressed(EventKeyboard::KeyCode code, Event *even
     AXLOG("onKeyPressed, keycode: %d", static_cast<int>(code));
     if (code == EventKeyboard::KeyCode::KEY_RIGHT_ARROW) {
         soundNo += 1;
-        if (soundNo >= cr->sounds_.size()) {
+        if (soundNo >= cr->sounds.size()) {
             soundNo = 0;
         }
     }
     if (code == EventKeyboard::KeyCode::KEY_LEFT_ARROW) {
         if (soundNo <= 0) {
-            soundNo = cr->sounds_.size();
+            soundNo = cr->sounds.size();
         }
         soundNo -= 1;
     }

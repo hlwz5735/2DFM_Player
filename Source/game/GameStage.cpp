@@ -6,6 +6,7 @@
 
 #include "2dfm/2dfmFileReader.hpp"
 #include "2dfm/2dfmScriptItem.hpp"
+#include "AudioEngine.h"
 #include "GameConfig.hpp"
 #include "GameManager.hpp"
 #include "ParallaxComponent.hpp"
@@ -13,7 +14,6 @@
 #include "StageCameraNode.hpp"
 #include "StageNode.hpp"
 #include "StageScriptInterceptor.hpp"
-#include "engine/AudioSystem.hpp"
 #include "engine/KgtNode.hpp"
 
 USING_NS_AX;
@@ -43,15 +43,8 @@ void GameStage::onExit() {
 }
 
 void GameStage::load(int stageNo) {
-    auto kgt = GameManager::getInstance().getKgtGame();
-    auto stageName = kgt->stageNames[stageNo];
-    if (stageName.empty()) {
-        return;
-    }
-    auto &gameConfig = GameConfig::getInstance();
-    auto fullStageName = std::format("{}/{}.stage", gameConfig.getGameBasePath(), stageName);
-
-    this->stage = readStageFile(fullStageName);
+    this->stage = readStageByNo(stageNo);
+    GameManager::getInstance().setKgtStage(stage);
     createTexturesForCommonResource(stage, 0);
     cameraNode->reset();
 
@@ -96,10 +89,11 @@ void GameStage::load(int stageNo) {
 }
 
 void GameStage::unload() {
-    AudioSystem::getInstance().stopAll();
+    AudioEngine::stopAll();
     while (!scriptNodes.empty()) {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();
     }
     AX_SAFE_DELETE(stage);
+    GameManager::getInstance().setKgtStage(nullptr);
 }

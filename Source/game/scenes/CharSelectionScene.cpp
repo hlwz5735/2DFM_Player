@@ -198,8 +198,7 @@ KgtPlayer *CharSelectionScene::readPlayer(int playerId) {
     }
 
     // TODO: 目前尚未使用 CachedPlayerCount 限制读取玩家数据的数量
-    auto fullFilePath = std::format("{}/{}.player", GameConfig::getInstance().getGameBasePath(), playerName);
-    auto player = readPlayerFile(fullFilePath);
+    auto player = readPlayerByNo(playerId);
     player->initBasicScriptInfos();
     createTexturesForCommonResource(player, 0);
     cachedReadPlayers.emplace_back(player);

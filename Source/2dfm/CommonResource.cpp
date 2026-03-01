@@ -1,4 +1,5 @@
 #include "CommonResource.hpp"
+
 #include "engine/SoundClip.hpp"
 
 CommonResource::~CommonResource() {
@@ -16,9 +17,6 @@ CommonResource::~CommonResource() {
         p = nullptr;
     }
     for (auto s : this->sounds) {
-        delete s;
-    }
-    for (auto s : this->sounds_) {
         delete s;
     }
     this->sounds.clear();

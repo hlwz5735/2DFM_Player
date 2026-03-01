@@ -42,6 +42,8 @@ public:
 private:
     void initDebugScenes();
 
+    // TODO: 声音资源的加载和卸载应该专门交给 SceneManager 类去处理
+
     std::vector<std::pair<std::string, std::function<ax::Scene *()>>> menuItems;
 };
 

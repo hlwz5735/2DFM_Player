@@ -28,6 +28,19 @@ bool MainScene::init() {
         AXLOGE("Failed to init Input system.");
         return false;
     }
+    // 此处开始是正式加载逻辑
+    auto &gameConfig = GameConfig::getInstance();
+    gameConfig.readAndInit();
+    try {
+        auto kgt = readKgtFile();
+        createTexturesForCommonResource(kgt, 0);
+        kgt->initBasicScriptInfos();
+        GameManager::getInstance().init();
+        GameManager::getInstance().setKgtGame(kgt);
+    } catch (...) {
+        AXLOGE("Failed to read kgt file");
+        return false;
+    }
 
     this->initDebugScenes();
 
@@ -87,21 +100,6 @@ bool MainScene::init() {
     auto scrollView = extension::ScrollView::create(Size(visibleSize.width, visibleSize.height), layer);
     scrollView->setDelegate(this);
     this->addChild(scrollView);
-
-    // 此处开始是正式加载逻辑
-    GameConfig::getInstance().readAndInit();
-    const auto &gameConfig = GameConfig::getInstance();
-    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
-    try {
-        auto kgt = readKgtFile(kgtFilePath);
-        createTexturesForCommonResource(kgt, 0);
-        kgt->initBasicScriptInfos();
-        GameManager::getInstance().init();
-        GameManager::getInstance().setKgtGame(kgt);
-    } catch (...) {
-        AXLOGE("Failed to read kgt file");
-        return false;
-    }
 
     return true;
 }

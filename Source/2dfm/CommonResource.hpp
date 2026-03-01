@@ -1,9 +1,9 @@
 #pragma once
 
-#include "KgtPicture.hpp"
 #include <renderer/Texture2D.h>
 #include <array>
 #include <vector>
+#include "KgtPicture.hpp"
 
 class Texture;
 class SoundClip;
@@ -47,9 +47,26 @@ struct KgtScript {
     int endIdx;
 };
 
+// 前向声明允许的派生类
+struct KgtGame;
+struct KgtDemo;
+struct KgtStage;
+struct KgtPlayer;
+
 struct CommonResource {
     virtual ~CommonResource();
 
+private:
+    // 私有构造函数，只允许特定的4个派生类访问
+    CommonResource() = default;
+    friend struct KgtGame;
+    friend struct KgtDemo;
+    friend struct KgtStage;
+    friend struct KgtPlayer;
+
+public:
+    /** 序号 */
+    int serialNo;
     /// 脚本信息
     std::vector<KgtScript> scripts;
     std::vector<_2dfm::ScriptItem *> scriptItems;
@@ -61,7 +78,6 @@ struct CommonResource {
     std::array<KgtPalette *, 8> sharedPalettes;
     /// 声音信息
     std::vector<SoundClip *> sounds;
-    std::vector<_2dfm::Sound *> sounds_;
 
     std::vector<KgtScript>::iterator findNextWithFlag(
         std::vector<KgtScript>::iterator it,
