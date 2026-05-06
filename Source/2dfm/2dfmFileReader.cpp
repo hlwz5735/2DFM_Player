@@ -9,7 +9,7 @@
 #include <string>
 
 #include "game/GameConfig.hpp"
-#include "game/GameManager.hpp"
+#include "game/ResourcePool.hpp"
 
 namespace {
     void readScripts(CommonResource *result, byte *rawData, int scriptCount, int itemCount) {
@@ -254,7 +254,7 @@ KgtDemo *readDemoFile(int demoNo, const std::string &filepath) {
 }
 
 KgtDemo *readDemoByNo(int demoNo) {
-    auto kgt = GameManager::getInstance().getKgtGame();
+    auto kgt = ResourcePool::getInstance().getKgtGame();
     auto demoName = kgt->demoNames[demoNo];
     if (demoName.empty()) {
         return nullptr;
@@ -298,7 +298,7 @@ KgtStage *readStageFile(int stageNo, const std::string &filepath) {
 }
 
 KgtStage *readStageByNo(int stageNo) {
-    auto kgt = GameManager::getInstance().getKgtGame();
+    auto kgt = ResourcePool::getInstance().getKgtGame();
     auto stageName = kgt->stageNames[stageNo];
     if (stageName.empty()) {
         return nullptr;
@@ -344,8 +344,8 @@ KgtPlayer *readPlayerFile(int playerNo, const std::string &filepath) {
 }
 
 KgtPlayer *readPlayerByNo(int playerNo) {
-    auto kgt = GameManager::getInstance().getKgtGame();
-    auto playerName = kgt->demoNames[playerNo];
+    auto kgt = ResourcePool::getInstance().getKgtGame();
+    auto playerName = kgt->playerNames[playerNo];
     if (playerName.empty()) {
         return nullptr;
     }

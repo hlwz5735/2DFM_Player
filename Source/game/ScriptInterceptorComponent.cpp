@@ -218,7 +218,7 @@ processHead:
 
 void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
     const auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
-    if (tex) {
+    if (tex && tex->getContentSizeInPixels().width > 0 && tex->getContentSizeInPixels().height > 0) {
         const auto blendFunc = spriteComponent->getBlendFunc();
         const auto visible = spriteComponent->isVisible();
         spriteComponent->setTexture(tex);

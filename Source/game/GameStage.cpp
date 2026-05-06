@@ -8,7 +8,7 @@
 #include "2dfm/2dfmScriptItem.hpp"
 #include "AudioEngine.h"
 #include "GameConfig.hpp"
-#include "GameManager.hpp"
+#include "ResourcePool.hpp"
 #include "ParallaxComponent.hpp"
 #include "SeamlessScrollComponent.hpp"
 #include "StageCameraNode.hpp"
@@ -32,20 +32,17 @@ bool GameStage::init() {
 
 void GameStage::update(float delta) {
     Node::update(delta);
-
-    // 需要注意可能会遇到空场景
-    // const auto kgt = GameManager::getInstance().getKgtGame();
 }
 
 void GameStage::onExit() {
-    AX_SAFE_DELETE(stage);
+    stage = nullptr;
     Node::onExit();
 }
 
 void GameStage::load(int stageNo) {
-    this->stage = readStageByNo(stageNo);
-    GameManager::getInstance().setKgtStage(stage);
-    createTexturesForCommonResource(stage, 0);
+    auto stagePtr = ResourcePool::getInstance().loadStage(stageNo);
+    this->stage = stagePtr.get();
+    createTexturesForCommonResource(stagePtr.get(), 0);
     cameraNode->reset();
 
     for (int i = 1; i < stage->scripts.size(); ++i) {
@@ -94,6 +91,6 @@ void GameStage::unload() {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();
     }
-    AX_SAFE_DELETE(stage);
-    GameManager::getInstance().setKgtStage(nullptr);
+    stage = nullptr;
+    ResourcePool::getInstance().purgeStage();
 }

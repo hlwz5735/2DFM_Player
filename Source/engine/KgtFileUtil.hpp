@@ -9,6 +9,12 @@
 #include "FileUtils-win32.h"
 #endif
 
+/**
+ * KgtFileUtil: 对 FileUtils 的再封装
+ *
+ * 设计意图：仅劫持 KGT 虚拟文件路径（形如 "player/0/sound/0.wav"），
+ * 所有其他路径完全透传给父类的原生实现，不做任何干预。
+ */
 class KgtFileUtil
 #if (AX_TARGET_PLATFORM == AX_PLATFORM_WIN32)
     : public ax::FileUtilsWin32
@@ -16,9 +22,15 @@ class KgtFileUtil
     : public ax::FileUtils
 #endif
 {
+#if (AX_TARGET_PLATFORM == AX_PLATFORM_WIN32)
+    using Super = ax::FileUtilsWin32;
+#else
+    using Super = ax::FileUtils;
+#endif
+
 public:
-    KgtFileUtil();
-    ~KgtFileUtil() override;
+    KgtFileUtil() = default;
+    ~KgtFileUtil() override = default;
 
     static KgtFileUtil* create();
 
@@ -26,28 +38,16 @@ public:
 
     void setGameRootPath(std::string gameRootPath);
 
-    /**
-     * 检查要求的文件是否存在
-     * @param filename 虚拟文件路径，形似 player/0/sound/0.wav
-     * @return 文件是否存在
-     */
     bool isFileExist(std::string_view filename) const override;
-
-    /**
-     * 根据传入的文件路径，查找并返回文件的替换路径
-     * 在我们这里，主要用于对音频的替换，我们这里使用的，是虚拟的路径
-     * @param filename 虚拟文件名，形似 player/0/sound/0.wav 这种形式
-     * @return
-     */
     std::string fullPathForFilename(std::string_view filename) const override;
+    std::unique_ptr<ax::IFileStream> openFileStream(std::string_view filePath, ax::IFileStream::Mode mode) const override;
 
     /**
-     * 根据传入的文件路径，打开虚拟文件流
-     * @param filePath
-     * @param mode
-     * @return
+     * 判断给定路径是否为 KGT 虚拟路径
+     * 虚拟路径格式: <type>/<fileIndex>/<resourceType>/<resourceIndex>.<ext>
+     * 例如: player/0/sound/0.wav, kgt/0/sound/13.wav, stage/1/pic/2.png
      */
-    std::unique_ptr<ax::IFileStream> openFileStream(std::string_view filePath, ax::IFileStream::Mode mode) const override;
+    static bool isKgtVirtualPath(std::string_view path);
 
 protected:
     std::string gameRootPath;

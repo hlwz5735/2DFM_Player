@@ -9,6 +9,7 @@
 #include "AudioEngine.h"
 #include "DemoScriptInterceptor.hpp"
 #include "GameConfig.hpp"
+#include "ResourcePool.hpp"
 #include "engine/KgtNode.hpp"
 
 USING_NS_AX;
@@ -23,13 +24,14 @@ bool GameDemo::init() {
 
 void GameDemo::onExit() {
     AudioEngine::stopAll();
-    AX_SAFE_DELETE(demo);
+    demo = nullptr;
     Node::onExit();
 }
 
 void GameDemo::load(int demoNo) {
-    this->demo = readDemoByNo(demoNo);
-    createTexturesForCommonResource(demo, 0);
+    auto demoPtr = ResourcePool::getInstance().loadDemo(demoNo);
+    this->demo = demoPtr.get();
+    createTexturesForCommonResource(demoPtr.get(), 0);
 
     for (int i = 1; i < demo->scripts.size(); ++i) {
         auto scriptNode = utils::createInstance<KgtNode>();
@@ -52,5 +54,6 @@ void GameDemo::unload() {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();
     }
-    AX_SAFE_DELETE(demo);
+    demo = nullptr;
+    ResourcePool::getInstance().purgeDemo();
 }

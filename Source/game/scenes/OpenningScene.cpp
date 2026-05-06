@@ -9,7 +9,7 @@
 #include "engine/Input.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameDemo.hpp"
-#include "game/GameManager.hpp"
+#include "game/ResourcePool.hpp"
 
 USING_NS_AX;
 
@@ -18,7 +18,7 @@ bool OpenningScene::init() {
         return false;
     }
 
-    auto kgtGame = GameManager::getInstance().getKgtGame();
+    auto kgtGame = ResourcePool::getInstance().getKgtGame();
 
     this->objDemo = utils::createInstance<GameDemo>();
     objDemo->load(kgtGame->getOpeningDemoNo());

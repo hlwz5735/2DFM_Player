@@ -32,7 +32,7 @@ std::string GameConfig::getGameBasePath() const {
     return data.at("gameBasePath").asString();
 }
 void GameConfig::setGameBasePath(std::string_view gamePath) {
-    data.emplace("gameBasePath", gamePath);
+    data["gameBasePath"] = std::string(gamePath);
 }
 
 std::string GameConfig::getKgtFileName() const {
@@ -42,5 +42,20 @@ std::string GameConfig::getKgtFileName() const {
     return data.at("kgtFileName").asString();
 }
 void GameConfig::setKgtFileName(std::string_view kgtFileName) {
-    data.emplace("kgtFileName", kgtFileName);
+    data["kgtFileName"] = std::string(kgtFileName);
+}
+
+bool GameConfig::getRememberKgtPath() const {
+    if (!data.contains("rememberKgtPath")) {
+        return false;
+    }
+    return data.at("rememberKgtPath").asBool();
+}
+
+void GameConfig::setRememberKgtPath(bool remember) {
+    data["rememberKgtPath"] = remember;
+}
+
+bool GameConfig::hasRememberedPath() const {
+    return getRememberKgtPath();
 }

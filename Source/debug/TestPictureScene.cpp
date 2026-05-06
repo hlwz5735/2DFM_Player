@@ -3,8 +3,9 @@
 #include "2dfm/CommonResource.hpp"
 #include "game/GameConfig.hpp"
 #include <axmol.h>
+#include <format>
 
-#include "game/GameManager.hpp"
+#include "game/ResourcePool.hpp"
 
 USING_NS_AX;
 
@@ -25,15 +26,13 @@ bool TestPictureScene::init() {
     GameConfig &gameConfig = GameConfig::getInstance();
     gameConfig.readAndInit();
 
-    auto kgt = readKgtFile();
+    auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+    auto kgt = ResourcePool::getInstance().loadKgtGame(kgtFilePath);
 
-    GameManager &gm = GameManager::getInstance();
-    gm.setKgtGame(kgt);
+    auto stagePtr = ResourcePool::getInstance().loadStage(0);
+    createTexturesForCommonResource(stagePtr.get(), 0);
 
-    auto stage = readStageByNo(0);
-    createTexturesForCommonResource(stage, 0);
-
-    this->cr = stage;
+    this->cr = stagePtr.get();
 
     auto keyboardListener = EventListenerKeyboard::create();
     keyboardListener->onKeyPressed = AX_CALLBACK_2(TestPictureScene::onKeyPressed, this);

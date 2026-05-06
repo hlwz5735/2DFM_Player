@@ -27,6 +27,8 @@
 
 #include "engine/Input.hpp"
 #include "engine/KgtFileUtil.hpp"
+#include "game/GameConfig.hpp"
+#include "game/scenes/EntryScene.hpp"
 #include "game/scenes/MainScene.hpp"
 
 #define USE_AUDIO_ENGINE 1
@@ -83,8 +85,26 @@ bool AppDelegate::applicationDidFinishLaunching() {
     glView->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height,
                                     ResolutionPolicy::SHOW_ALL);
     director->setClearColor(Color4F::BLACK);
-    // create a scene. it's an autorelease object
-    auto scene = utils::createInstance<MainScene>();
+
+    // Read config and decide initial scene
+    auto& gameConfig = GameConfig::getInstance();
+    gameConfig.readAndInit();
+
+    Scene* scene = nullptr;
+    if (gameConfig.hasRememberedPath()) {
+        // Verify the file still exists
+        auto fullPath = gameConfig.getGameBasePath() + "/" + gameConfig.getKgtFileName();
+        if (FileUtils::getInstance()->isFileExist(fullPath)) {
+            scene = utils::createInstance<MainScene>();
+        } else {
+            // File no longer exists, clear remembered flag and show entry scene
+            gameConfig.setRememberKgtPath(false);
+            gameConfig.save();
+            scene = utils::createInstance<EntryScene>();
+        }
+    } else {
+        scene = utils::createInstance<EntryScene>();
+    }
 
     // run
     director->runWithScene(scene);

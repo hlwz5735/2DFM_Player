@@ -9,7 +9,7 @@
 #include "engine/KgtNode.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameDemo.hpp"
-#include "game/GameManager.hpp"
+#include "game/ResourcePool.hpp"
 #include "game/KgtScriptInterceptor.hpp"
 
 USING_NS_AX;
@@ -18,7 +18,7 @@ bool TitleScene::init() {
     if (!Scene::init()) {
         return false;
     }
-    auto kgtGame = GameManager::getInstance().getKgtGame();
+    auto kgtGame = ResourcePool::getInstance().getKgtGame();
 
     objDemo = utils::createInstance<GameDemo>();
     objDemo->load(static_cast<int>(kgtGame->demoConfig.titleDemoId) - 1);
@@ -26,7 +26,7 @@ bool TitleScene::init() {
 
     cursorNode = utils::createInstance<KgtNode>();
     const auto interceptor = utils::createInstance<KgtScriptInterceptor>();
-    interceptor->setKgtGame(kgtGame);
+    interceptor->setKgtGame(kgtGame.get());
     interceptor->initRunningScript(kgtGame->titleCursorScriptId);
     cursorNode->addInterceptor(interceptor);
     cursorNode->setLogicPosition(kgtGame->getTitleStoryModePos());
@@ -53,7 +53,7 @@ void TitleScene::update(float deltaTime) {
     } else if (Input::getInstance().isButtonDown(Input::GameButton::D_LEFT)) {
         moveCursorPrev();
     }
-    const auto kgtGame = GameManager::getInstance().getKgtGame();
+    const auto kgtGame = ResourcePool::getInstance().getKgtGame();
     switch (cursorIdx) {
     case 0:
         cursorNode->setLogicPosition(kgtGame->getTitleStoryModePos());
@@ -87,7 +87,7 @@ void TitleScene::update(float deltaTime) {
 }
 
 void TitleScene::moveCursorNext() {
-    const auto kgtGame = GameManager::getInstance().getKgtGame();
+    const auto kgtGame = ResourcePool::getInstance().getKgtGame();
 
     if (cursorIdx == 0) {
         if (kgtGame->projectBaseConfig.enable1V1Mode) {
@@ -111,7 +111,7 @@ void TitleScene::moveCursorNext() {
 }
 
 void TitleScene::moveCursorPrev() {
-    const auto kgtGame = GameManager::getInstance().getKgtGame();
+    const auto kgtGame = ResourcePool::getInstance().getKgtGame();
 
     if (cursorIdx == 0) {
         if (kgtGame->projectBaseConfig.enableTeamMode) {

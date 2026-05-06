@@ -3,3 +3,4 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif ()
 
 add_subdirectory(libsndfile)
+add_subdirectory(lib2dfm_reader)

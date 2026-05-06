@@ -1,6 +1,7 @@
 #include "MainScene.hpp"
 #include <axmol.h>
 #include "2dfm/2dfmFileReader.hpp"
+#include "EntryScene.hpp"
 #include "OpenningScene.hpp"
 #include "debug/StageTestScene.hpp"
 #include "debug/TestAudioEngineScene.hpp"
@@ -8,6 +9,7 @@
 #include "engine/Input.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameManager.hpp"
+#include "game/ResourcePool.hpp"
 
 USING_NS_AX;
 
@@ -30,13 +32,16 @@ bool MainScene::init() {
     }
     // 此处开始是正式加载逻辑
     auto &gameConfig = GameConfig::getInstance();
-    gameConfig.readAndInit();
     try {
-        auto kgt = readKgtFile();
-        createTexturesForCommonResource(kgt, 0);
+        auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+        auto kgt = ResourcePool::getInstance().loadKgtGame(kgtFilePath);
+        if (!kgt) {
+            AXLOGE("Failed to load kgt game");
+            return false;
+        }
+        createTexturesForCommonResource(kgt.get(), 0);
         kgt->initBasicScriptInfos();
         GameManager::getInstance().init();
-        GameManager::getInstance().setKgtGame(kgt);
     } catch (...) {
         AXLOGE("Failed to read kgt file");
         return false;
@@ -87,7 +92,9 @@ bool MainScene::init() {
             // 点击范围判断检测
             if (rect.containsPoint(locationInNode)) {
                 auto scene = callback();
-                Director::getInstance()->replaceScene(scene);
+                if (scene) {
+                    Director::getInstance()->replaceScene(scene);
+                }
                 return true;
             }
             return false;
@@ -106,7 +113,7 @@ bool MainScene::init() {
 
 void MainScene::onEnterTransitionDidFinish() {
     Scene::onEnterTransitionDidFinish();
-    const auto kgt = GameManager::getInstance().getKgtGame();
+    const auto kgt = ResourcePool::getInstance().getKgtGame();
     if (kgt == nullptr) {
         AXLOGE("KGT is null");
         return;
@@ -136,6 +143,9 @@ void MainScene::initDebugScenes() {
     menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
     menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
     menuItems.emplace_back("AudioEngine 测试", []() { return ax::utils::createInstance<TestAudioEngineScene>(); });
+    menuItems.emplace_back("Select KGT File", []() -> ax::Scene* {
+        return ax::utils::createInstance<EntryScene>();
+    });
 }
 
 void MainScene::scrollViewDidScroll(extension::ScrollView *view) {

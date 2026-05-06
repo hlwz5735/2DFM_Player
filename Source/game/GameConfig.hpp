@@ -14,6 +14,10 @@ public:
     std::string getKgtFileName() const;
     void setKgtFileName(std::string_view kgtFileName);
 
+    bool getRememberKgtPath() const;
+    void setRememberKgtPath(bool remember);
+    bool hasRememberedPath() const;
+
     ax::Size getStageSize() const {
         return ax::Size{ static_cast<float>(stageWidth), static_cast<float>(stageHeight) };
     }

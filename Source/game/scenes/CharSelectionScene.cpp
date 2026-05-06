@@ -11,7 +11,7 @@
 #include "engine/KgtNode.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameDemo.hpp"
-#include "game/GameManager.hpp"
+#include "game/ResourcePool.hpp"
 #include "game/KgtScriptInterceptor.hpp"
 #include "game/PlayerNode.hpp"
 #include "game/PlayerScriptInterceptor.hpp"
@@ -25,7 +25,7 @@ bool CharSelectionScene::init() {
         return false;
     }
     cachedReadPlayers.reserve(CachedPlayerCount);
-    const auto kgtGame = GameManager::getInstance().getKgtGame();
+    const auto kgtGame = ResourcePool::getInstance().getKgtGame();
 
     rowCount = kgtGame->charSelectConfig.rowCount;
     columnCount = kgtGame->charSelectConfig.columnCount;
@@ -63,7 +63,7 @@ void CharSelectionScene::update(float delta) {
     objP1Cursor->setLogicPosition(cursorInitialPos + Vec2(colNo * boxSize.width, rowNo * boxSize.height));
 
     if (Input::getInstance().isAnyAttackButtonDown()) {
-        auto kgtGame = GameManager::getInstance().getKgtGame();
+        auto kgtGame = ResourcePool::getInstance().getKgtGame();
         if (!kgtGame->isPlayerInStoryMode(p1Idx)) {
             return;
         }
@@ -73,20 +73,16 @@ void CharSelectionScene::update(float delta) {
     }
 }
 void CharSelectionScene::onExit() {
-    while (!cachedReadPlayers.empty()) {
-        auto p = cachedReadPlayers.back();
-        delete p;
-        cachedReadPlayers.pop_back();
-    }
+    cachedReadPlayers.clear();
     Scene::onExit();
 }
 
 void CharSelectionScene::addCursorObj(int playerNo) {
-    const auto kgtGame = GameManager::getInstance().getKgtGame();
+    const auto kgtGame = ResourcePool::getInstance().getKgtGame();
 
     KgtNode *pCursor = utils::createInstance<KgtNode>();
     const auto interceptor = utils::createInstance<KgtScriptInterceptor>();
-    interceptor->setKgtGame(kgtGame);
+    interceptor->setKgtGame(kgtGame.get());
     interceptor->initRunningScript(playerNo == 1 ? kgtGame->player1CharSelCursorScriptId
                                                  : kgtGame->player2CharSelCursorScriptId);
     pCursor->addInterceptor(interceptor);
@@ -116,7 +112,7 @@ void CharSelectionScene::addPlayerShowcaseObj(int playerNo) {
     pNode->scheduleUpdate();
     this->addChild(pNode);
 
-    auto kgtGame = GameManager::getInstance().getKgtGame();
+    auto kgtGame = ResourcePool::getInstance().getKgtGame();
     if (playerNo == 1) {
         pNode->setLogicPosition(kgtGame->charSelectConfig.player1PortraitPos);
         objP1Showcase = pNode;
@@ -168,7 +164,7 @@ void CharSelectionScene::moveP1CursorDown() {
 }
 
 void CharSelectionScene::afterCursorMove(int playerNo) {
-    auto kgtGame = GameManager::getInstance().getKgtGame();
+    auto kgtGame = ResourcePool::getInstance().getKgtGame();
     if (playerNo == 1) {
         objP1Showcase->destroyManagedObjects();
         if (auto interceptor = dynamic_cast<PlayerScriptInterceptor *>(objP1Showcase->getInterceptor())) {
@@ -188,7 +184,7 @@ void CharSelectionScene::afterCursorMove(int playerNo) {
 }
 
 KgtPlayer *CharSelectionScene::readPlayer(int playerId) {
-    auto kgtGame = GameManager::getInstance().getKgtGame();
+    auto kgtGame = ResourcePool::getInstance().getKgtGame();
     auto playerName = kgtGame->playerNames[playerId];
     auto i = std::find_if(cachedReadPlayers.begin(), cachedReadPlayers.end(), [&playerName](const KgtPlayer *p) {
         return p->playerName == playerName;
@@ -198,9 +194,10 @@ KgtPlayer *CharSelectionScene::readPlayer(int playerId) {
     }
 
     // TODO: 目前尚未使用 CachedPlayerCount 限制读取玩家数据的数量
-    auto player = readPlayerByNo(playerId);
-    player->initBasicScriptInfos();
-    createTexturesForCommonResource(player, 0);
-    cachedReadPlayers.emplace_back(player);
-    return player;
+    auto playerPtr = ResourcePool::getInstance().loadPlayer(playerId);
+    if (!playerPtr) return nullptr;
+    playerPtr->initBasicScriptInfos();
+    createTexturesForCommonResource(playerPtr.get(), 0);
+    cachedReadPlayers.emplace_back(playerPtr.get());
+    return playerPtr.get();
 }
