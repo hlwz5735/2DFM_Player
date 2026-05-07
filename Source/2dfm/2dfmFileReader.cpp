@@ -356,7 +356,9 @@ KgtPlayer *readPlayerByNo(int playerNo) {
 
 void createTexturesForCommonResource(CommonResource *cr, int paletteNo) {
     for (auto tex : cr->pictures) {
-        delete tex;
+        if (tex) {
+            tex->release();
+        }
     }
     cr->pictures.clear();
     for (auto &sf : cr->spriteFrames) {

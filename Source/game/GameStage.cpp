@@ -35,14 +35,19 @@ void GameStage::update(float delta) {
 }
 
 void GameStage::onExit() {
-    stage = nullptr;
+    AudioEngine::stopAll();
+    while (!scriptNodes.empty()) {
+        this->removeChild(scriptNodes.back());
+        scriptNodes.pop_back();
+    }
+    stage.reset();
     Node::onExit();
 }
 
 void GameStage::load(int stageNo) {
-    auto stagePtr = ResourcePool::getInstance().loadStage(stageNo);
-    this->stage = stagePtr.get();
-    createTexturesForCommonResource(stagePtr.get(), 0);
+    stage = ResourcePool::getInstance().loadStage(stageNo);
+    if (!stage) return;
+    createTexturesForCommonResource(stage.get(), 0);
     cameraNode->reset();
 
     for (int i = 1; i < stage->scripts.size(); ++i) {
@@ -91,6 +96,5 @@ void GameStage::unload() {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();
     }
-    stage = nullptr;
-    ResourcePool::getInstance().purgeStage();
+    stage.reset();
 }

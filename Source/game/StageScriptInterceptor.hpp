@@ -2,16 +2,17 @@
 
 #include "2dfm/KgtStage.hpp"
 #include "ScriptInterceptorComponent.hpp"
+#include <memory>
 
 class StageScriptInterceptor : public ScriptInterceptorComponent {
 public:
     void update(float deltaTime) override;
 
-    const CommonResource *getCommonResource() const override { return stageData; }
+    const CommonResource *getCommonResource() const override { return stageData.get(); }
 
-    void setStageData(KgtStage *stage);
+    void setStageData(std::shared_ptr<KgtStage> stage);
 protected:
     void interceptShowPicCmd(const _2dfm::ShowPic *cmd) override;
 private:
-    KgtStage *stageData = nullptr;
+    std::shared_ptr<KgtStage> stageData;
 };

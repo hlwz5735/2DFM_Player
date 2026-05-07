@@ -58,9 +58,9 @@ void PlayerScriptInterceptor::update(float deltaTime) {
     }
 }
 
-void PlayerScriptInterceptor::setPlayerData(KgtPlayer *playerData) {
+void PlayerScriptInterceptor::setPlayerData(std::shared_ptr<KgtPlayer> data) {
     this->stop();
-    this->playerData = playerData;
+    this->playerData = std::move(data);
 }
 
 PlayerNode *PlayerScriptInterceptor::getPlayerNode() const {

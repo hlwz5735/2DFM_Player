@@ -6,10 +6,12 @@
 #define CHARSELECTIONSCENE_HPP
 
 #include <axmol.h>
+#include <memory>
+#include <vector>
 
 class KgtNode;
 class PlayerNode;
-class KgtPlayer;
+struct KgtPlayer;
 
 class CharSelectionScene : public ax::Scene {
 public:
@@ -27,7 +29,7 @@ private:
     /// 光标移动后的回调
     void afterCursorMove(int playerNo);
 
-    KgtPlayer *readPlayer(int playerId);
+    std::shared_ptr<KgtPlayer> readPlayer(int playerId);
 
     class GameDemo *objDemo = nullptr;
 
@@ -43,7 +45,7 @@ private:
     ax::Vec2 cursorInitialPos = ax::Vec2::ZERO;
 
     /// 缓存的已读的玩家数
-    std::vector<KgtPlayer *> cachedReadPlayers;
+    std::vector<std::shared_ptr<KgtPlayer>> cachedReadPlayers;
 };
 
 #endif //CHARSELECTIONSCENE_HPP

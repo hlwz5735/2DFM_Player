@@ -44,9 +44,9 @@ void StageScriptInterceptor::update(float deltaTime) {
     }
 }
 
-void StageScriptInterceptor::setStageData(KgtStage *stage) {
+void StageScriptInterceptor::setStageData(std::shared_ptr<KgtStage> stage) {
     this->stop();
-    this->stageData = stage;
+    this->stageData = std::move(stage);
 }
 
 void StageScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {

@@ -183,10 +183,10 @@ void CharSelectionScene::afterCursorMove(int playerNo) {
     }
 }
 
-KgtPlayer *CharSelectionScene::readPlayer(int playerId) {
+std::shared_ptr<KgtPlayer> CharSelectionScene::readPlayer(int playerId) {
     auto kgtGame = ResourcePool::getInstance().getKgtGame();
     auto playerName = kgtGame->playerNames[playerId];
-    auto i = std::find_if(cachedReadPlayers.begin(), cachedReadPlayers.end(), [&playerName](const KgtPlayer *p) {
+    auto i = std::find_if(cachedReadPlayers.begin(), cachedReadPlayers.end(), [&playerName](const std::shared_ptr<KgtPlayer> &p) {
         return p->playerName == playerName;
     });
     if (i != cachedReadPlayers.end()) {
@@ -198,6 +198,6 @@ KgtPlayer *CharSelectionScene::readPlayer(int playerId) {
     if (!playerPtr) return nullptr;
     playerPtr->initBasicScriptInfos();
     createTexturesForCommonResource(playerPtr.get(), 0);
-    cachedReadPlayers.emplace_back(playerPtr.get());
-    return playerPtr.get();
+    cachedReadPlayers.emplace_back(playerPtr);
+    return playerPtr;
 }

@@ -6,6 +6,7 @@
 #define GAMESTAGE_HPP
 
 #include <axmol.h>
+#include <memory>
 
 struct KgtStage;
 
@@ -18,7 +19,7 @@ public:
     void load(int stageNo);
     void unload();
 private:
-    KgtStage *stage = nullptr;
+    std::shared_ptr<KgtStage> stage;
     class StageCameraNode *cameraNode = nullptr;
     std::vector<ax::Node*> scriptNodes;
 };

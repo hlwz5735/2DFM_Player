@@ -7,6 +7,7 @@
 
 #include "2dfm/KgtDemo.hpp"
 #include <axmol.h>
+#include <memory>
 
 class GameDemo : public ax::Node {
 public:
@@ -17,7 +18,7 @@ public:
     void unload();
 private:
     std::vector<ax::Node *> scriptNodes;
-    KgtDemo *demo = nullptr;
+    std::shared_ptr<KgtDemo> demo;
 };
 
 #endif //GAMEDEMO_HPP

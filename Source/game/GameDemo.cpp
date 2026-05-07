@@ -24,14 +24,18 @@ bool GameDemo::init() {
 
 void GameDemo::onExit() {
     AudioEngine::stopAll();
-    demo = nullptr;
+    while (!scriptNodes.empty()) {
+        this->removeChild(scriptNodes.back());
+        scriptNodes.pop_back();
+    }
+    demo.reset();
     Node::onExit();
 }
 
 void GameDemo::load(int demoNo) {
-    auto demoPtr = ResourcePool::getInstance().loadDemo(demoNo);
-    this->demo = demoPtr.get();
-    createTexturesForCommonResource(demoPtr.get(), 0);
+    demo = ResourcePool::getInstance().loadDemo(demoNo);
+    if (!demo) return;
+    createTexturesForCommonResource(demo.get(), 0);
 
     for (int i = 1; i < demo->scripts.size(); ++i) {
         auto scriptNode = utils::createInstance<KgtNode>();
@@ -54,6 +58,5 @@ void GameDemo::unload() {
         this->removeChild(scriptNodes.back());
         scriptNodes.pop_back();
     }
-    demo = nullptr;
-    ResourcePool::getInstance().purgeDemo();
+    demo.reset();
 }

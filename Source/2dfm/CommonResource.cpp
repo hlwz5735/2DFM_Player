@@ -4,7 +4,9 @@
 
 CommonResource::~CommonResource() {
     for (auto t : this->pictures) {
-        delete t;
+        if (t) {
+            t->release();
+        }
     }
     this->pictures.clear();
     this->scripts.clear();

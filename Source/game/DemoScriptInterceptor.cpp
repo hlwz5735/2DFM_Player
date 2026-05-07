@@ -44,7 +44,7 @@ void DemoScriptInterceptor::update(float deltaTime) {
     }
 }
 
-void DemoScriptInterceptor::setDemoData(KgtDemo *data) {
+void DemoScriptInterceptor::setDemoData(std::shared_ptr<KgtDemo> data) {
     this->stop();
-    this->demoData = data;
+    this->demoData = std::move(data);
 }

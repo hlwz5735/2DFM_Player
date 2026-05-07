@@ -6,6 +6,7 @@
 #define PLAYERSCRIPTINTERCEPTOR_HPP
 
 #include <axmol.h>
+#include <memory>
 
 #include "2dfm/KgtPlayer.hpp"
 #include "ScriptInterceptorComponent.hpp"
@@ -14,14 +15,14 @@ class PlayerScriptInterceptor : public ScriptInterceptorComponent {
 public:
     void update(float delta) override;
 
-    const CommonResource *getCommonResource() const override { return playerData; }
+    const CommonResource *getCommonResource() const override { return playerData.get(); }
 
-    void setPlayerData(KgtPlayer *playerData);
+    void setPlayerData(std::shared_ptr<KgtPlayer> playerData);
     class PlayerNode *getPlayerNode() const;
 protected:
     void interceptObjectCmd(const _2dfm::ObjectCmd *cmd) const override;
 private:
-    KgtPlayer *playerData = nullptr;
+    std::shared_ptr<KgtPlayer> playerData;
     mutable class PlayerNode *playerNode = nullptr;
 };
 

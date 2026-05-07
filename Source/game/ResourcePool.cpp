@@ -253,8 +253,10 @@ std::shared_ptr<KgtPlayer> ResourcePool::getPlayer(int playerNo) const {
 std::shared_ptr<KgtDemo> ResourcePool::loadDemo(int demoNo) {
     if (cachedDemo && cachedDemoNo == demoNo) return cachedDemo;
 
-    // 切换 Demo 时释放旧的
-    purgeDemo();
+    // 加载新 Demo，旧的由 shared_ptr 自动管理生命周期
+    // 只要还有持有者（如 GameDemo、Interceptor），旧资源就不会释放
+    cachedDemo.reset();
+    cachedDemoNo = -1;
 
     auto kgt = getKgtGame();
     if (!kgt || demoNo < 0 || demoNo >= (int)kgt->demoNames.size()) return nullptr;
@@ -298,8 +300,9 @@ std::shared_ptr<KgtDemo> ResourcePool::getDemo(int demoNo) const {
 std::shared_ptr<KgtStage> ResourcePool::loadStage(int stageNo) {
     if (cachedStage && cachedStageNo == stageNo) return cachedStage;
 
-    // 切换 Stage 时释放旧的
-    purgeStage();
+    // 加载新 Stage，旧的由 shared_ptr 自动管理生命周期
+    cachedStage.reset();
+    cachedStageNo = -1;
 
     auto kgt = getKgtGame();
     if (!kgt || stageNo < 0 || stageNo >= (int)kgt->stageNames.size()) return nullptr;
