@@ -7,7 +7,8 @@
 #include <unordered_map>
 #include "Singleton.hpp"
 
-#include "EventKeyboard.h"
+#include <EventKeyboard.h>
+#include <EventListenerKeyboard.h>
 
 class Input final : public Singleton<Input> {
 public:

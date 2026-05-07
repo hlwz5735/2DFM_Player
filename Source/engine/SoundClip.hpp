@@ -1,9 +1,9 @@
 #pragma once
 
+#include "2dfm/2dfmCommon.hpp"
+
 #include <cstdint>
 #include <string>
-
-#include "2dfm/2dfmCommon.hpp"
 
 namespace _2dfm {
 class Sound;
