@@ -85,7 +85,7 @@ void SeamlessScrollComponent::updateSprite() {
         if (seedHeight >= stageSize.height) {
             vertSubs = 2;
         } else {
-            vertSubs = stageSize.height / seedHeight + 2;
+            vertSubs = stageSize.height / seedHeight + 3;
         }
     }
 
@@ -126,7 +126,7 @@ void SeamlessScrollComponent::lateUpdate(float delta) {
     if (this->horiSeamless || this->vertSeamless) {
         auto nodePos = getOwner()->spritePNode->getPosition();
         float dx = nodePos.x;
-        int dy = nodePos.y;
+        float dy = nodePos.y;
         if (this->horiSeamless) {
             if (dx >= 0) {
                 dx -= ((static_cast<int>(dx) / seedWidth) + 1) * seedWidth;
@@ -136,11 +136,13 @@ void SeamlessScrollComponent::lateUpdate(float delta) {
         }
         if (this->vertSeamless) {
             if (dy >= 0) {
-                dy = dy % seedHeight - seedHeight;
+                dy = fmodf(dy, seedHeight) - seedHeight;
             } else if (dy < -seedHeight) {
-                dy = dy % seedHeight;
+                dy = fmodf(dy, seedHeight);
             }
+            // anchor(0,1) 下内容向下延伸，需比横向多提升一个分段
+            dy += seedHeight;
         }
-        getOwner()->spritePNode->setPosition(Vec2(dx, nodePos.y));
+        getOwner()->spritePNode->setPosition(Vec2(dx, dy));
     }
 }
