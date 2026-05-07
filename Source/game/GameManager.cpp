@@ -9,6 +9,7 @@ USING_NS_AX;
 
 namespace {
     static uint64_t customShaderId = 0;
+    static uint64_t seamlessShaderId = 0;
 }
 
 bool GameManager::init() {
@@ -16,10 +17,16 @@ bool GameManager::init() {
     customShaderId = programManager->registerCustomProgram(
         "custom/2dfmPositionTextureColor_vs"sv, "custom/2dfmPositionTextureColor_fs"sv, VertexLayoutType::Sprite);
 
+    seamlessShaderId = programManager->registerCustomProgram(
+        "custom/seamlessScroll_vs"sv, "custom/seamlessScroll_fs"sv, VertexLayoutType::Sprite);
+
     auto programState = new backend::ProgramState(ProgramManager::getInstance()->loadProgram(customShaderId));
     programState->autorelease();
     return true;
 }
 uint64_t GameManager::getCustomShaderProgramId() const {
     return customShaderId;
+}
+uint64_t GameManager::getSeamlessShaderProgramId() const {
+    return seamlessShaderId;
 }

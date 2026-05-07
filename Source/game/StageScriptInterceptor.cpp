@@ -50,12 +50,12 @@ void StageScriptInterceptor::setStageData(std::shared_ptr<KgtStage> stage) {
 }
 
 void StageScriptInterceptor::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {
+    auto oldTex = spriteComponent->getTexture();
+    const auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
+
     ScriptInterceptorComponent::interceptShowPicCmd(cmd);
 
     if (auto owner = dynamic_cast<StageNode *>(_owner)) {
-        auto oldTex = spriteComponent->getTexture();
-        auto tex = getCommonResource()->pictures.at(cmd->getPicIdx());
-
         auto seamlessComp = owner->getSeamlessScrollComp();
         if (seamlessComp && oldTex != tex) {
             seamlessComp->updateSprite();

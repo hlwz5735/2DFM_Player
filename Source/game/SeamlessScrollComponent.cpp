@@ -5,6 +5,7 @@
 #include "SeamlessScrollComponent.hpp"
 
 #include "GameConfig.hpp"
+#include "GameManager.hpp"
 #include "engine/KgtNode.hpp"
 #include <axmol.h>
 
@@ -25,16 +26,22 @@ void SeamlessScrollComponent::onAdd() {
     AXASSERT(seedSprite != nullptr, "seedSprite can't be null.");
 }
 void SeamlessScrollComponent::onExit() {
-    KgtComponent::onExit();
+    // 清理铺贴精灵
+    if (tileSprite) {
+        getOwner()->spritePNode->removeChild(tileSprite);
+        tileSprite = nullptr;
+    }
     if (seedSprite) {
         seedSprite->release();
     }
+    KgtComponent::onExit();
 }
 
 void SeamlessScrollComponent::updateSprite() {
-    // 移除旧内容
-    if (rootNode) {
-        getOwner()->spritePNode->removeChild(rootNode);
+    // 移除旧精灵
+    if (tileSprite) {
+        getOwner()->spritePNode->removeChild(tileSprite);
+        tileSprite = nullptr;
     }
     // 获取纹理长宽信息（目前2DFM使用的精灵帧都是全幅纹理）
     const auto tex = seedSprite->getSpriteFrame()->getTexture();
@@ -42,9 +49,11 @@ void SeamlessScrollComponent::updateSprite() {
         return;
     }
     // 设置种子宽高
-    const auto &r = tex->getContentSizeInPixels();
+    const auto& r = tex->getContentSizeInPixels();
     seedWidth = r.width;
     seedHeight = r.height;
+
+    // 着色器内 fract() 自动 wrap，无需设置纹理 REPEAT
 
     auto cx = seedSprite->getPosition().x;
     auto cy = seedSprite->getPosition().y;
@@ -80,29 +89,28 @@ void SeamlessScrollComponent::updateSprite() {
         }
     }
 
-    rootNode = utils::createInstance<Node>();
-    rootNode->setPosition(cx, cy);
+    // 单个精灵 + 自定义着色器 u_tileScale 控制平铺，替代 N×M 子精灵网格
+    tileSprite = utils::createInstance<Sprite>();
+    tileSprite->setAnchorPoint(Vec2{0, 1});
+    tileSprite->setSpriteFrame(seedSprite->getSpriteFrame());
+    tileSprite->setTextureRect({0, 0, static_cast<float>(seedWidth), static_cast<float>(seedHeight)});
+    tileSprite->setContentSize(
+        {static_cast<float>(seedWidth * horiSubs), static_cast<float>(seedHeight * vertSubs)});
+    tileSprite->setProgramStateByProgramId(GameManager::getInstance().getSeamlessShaderProgramId());
 
-    for (int i = 0; i < vertSubs; ++i) {
-        auto rowNode = utils::createInstance<Node>();
-        rowNode->setName(std::format("seamless_row_{}", i));
+    // 设置着色器 uniform：平铺倍数
+    auto ps = tileSprite->getProgramState();
+    auto loc = ps->getUniformLocation("u_tileScale");
+    float tileScale[2] = {static_cast<float>(horiSubs), static_cast<float>(vertSubs)};
+    ps->setUniform(loc, tileScale, sizeof(tileScale));
 
-        for (int j = 0; j <= horiSubs; ++j) {
-            auto tileNode = utils::createInstance<Sprite>();
-            tileNode->setName(std::format("seamless_tile_{}", i));
-            tileNode->setAnchorPoint(Vec2{0, 1});
-            tileNode->setSpriteFrame(seedSprite->getSpriteFrame());
-            tileNode->setPosition(j * seedWidth, i * seedHeight);
-            tileNode->setOpacity(seedSprite->getOpacity());
-            tileNode->setBlendFunc(seedSprite->getBlendFunc());
-            tileNode->setFlippedX(seedSprite->isFlippedX());
-            tileNode->setFlippedY(seedSprite->isFlippedY());
+    tileSprite->setPosition(cx, cy);
+    tileSprite->setOpacity(seedSprite->getOpacity());
+    tileSprite->setBlendFunc(seedSprite->getBlendFunc());
+    tileSprite->setFlippedX(seedSprite->isFlippedX());
+    tileSprite->setFlippedY(seedSprite->isFlippedY());
 
-            rowNode->addChild(tileNode);
-        }
-        rootNode->addChild(rowNode);
-    }
-    getOwner()->spritePNode->addChild(rootNode);
+    getOwner()->spritePNode->addChild(tileSprite);
     if (seedSprite->isVisible()) {
         seedSprite->setVisible(false);
     }

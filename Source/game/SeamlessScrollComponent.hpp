@@ -28,7 +28,7 @@ private:
     bool horiSeamless = false;
     bool vertSeamless = false;
     ax::Sprite *seedSprite = nullptr;
-    ax::Node *rootNode = nullptr;
+    ax::Sprite *tileSprite = nullptr;
 };
 
 #endif //SEAMLESSSCROLLCOMPONENT_HPP

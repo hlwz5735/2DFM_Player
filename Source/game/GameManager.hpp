@@ -22,6 +22,7 @@ public:
     bool init();
 
     uint64_t getCustomShaderProgramId() const;
+    uint64_t getSeamlessShaderProgramId() const;
 };
 
 #endif //GAMEMANAGER_HPP
