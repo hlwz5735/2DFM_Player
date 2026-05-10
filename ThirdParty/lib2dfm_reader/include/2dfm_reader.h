@@ -167,6 +167,102 @@ typedef struct Kgt2dfmStageConfig {
     int32_t bgmSoundId;
 } Kgt2dfmStageConfig;
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Player 文件特有数据结构
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** 出招指令项 (82 字节) */
+typedef struct Kgt2dfmCommandItem {
+    char    name[32];
+    int16_t timeWindow;
+    int16_t airScriptId;
+    int16_t standNearScriptId;
+    int16_t standFarScriptId;
+    int16_t crouchScriptId;
+    int16_t cmdData[10];
+    int16_t cmdExtraData[10];
+} Kgt2dfmCommandItem;
+
+/** 投掷反应项 (6 字节) */
+typedef struct Kgt2dfmPlayerThrowAction {
+    int16_t picNo;
+    int16_t offsetX;
+    int16_t offsetY;
+} Kgt2dfmPlayerThrowAction;
+
+/** AI 指令 (7 字节) */
+typedef struct Kgt2dfmAiCommand {
+    uint8_t head;
+    uint8_t dir;
+    uint8_t flag;
+    int16_t cmdIdx;
+    int16_t delayTime;
+} Kgt2dfmAiCommand;
+
+#define KGT2DFM_AI_SLOT_CMD_COUNT 10
+#define KGT2DFM_AI_SLOT_COUNT     100
+
+/** AI 档位 (111 字节) */
+typedef struct Kgt2dfmAiSlot {
+    char              name[32];
+    uint8_t           aiAirFlag;
+    uint8_t           aiProbability;
+    int16_t           rangeMin;
+    int16_t           rangeMax;
+    uint8_t           aiUnusedGap[3];
+    Kgt2dfmAiCommand  aiCmds[KGT2DFM_AI_SLOT_CMD_COUNT];
+} Kgt2dfmAiSlot;
+
+#define KGT2DFM_STORY_ITEM_SIZE  206
+#define KGT2DFM_STORY_ITEM_COUNT 100
+
+/** 故事项原始数据 (206 字节) */
+typedef struct Kgt2dfmStoryItemRaw {
+    uint8_t itemType;
+    uint8_t rawData[205];
+} Kgt2dfmStoryItemRaw;
+
+/** 故事 CPU 配置 (26 字节) */
+typedef struct Kgt2dfmStoryCpuConfig {
+    int32_t flags;
+    uint8_t cpuId;
+    uint8_t cpuLevel;
+    uint8_t atkBitmap;
+    int16_t startXPos;
+    int16_t unknown2B;
+    uint8_t showTimeSecond;
+    uint8_t showTimeExtraRandomSecond;
+    uint8_t showWhenWhosHpIsShort;
+    uint8_t showWhenWhosHpIsLessThan;
+    uint8_t winPoint;
+    uint8_t addHpWhenKo;
+    uint8_t addSpWhenKo;
+    uint8_t winPointTarget;
+    uint8_t compareWithWhoWhenTimeout;
+    uint8_t winPointGetWhenTimeout;
+    uint8_t unknown5B[5];
+} Kgt2dfmStoryCpuConfig;
+
+/** 角色属性配置 */
+typedef struct Kgt2dfmPlayerStatsConfig {
+    int16_t hpYPos;
+    int16_t nearThreshold;
+    uint8_t defenceAdjustRate;
+    uint8_t hpAdjustStartPos;
+    uint8_t hpAdjustRate;
+    uint8_t comboAdjustRate;
+    uint8_t defenceKey;
+    int32_t hp;
+    int32_t sp;
+    int32_t maxSpSlot;
+    int32_t playerFlags;
+    uint8_t unknownGap4B[4];
+    int16_t spAddWhenIAtk;
+    int16_t spAddWhenEnemyAtk;
+    int16_t initSpSlot;
+    uint8_t unknownGap5B[5];
+} Kgt2dfmPlayerStatsConfig;
+
 #pragma pack(pop)
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -241,6 +337,25 @@ typedef struct Kgt2dfmGame {
 typedef struct Kgt2dfmPlayer {
     char playerName[256];   /* GBK */
     Kgt2dfmCommonResource common;
+
+    /* ── Player 特有数据 ── */
+    Kgt2dfmCommandItem*         commands;
+    int32_t                     commandCount;
+
+    int32_t*                    hurtBinds;
+    int32_t                     hurtBindCount;
+
+    Kgt2dfmPlayerThrowAction*   throwActions;
+    int32_t                     throwActionCount;
+
+    Kgt2dfmAiSlot               aiSlots[KGT2DFM_AI_SLOT_COUNT];
+
+    int32_t                     age;
+    uint8_t                     sexFlag;
+
+    Kgt2dfmPlayerStatsConfig    statsConfig;
+
+    Kgt2dfmStoryItemRaw         storyItems[KGT2DFM_STORY_ITEM_COUNT];
 } Kgt2dfmPlayer;
 
 /** Demo 文件解析结果 */

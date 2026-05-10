@@ -204,14 +204,11 @@ if (NOT _AX_USE_PREBUILT)
     target_link_libraries(${APP_NAME} ${_AX_CORE_LIB})
 endif()
 
-target_link_libraries(${APP_NAME} Iconv lib2dfm_reader)
+target_link_libraries(${APP_NAME} lib2dfm_reader)
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(${APP_NAME} Iconv libsndfile_ext)
+    target_link_libraries(${APP_NAME} Iconv)
     add_custom_command(TARGET ${APP_NAME}
             POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/libsndfile/lib/windows/x64/sndfile.dll"
-            $<TARGET_FILE_DIR:${APP_NAME}>
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:lib2dfm_reader>
             $<TARGET_FILE_DIR:${APP_NAME}>

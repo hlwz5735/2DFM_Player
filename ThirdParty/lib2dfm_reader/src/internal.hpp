@@ -86,6 +86,15 @@ struct RawProjectBaseConfig {
 
 #pragma pack(pop)
 
+// 编译时验证结构体大小
+static_assert(sizeof(Kgt2dfmCommandItem) == 82, "Kgt2dfmCommandItem size mismatch");
+static_assert(sizeof(Kgt2dfmPlayerThrowAction) == 6, "Kgt2dfmPlayerThrowAction size mismatch");
+static_assert(sizeof(Kgt2dfmAiCommand) == 7, "Kgt2dfmAiCommand size mismatch");
+static_assert(sizeof(Kgt2dfmAiSlot) == 111, "Kgt2dfmAiSlot size mismatch");
+static_assert(sizeof(Kgt2dfmStoryItemRaw) == 206, "Kgt2dfmStoryItemRaw size mismatch");
+static_assert(sizeof(Kgt2dfmStoryCpuConfig) == 26, "Kgt2dfmStoryCpuConfig size mismatch");
+static_assert(sizeof(Kgt2dfmPlayerStatsConfig) == 40, "Kgt2dfmPlayerStatsConfig size mismatch");
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * 公共资源解析辅助
  * ═══════════════════════════════════════════════════════════════════════════ */

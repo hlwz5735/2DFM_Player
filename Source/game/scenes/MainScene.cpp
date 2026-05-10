@@ -6,6 +6,7 @@
 #include "debug/StageTestScene.hpp"
 #include "debug/TestAudioEngineScene.hpp"
 #include "debug/TestPictureScene.hpp"
+#include "debug/PlayerTestScene.hpp"
 #include "engine/Input.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameManager.hpp"
@@ -140,6 +141,7 @@ void MainScene::menuCloseCallback(Object *sender) {
 
 void MainScene::initDebugScenes() {
     menuItems.emplace_back("正常游戏场景", [] { return utils::createInstance<OpenningScene>(); });
+    menuItems.emplace_back("角色测试场景", []() { return ax::utils::createInstance<PlayerTestScene>(); });
     menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
     menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
     menuItems.emplace_back("AudioEngine 测试", []() { return ax::utils::createInstance<TestAudioEngineScene>(); });
