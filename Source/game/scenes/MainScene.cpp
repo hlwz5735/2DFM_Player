@@ -109,6 +109,9 @@ bool MainScene::init() {
     statusLabel->setPosition(visibleSize.width / 2, visibleSize.height - 16);
     this->addChild(statusLabel, 2);
 
+    // 进入主菜单时自动加载配置中的 KGT；若池中已加载同路径则直接跳过（幂等）
+    loadKgtFromConfig();
+
     return true;
 }
 
@@ -182,18 +185,6 @@ void MainScene::initDebugScenes() {
         return creator();
     };
 
-    menuItems.emplace_back("加载 KGT", [this]() -> ax::Scene * {
-        this->loadKgtFromConfig();
-        return nullptr;  // 加载后停留在菜单，由用户选择后续场景
-    });
-    menuItems.emplace_back("卸载 KGT", [this]() -> ax::Scene * {
-        ResourcePool::getInstance().unloadAll();
-        if (this->statusLabel) {
-            this->statusLabel->setString("KGT 已卸载，点“加载 KGT”重新加载");
-        }
-        AXLOGI("[MainScene] kgt unloaded by user");
-        return nullptr;
-    });
     menuItems.emplace_back("正常游戏场景", [requireLoaded] {
         return requireLoaded([] { return utils::createInstance<OpenningScene>(); });
     });
@@ -209,7 +200,15 @@ void MainScene::initDebugScenes() {
     menuItems.emplace_back("AudioEngine 测试", [requireLoaded] {
         return requireLoaded([] { return ax::utils::createInstance<TestAudioEngineScene>(); });
     });
-    menuItems.emplace_back("Select KGT File", []() -> ax::Scene * { return ax::utils::createInstance<EntryScene>(); });
+    menuItems.emplace_back("选择加载 KGT", []() -> ax::Scene * { return ax::utils::createInstance<EntryScene>(); });
+    menuItems.emplace_back("卸载 KGT", [this]() -> ax::Scene * {
+        ResourcePool::getInstance().unloadAll();
+        if (this->statusLabel) {
+            this->statusLabel->setString("KGT 已卸载，重新进入场景或重启后自动加载");
+        }
+        AXLOGI("[MainScene] kgt unloaded by user");
+        return nullptr;
+    });
 }
 
 void MainScene::scrollViewDidScroll(extension::ScrollView *view) {
