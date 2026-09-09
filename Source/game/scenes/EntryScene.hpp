@@ -13,4 +13,5 @@ private:
     bool rememberChecked = false;
     ax::Label* openBtnLabel = nullptr;
     ax::Label* checkboxLabel = nullptr;
+    ax::Label* backBtnLabel = nullptr;  // 返回菜单按钮
 };

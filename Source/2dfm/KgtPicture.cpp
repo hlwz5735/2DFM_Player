@@ -184,6 +184,10 @@ void KgtPicture::setFrom2dfmPicture(_2dfm::Picture *picture) {
     }
     rawData = static_cast<byte *>(malloc(picSize));
     memcpy(rawData, ppic, picSize);
+    if (compressed) {
+        // 解压出的临时缓冲已拷贝完成，释放，避免每帧泄漏
+        free(content);
+    }
 }
 
 void KgtPicture::setSharedPalettes(const std::array<KgtPalette *, 8> &palettes) {

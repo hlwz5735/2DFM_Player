@@ -16,6 +16,9 @@ public:
 
     void load(int demoNo);
     void unload();
+
+    /// DEMO 数据是否已成功加载
+    bool isLoaded() const { return demo != nullptr; }
 private:
     std::vector<ax::Node *> scriptNodes;
     std::shared_ptr<KgtDemo> demo;

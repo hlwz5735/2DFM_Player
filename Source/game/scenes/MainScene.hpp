@@ -42,6 +42,12 @@ public:
 private:
     void initDebugScenes();
 
+    /// 加载配置中记录的 KGT（由“加载 KGT”菜单项手动触发）。成功返回 true
+    bool loadKgtFromConfig();
+
+    /// 顶部 KGT 路径/状态栏
+    ax::Label *statusLabel = nullptr;
+
     // TODO: 声音资源的加载和卸载应该专门交给 SceneManager 类去处理
 
     std::vector<std::pair<std::string, std::function<ax::Scene *()>>> menuItems;

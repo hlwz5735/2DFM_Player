@@ -2,6 +2,7 @@
 #include "2dfm_reader.h"
 #include "2dfmCommon.hpp"
 #include "KgtPalette.hpp"
+#include "engine/FileUtil.hpp"
 #include "engine/MyString.hpp"
 #include "engine/SoundClip.hpp"
 
@@ -89,7 +90,7 @@ void setCommonResource(CommonResource *result, Kgt2dfmCommonResource *cr) {
 // ==================== KGT 文件读取 ====================
 
 KgtGame *readKgtFile(const std::string& filepath) {
-    auto file = fopen(filepath.c_str(), "rb");
+    auto file = fopenUtf8(filepath, "rb");
     if (!file) {
         throw std::runtime_error("open kgt file failed");
     }
@@ -167,7 +168,7 @@ KgtGame *readKgtFile() {
 // ==================== DEMO 文件读取 ====================
 
 KgtDemo *readDemoFile(int demoNo, const std::string &filepath) {
-    auto file = fopen(filepath.c_str(), "rb");
+    auto file = fopenUtf8(filepath, "rb");
     if (!file) {
         throw std::runtime_error("open demo file failed");
     }
@@ -204,7 +205,7 @@ KgtDemo *readDemoByNo(int demoNo) {
 // ==================== Stage 文件读取 ====================
 
 KgtStage *readStageFile(int stageNo, const std::string &filepath) {
-    auto file = fopen(filepath.c_str(), "rb");
+    auto file = fopenUtf8(filepath, "rb");
     if (!file) {
         throw std::runtime_error("open stage file failed");
     }
@@ -241,7 +242,7 @@ KgtStage *readStageByNo(int stageNo) {
 // ==================== Player 文件读取 ====================
 
 KgtPlayer *readPlayerFile(int playerNo, const std::string &filepath) {
-    auto file = fopen(filepath.c_str(), "rb");
+    auto file = fopenUtf8(filepath, "rb");
     if (!file) {
         throw std::runtime_error("open player file failed");
     }
@@ -438,8 +439,16 @@ void createTexturesForCommonResource(CommonResource *cr, int paletteNo) {
         }
     }
     cr->pictures.clear();
+    int nullCount = 0;
     for (auto &sf : cr->spriteFrames) {
-        cr->pictures.emplace_back(sf.createTexture(paletteNo));
+        auto *tex = sf.createTexture(paletteNo);
+        if (!tex) {
+            ++nullCount;
+        }
+        cr->pictures.emplace_back(tex);
+    }
+    if (nullCount > 0) {
+        AXLOGE("[Tex] serial={}: {}/{} textures failed to create", cr->serialNo, nullCount, cr->spriteFrames.size());
     }
 }
 

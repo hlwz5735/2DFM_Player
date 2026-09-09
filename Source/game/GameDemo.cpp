@@ -34,7 +34,10 @@ void GameDemo::onExit() {
 
 void GameDemo::load(int demoNo) {
     demo = ResourcePool::getInstance().loadDemo(demoNo);
-    if (!demo) return;
+    if (!demo) {
+        AXLOGE("[GameDemo] loadDemo({}) returned null, nothing to show", demoNo);
+        return;
+    }
     createTexturesForCommonResource(demo.get(), 0);
 
     for (int i = 1; i < demo->scripts.size(); ++i) {

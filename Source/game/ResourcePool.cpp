@@ -10,11 +10,13 @@
 #include "2dfm/KgtDemo.hpp"
 #include "2dfm/KgtStage.hpp"
 #include "2dfm/2dfmFileReader.hpp"
+#include "engine/FileUtil.hpp"
 #include "engine/MyString.hpp"
 #include "engine/SoundClip.hpp"
 
 #include <axmol.h>
 #include <2dfm_reader.h>
+#include <cerrno>
 #include <cstdio>
 #include <format>
 #include <stdexcept>
@@ -100,8 +102,10 @@ void fillCommonResource(CommonResource* cr, const Kgt2dfmCommonResource& src, co
 }
 
 Kgt2dfmStream openFileStream(const std::string& path) {
-    FILE* f = std::fopen(path.c_str(), "rb");
+    FILE* f = fopenUtf8(path, "rb");
     if (!f) {
+        AXLOGE("[ResourcePool] fopen failed: '{}' errno={} isFileExist={}", path, errno,
+               ax::FileUtils::getInstance()->isFileExist(path) ? "true" : "false");
         throw std::runtime_error("Failed to open file: " + path);
     }
     return kgt_stream_from_file(f);
@@ -119,18 +123,34 @@ void closeFileStream(Kgt2dfmStream& stream) {
 // ─── 公共接口实现 ─────────────────────────────────────────────────────────────
 
 std::shared_ptr<KgtGame> ResourcePool::loadKgtGame(const std::string& filepath) {
-    if (cachedKgtGame) return cachedKgtGame;
+    // 同一路径命中缓存直接返回；换路径则旧游戏整体失效，避免用到上一个游戏的名称表/资源
+    if (cachedKgtGame && cachedKgtPath == filepath) return cachedKgtGame;
+    if (cachedKgtGame) {
+        AXLOGI("[ResourcePool] switching KGT: '{}' -> '{}'", cachedKgtPath, filepath);
+        // 旧资源延后到后续渲染帧再释放：避免旧纹理删除与新纹理创建在同一帧内交织
+        pendingReleaseKgt = std::move(cachedKgtGame);
+        pendingReleasePlayers = std::move(cachedPlayers);
+        pendingReleaseDemo = std::move(cachedDemo);
+        pendingReleaseStage = std::move(cachedStage);
+        cachedDemoNo = -1;
+        cachedStageNo = -1;
+        schedulePendingRelease();
+    }
 
     Kgt2dfmStream stream;
     try {
         stream = openFileStream(filepath);
     } catch (...) {
+        AXLOGE("[ResourcePool] loadKgtGame failed: cannot open '{}'", filepath);
         return nullptr;
     }
 
     auto* raw = kgt_read_game(&stream);
     closeFileStream(stream);
-    if (!raw) return nullptr;
+    if (!raw) {
+        AXLOGE("[ResourcePool] loadKgtGame failed: kgt_read_game returned null for '{}'", filepath);
+        return nullptr;
+    }
 
     auto result = std::make_shared<KgtGame>();
     result->serialNo = 0;
@@ -204,6 +224,7 @@ std::shared_ptr<KgtGame> ResourcePool::loadKgtGame(const std::string& filepath) 
 
     kgt_free_game(raw);
     cachedKgtGame = result;
+    cachedKgtPath = filepath;
     return cachedKgtGame;
 }
 
@@ -216,10 +237,20 @@ std::shared_ptr<KgtPlayer> ResourcePool::loadPlayer(int playerNo) {
     if (it != cachedPlayers.end()) return it->second;
 
     auto kgt = getKgtGame();
-    if (!kgt || playerNo < 0 || playerNo >= (int)kgt->playerNames.size()) return nullptr;
+    if (!kgt) {
+        AXLOGE("[ResourcePool] loadPlayer({}) failed: kgt is null", playerNo);
+        return nullptr;
+    }
+    if (playerNo < 0 || playerNo >= (int)kgt->playerNames.size()) {
+        AXLOGE("[ResourcePool] loadPlayer failed: playerNo={} out of range [0, {})", playerNo, kgt->playerNames.size());
+        return nullptr;
+    }
 
     auto& playerName = kgt->playerNames[playerNo];
-    if (playerName.empty()) return nullptr;
+    if (playerName.empty()) {
+        AXLOGE("[ResourcePool] loadPlayer({}) failed: playerName is empty", playerNo);
+        return nullptr;
+    }
 
     auto& gameConfig = GameConfig::getInstance();
     auto fullPath = std::format("{}/{}.player", gameConfig.getGameBasePath(), playerName);
@@ -228,12 +259,16 @@ std::shared_ptr<KgtPlayer> ResourcePool::loadPlayer(int playerNo) {
     try {
         stream = openFileStream(fullPath);
     } catch (...) {
+        AXLOGE("[ResourcePool] loadPlayer({}) failed: cannot open '{}'", playerNo, fullPath);
         return nullptr;
     }
 
     auto* raw = kgt_read_player(&stream);
     closeFileStream(stream);
-    if (!raw) return nullptr;
+    if (!raw) {
+        AXLOGE("[ResourcePool] loadPlayer({}) failed: kgt_read_player returned null for '{}'", playerNo, fullPath);
+        return nullptr;
+    }
 
     auto result = std::make_shared<KgtPlayer>();
     result->serialNo = playerNo;
@@ -259,10 +294,20 @@ std::shared_ptr<KgtDemo> ResourcePool::loadDemo(int demoNo) {
     cachedDemoNo = -1;
 
     auto kgt = getKgtGame();
-    if (!kgt || demoNo < 0 || demoNo >= (int)kgt->demoNames.size()) return nullptr;
+    if (!kgt) {
+        AXLOGE("[ResourcePool] loadDemo({}) failed: kgt is null", demoNo);
+        return nullptr;
+    }
+    if (demoNo < 0 || demoNo >= (int)kgt->demoNames.size()) {
+        AXLOGE("[ResourcePool] loadDemo failed: demoNo={} out of range [0, {})", demoNo, kgt->demoNames.size());
+        return nullptr;
+    }
 
     auto& demoName = kgt->demoNames[demoNo];
-    if (demoName.empty()) return nullptr;
+    if (demoName.empty()) {
+        AXLOGE("[ResourcePool] loadDemo({}) failed: demoName is empty", demoNo);
+        return nullptr;
+    }
 
     auto& gameConfig = GameConfig::getInstance();
     auto fullPath = std::format("{}/{}.demo", gameConfig.getGameBasePath(), demoName);
@@ -271,12 +316,16 @@ std::shared_ptr<KgtDemo> ResourcePool::loadDemo(int demoNo) {
     try {
         stream = openFileStream(fullPath);
     } catch (...) {
+        AXLOGE("[ResourcePool] loadDemo({}) failed: cannot open '{}'", demoNo, fullPath);
         return nullptr;
     }
 
     auto* raw = kgt_read_demo(&stream);
     closeFileStream(stream);
-    if (!raw) return nullptr;
+    if (!raw) {
+        AXLOGE("[ResourcePool] loadDemo({}) failed: kgt_read_demo returned null for '{}'", demoNo, fullPath);
+        return nullptr;
+    }
 
     auto result = std::make_shared<KgtDemo>();
     result->serialNo = demoNo;
@@ -305,10 +354,20 @@ std::shared_ptr<KgtStage> ResourcePool::loadStage(int stageNo) {
     cachedStageNo = -1;
 
     auto kgt = getKgtGame();
-    if (!kgt || stageNo < 0 || stageNo >= (int)kgt->stageNames.size()) return nullptr;
+    if (!kgt) {
+        AXLOGE("[ResourcePool] loadStage({}) failed: kgt is null", stageNo);
+        return nullptr;
+    }
+    if (stageNo < 0 || stageNo >= (int)kgt->stageNames.size()) {
+        AXLOGE("[ResourcePool] loadStage failed: stageNo={} out of range [0, {})", stageNo, kgt->stageNames.size());
+        return nullptr;
+    }
 
     auto& stageName = kgt->stageNames[stageNo];
-    if (stageName.empty()) return nullptr;
+    if (stageName.empty()) {
+        AXLOGE("[ResourcePool] loadStage({}) failed: stageName is empty", stageNo);
+        return nullptr;
+    }
 
     auto& gameConfig = GameConfig::getInstance();
     auto fullPath = std::format("{}/{}.stage", gameConfig.getGameBasePath(), stageName);
@@ -317,12 +376,16 @@ std::shared_ptr<KgtStage> ResourcePool::loadStage(int stageNo) {
     try {
         stream = openFileStream(fullPath);
     } catch (...) {
+        AXLOGE("[ResourcePool] loadStage({}) failed: cannot open '{}'", stageNo, fullPath);
         return nullptr;
     }
 
     auto* raw = kgt_read_stage(&stream);
     closeFileStream(stream);
-    if (!raw) return nullptr;
+    if (!raw) {
+        AXLOGE("[ResourcePool] loadStage({}) failed: kgt_read_stage returned null for '{}'", stageNo, fullPath);
+        return nullptr;
+    }
 
     auto result = std::make_shared<KgtStage>();
     result->serialNo = stageNo;
@@ -361,6 +424,28 @@ CommonResource* ResourcePool::findResource(FileType type, int fileIndex) const {
 
 // ─── 资源释放 ─────────────────────────────────────────────────────────────────
 
+void ResourcePool::schedulePendingRelease() {
+    auto* director = ax::Director::getInstance();
+    if (director == nullptr) {
+        // 极端情况：无 Director（理论不会发生），直接同步释放
+        pendingReleaseKgt.reset();
+        pendingReleasePlayers.clear();
+        pendingReleaseDemo.reset();
+        pendingReleaseStage.reset();
+        return;
+    }
+    auto* scheduler = director->getScheduler();
+    // repeat = 0 → 只执行一次（release + 1 次调度）
+    scheduler->schedule(
+        [this](float) {
+            pendingReleaseKgt.reset();
+            pendingReleasePlayers.clear();
+            pendingReleaseDemo.reset();
+            pendingReleaseStage.reset();
+        },
+        this, 0.f, 0, 0.f, false, "2dfm_pending_resource_release");
+}
+
 void ResourcePool::purgePlayer(int playerNo) {
     cachedPlayers.erase(playerNo);
 }
@@ -384,4 +469,19 @@ void ResourcePool::purgeAll() {
     purgeAllPlayers();
     purgeDemo();
     purgeStage();
+}
+
+void ResourcePool::unloadAll() {
+    if (auto* director = ax::Director::getInstance()) {
+        director->getScheduler()->unschedule("2dfm_pending_resource_release", this);
+    }
+    cachedKgtGame.reset();
+    cachedPlayers.clear();
+    purgeDemo();
+    purgeStage();
+    cachedKgtPath.clear();
+    pendingReleaseKgt.reset();
+    pendingReleasePlayers.clear();
+    pendingReleaseDemo.reset();
+    pendingReleaseStage.reset();
 }

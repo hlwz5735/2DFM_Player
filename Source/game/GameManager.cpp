@@ -13,6 +13,12 @@ namespace {
 }
 
 bool GameManager::init() {
+    // 幂等：ProgramManager::registerCustomProgram 对同名 shader 重复注册（非 force）会返回 0，
+    // 若每次都重新赋值会把手持的 shader id 覆盖成 0，导致此后 KgtNode 绑定到错误程序而黑屏
+    if (customShaderId != 0) {
+        return true;
+    }
+
     auto programManager = ProgramManager::getInstance();
     customShaderId = programManager->registerCustomProgram(
         "custom/2dfmPositionTextureColor_vs"sv, "custom/2dfmPositionTextureColor_fs"sv, VertexLayoutType::Sprite);

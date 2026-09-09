@@ -34,6 +34,12 @@ public:
     /** 获取已加载的 KGT (未加载返回 nullptr) */
     std::shared_ptr<KgtGame> getKgtGame() const;
 
+    /** 当前是否已加载 KGT（全局唯一状态，供菜单/场景查询） */
+    bool isKgtLoaded() const { return cachedKgtGame != nullptr; }
+
+    /** 已加载 KGT 的来源路径（未加载时为空串） */
+    const std::string &getLoadedKgtPath() const { return cachedKgtPath; }
+
     /** 加载 Player 文件。可同时缓存多个 */
     std::shared_ptr<KgtPlayer> loadPlayer(int playerNo);
 
@@ -70,11 +76,24 @@ public:
     void purgeStage();
     void purgeAll();
 
+    /// 同步卸载当前全部资源（含待延迟释放的旧资源），供“卸载 KGT”菜单使用
+    void unloadAll();
+
 private:
+    /// 切换 KGT 时把旧资源暂存于此，延后到下一帧再真正释放，
+    /// 避免“大量旧纹理删除 + 新纹理创建”在同一渲染帧内交织导致新纹理失效
+    void schedulePendingRelease();
+
     std::shared_ptr<KgtGame> cachedKgtGame;
+    std::string cachedKgtPath;  // 当前缓存 KGT 的来源路径，用于切换文件时判断
     std::unordered_map<int, std::shared_ptr<KgtPlayer>> cachedPlayers;
     std::shared_ptr<KgtDemo> cachedDemo;
     int cachedDemoNo = -1;
     std::shared_ptr<KgtStage> cachedStage;
     int cachedStageNo = -1;
+
+    std::shared_ptr<KgtGame> pendingReleaseKgt;
+    std::unordered_map<int, std::shared_ptr<KgtPlayer>> pendingReleasePlayers;
+    std::shared_ptr<KgtDemo> pendingReleaseDemo;
+    std::shared_ptr<KgtStage> pendingReleaseStage;
 };

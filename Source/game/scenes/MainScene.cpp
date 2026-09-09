@@ -12,6 +12,8 @@
 #include "game/GameManager.hpp"
 #include "game/ResourcePool.hpp"
 
+#include <exception>
+
 USING_NS_AX;
 
 // Print useful error message instead of segfaulting when files are not there.
@@ -27,26 +29,10 @@ bool MainScene::init() {
     if (!Scene::init()) {
         return false;
     }
-    if (!Input::getInstance().init()) {
-        AXLOGE("Failed to init Input system.");
-        return false;
-    }
-    // 此处开始是正式加载逻辑
-    auto &gameConfig = GameConfig::getInstance();
-    try {
-        auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
-        auto kgt = ResourcePool::getInstance().loadKgtGame(kgtFilePath);
-        if (!kgt) {
-            AXLOGE("Failed to load kgt game");
-            return false;
-        }
-        createTexturesForCommonResource(kgt.get(), 0);
-        kgt->initBasicScriptInfos();
-        GameManager::getInstance().init();
-    } catch (...) {
-        AXLOGE("Failed to read kgt file");
-        return false;
-    }
+
+    // 不再自动加载 KGT：进入菜单只显示配置路径，由“加载 KGT”菜单项手动触发加载
+    const auto& gameConfig = GameConfig::getInstance();
+    const auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
 
     this->initDebugScenes();
 
@@ -70,7 +56,7 @@ bool MainScene::init() {
     this->addChild(menu, 1);
 
     TTFConfig ttfConfig("fonts/msyh.ttc", 20);
-    auto startY = visibleSize.height - 30;
+    auto startY = visibleSize.height - 60;
 
     auto layer = utils::createInstance<Layer>();
     for (auto it = menuItems.begin(); it != menuItems.end(); ++it) {
@@ -109,22 +95,66 @@ bool MainScene::init() {
     scrollView->setDelegate(this);
     this->addChild(scrollView);
 
+    // 顶部状态栏：显示当前配置路径与全局加载状态（数据以 ResourcePool 为准）
+    auto &pool = ResourcePool::getInstance();
+    std::string stateText;
+    if (auto kgt = pool.getKgtGame()) {
+        stateText = (pool.getLoadedKgtPath() == kgtFilePath)
+                        ? std::format("[ 已加载: {} ]", kgt->projectName)
+                        : "[ 已加载其他游戏，点“加载 KGT”切换 ]";
+    } else {
+        stateText = "[ 未加载 ]";
+    }
+    statusLabel = Label::createWithTTF(TTFConfig("fonts/msyh.ttc", 15), "KGT: " + kgtFilePath + "  " + stateText);
+    statusLabel->setPosition(visibleSize.width / 2, visibleSize.height - 16);
+    this->addChild(statusLabel, 2);
+
     return true;
 }
 
 void MainScene::onEnterTransitionDidFinish() {
     Scene::onEnterTransitionDidFinish();
-    const auto kgt = ResourcePool::getInstance().getKgtGame();
-    if (kgt == nullptr) {
-        AXLOGE("KGT is null");
-        return;
-    }
+}
 
-    // auto openDemoName =
-    // std::format("{}/{}.demo", GameConfig::getInstance().getGameBasePath(), kgt->getOpeningDemoName());
-    // const auto openDemoScene =
-    //     utils::createInstance<DemoScene>(&DemoScene::initWithFile, openDemoName, DemoScene::DemoType::OPENING);
-    // _director->replaceScene(openDemoScene);
+bool MainScene::loadKgtFromConfig() {
+    auto &gameConfig = GameConfig::getInstance();
+    auto &pool = ResourcePool::getInstance();
+    try {
+        const auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+
+        // 全局已加载同一路径：直接视为就绪，不重复加载
+        if (pool.isKgtLoaded() && pool.getLoadedKgtPath() == kgtFilePath) {
+            AXLOGI("[MainScene] kgt already loaded: '{}'", kgtFilePath);
+            if (statusLabel && pool.getKgtGame()) {
+                statusLabel->setString("KGT: " + kgtFilePath + "  [ 已加载: " + pool.getKgtGame()->projectName + " ]");
+            }
+            return true;
+        }
+
+        AXLOGI("[MainScene] loading kgt: '{}'", kgtFilePath);
+        auto kgt = pool.loadKgtGame(kgtFilePath);
+        if (!kgt) {
+            AXLOGE("[MainScene] Failed to load kgt game: '{}'", kgtFilePath);
+            if (statusLabel) {
+                statusLabel->setString("KGT: " + kgtFilePath + "  [ 加载失败 ]");
+            }
+            return false;
+        }
+        createTexturesForCommonResource(kgt.get(), 0);
+        kgt->initBasicScriptInfos();
+
+        AXLOGI("[MainScene] kgt loaded ok: '{}'", kgt->projectName);
+        if (statusLabel) {
+            statusLabel->setString("KGT: " + kgtFilePath + "  [ 已加载: " + kgt->projectName + " ]");
+        }
+        return true;
+    } catch (const std::exception &e) {
+        AXLOGE("[MainScene] Failed to read kgt file: {}", e.what());
+        return false;
+    } catch (...) {
+        AXLOGE("[MainScene] Failed to read kgt file: unknown error");
+        return false;
+    }
 }
 
 void MainScene::menuCloseCallback(Object *sender) {
@@ -140,14 +170,46 @@ void MainScene::menuCloseCallback(Object *sender) {
 }
 
 void MainScene::initDebugScenes() {
-    menuItems.emplace_back("正常游戏场景", [] { return utils::createInstance<OpenningScene>(); });
-    menuItems.emplace_back("角色测试场景", []() { return ax::utils::createInstance<PlayerTestScene>(); });
-    menuItems.emplace_back("图片测试场景", []() { return ax::utils::createInstance<TestPictureScene>(); });
-    menuItems.emplace_back("场景测试", []() { return ax::utils::createInstance<StageTestScene>(); });
-    menuItems.emplace_back("AudioEngine 测试", []() { return ax::utils::createInstance<TestAudioEngineScene>(); });
-    menuItems.emplace_back("Select KGT File", []() -> ax::Scene* {
-        return ax::utils::createInstance<EntryScene>();
+    // 需要先加载 KGT，其余菜单项才可用
+    const auto requireLoaded = [this](const std::function<ax::Scene *()> &creator) -> ax::Scene * {
+        if (!ResourcePool::getInstance().isKgtLoaded()) {
+            AXLOGW("[MainScene] kgt not loaded yet");
+            if (this->statusLabel) {
+                this->statusLabel->setString("KGT 未加载，请先点击上方“加载 KGT”");
+            }
+            return nullptr;
+        }
+        return creator();
+    };
+
+    menuItems.emplace_back("加载 KGT", [this]() -> ax::Scene * {
+        this->loadKgtFromConfig();
+        return nullptr;  // 加载后停留在菜单，由用户选择后续场景
     });
+    menuItems.emplace_back("卸载 KGT", [this]() -> ax::Scene * {
+        ResourcePool::getInstance().unloadAll();
+        if (this->statusLabel) {
+            this->statusLabel->setString("KGT 已卸载，点“加载 KGT”重新加载");
+        }
+        AXLOGI("[MainScene] kgt unloaded by user");
+        return nullptr;
+    });
+    menuItems.emplace_back("正常游戏场景", [requireLoaded] {
+        return requireLoaded([] { return utils::createInstance<OpenningScene>(); });
+    });
+    menuItems.emplace_back("角色测试场景", [requireLoaded] {
+        return requireLoaded([] { return ax::utils::createInstance<PlayerTestScene>(); });
+    });
+    menuItems.emplace_back("图片测试场景", [requireLoaded] {
+        return requireLoaded([] { return ax::utils::createInstance<TestPictureScene>(); });
+    });
+    menuItems.emplace_back("场景测试", [requireLoaded] {
+        return requireLoaded([] { return ax::utils::createInstance<StageTestScene>(); });
+    });
+    menuItems.emplace_back("AudioEngine 测试", [requireLoaded] {
+        return requireLoaded([] { return ax::utils::createInstance<TestAudioEngineScene>(); });
+    });
+    menuItems.emplace_back("Select KGT File", []() -> ax::Scene * { return ax::utils::createInstance<EntryScene>(); });
 }
 
 void MainScene::scrollViewDidScroll(extension::ScrollView *view) {

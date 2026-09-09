@@ -37,6 +37,11 @@ bool EntryScene::init() {
     checkboxLabel->setPosition(Vec2(visibleSize.width / 2, visibleSize.height / 2 - 40));
     this->addChild(checkboxLabel);
 
+    // “返回菜单”按钮：不选择文件，直接回到上一个场景
+    backBtnLabel = Label::createWithTTF(TTFConfig("fonts/msyh.ttc", 22), "[ 返回菜单 ]");
+    backBtnLabel->setPosition(Vec2(visibleSize.width / 2, 40));
+    this->addChild(backBtnLabel);
+
     // Single touch listener on the scene handles all clickable elements
     auto listener = EventListenerTouchOneByOne::create();
     listener->setSwallowTouches(true);
@@ -54,6 +59,12 @@ bool EntryScene::init() {
             } else {
                 checkboxLabel->setString("☐ 下次记住");
             }
+            return true;
+        }
+        // 返回菜单，不触发 KGT 选择
+        if (backBtnLabel && hitTestLabel(backBtnLabel, t)) {
+            AXLOGI("[EntryScene] back to menu without selecting file");
+            _director->replaceScene(utils::createInstance<MainScene>());
             return true;
         }
         return false;
@@ -87,11 +98,19 @@ void EntryScene::onFileSelected(const std::string& fullPath) {
     auto& config = GameConfig::getInstance();
     config.setGameBasePath(basePath);
     config.setKgtFileName(fileName);
+    AXLOGI("[EntryScene] selected kgt: full='{}', base='{}', name='{}'", fullPath, basePath, fileName);
 
     if (rememberChecked) {
         config.setRememberKgtPath(true);
         config.save();
     }
 
-    _director->replaceScene(utils::createInstance<MainScene>());
+    auto scene = utils::createInstance<MainScene>();
+    if (scene == nullptr) {
+        // 场景创建失败（如 KGT 读取失败）时不要切换场景，否则 replaceScene(nullptr) 会直接崩溃
+        AXLOGE("[EntryScene] Failed to create MainScene for: {}", fullPath);
+        openBtnLabel->setString("[ 加载失败，点击重试 ]");
+        return;
+    }
+    _director->replaceScene(scene);
 }

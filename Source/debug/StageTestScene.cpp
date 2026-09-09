@@ -8,6 +8,7 @@
 #include "game/GameConfig.hpp"
 #include "game/ResourcePool.hpp"
 #include "game/GameStage.hpp"
+#include "SceneNavUtil.hpp"
 
 USING_NS_AX;
 
@@ -21,6 +22,7 @@ bool StageTestScene::init() {
     addChild(stage);
 
     this->scheduleUpdate();
+    addBackToMainSceneButton(this);  // 底部“返回菜单”按钮
     return true;
 }
 void StageTestScene::update(float delta) {

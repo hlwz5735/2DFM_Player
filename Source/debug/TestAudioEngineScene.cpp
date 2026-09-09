@@ -7,6 +7,7 @@
 #include <AudioEngine.h>
 
 #include "engine/SoundClip.hpp"
+#include "SceneNavUtil.hpp"
 
 USING_NS_AX;
 
@@ -27,18 +28,16 @@ bool TestAudioEngineScene::init() {
     label->setPosition(startX, startY);
     layer->addChild(label);
 
-    GameConfig gameConfig;
-    gameConfig.readAndInit();
-
     auto kgt = readKgtFile();
     this->cr = kgt;
 
     auto keyboardListener = EventListenerKeyboard::create();
     keyboardListener->onKeyPressed = AX_CALLBACK_2(TestAudioEngineScene::onKeyPressed, this);
     keyboardListener->onKeyReleased = AX_CALLBACK_2(TestAudioEngineScene::onKeyReleased, this);
-    _eventDispatcher->addEventListenerWithFixedPriority(keyboardListener, 11);
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(keyboardListener, this);
 
     scheduleUpdate();
+    addBackToMainSceneButton(this);  // 底部“返回菜单”按钮
     return true;
 }
 

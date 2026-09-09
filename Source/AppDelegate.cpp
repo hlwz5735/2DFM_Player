@@ -27,6 +27,7 @@
 
 #include "engine/Input.hpp"
 #include "engine/KgtFileUtil.hpp"
+#include "game/GameBootstrap.hpp"
 #include "game/GameConfig.hpp"
 #include "game/scenes/EntryScene.hpp"
 #include "game/scenes/MainScene.hpp"
@@ -100,10 +101,11 @@ bool AppDelegate::applicationDidFinishLaunching() {
                                     ResolutionPolicy::SHOW_ALL);
     director->setClearColor(Color4F::BLACK);
 
-    // Read config and decide initial scene
-    auto& gameConfig = GameConfig::getInstance();
-    gameConfig.readAndInit();
+    // 全局一次性初始化：Input / GameConfig 磁盘读取 / 自定义着色器注册
+    GameBootstrap::getInstance().initialize();
 
+    // Decide initial scene
+    auto &gameConfig = GameConfig::getInstance();
     Scene* scene = nullptr;
     if (gameConfig.hasRememberedPath()) {
         // Verify the file still exists
@@ -121,7 +123,14 @@ bool AppDelegate::applicationDidFinishLaunching() {
     }
 
     // run
-    director->runWithScene(scene);
+    if (scene == nullptr) {
+        // 初始场景创建失败（如 KGT 读取失败）时回退到文件选择界面，避免 runWithScene(nullptr) 崩溃
+        AXLOGE("Failed to create initial scene, fallback to EntryScene");
+        scene = utils::createInstance<EntryScene>();
+    }
+    if (scene != nullptr) {
+        director->runWithScene(scene);
+    }
 
     return true;
 }

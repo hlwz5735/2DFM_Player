@@ -2,6 +2,24 @@
 
 #include "2dfmScriptItem.hpp"
 
+namespace {
+/// 安全查找“下一个带指定标志的脚本”：起始迭代器为 end 时直接返回 end，避免 end + 1 越界（未定义行为）
+template <typename It>
+It findNextFlagSafe(It it, It end, ScriptSpecialFlag flag) {
+    if (it == end) {
+        return end;
+    }
+    ++it;
+    while (it != end) {
+        if (it->flags == flag) {
+            return it;
+        }
+        ++it;
+    }
+    return end;
+}
+} // namespace
+
 KgtGame::~KgtGame() {}
 
 ax::Vec2 KgtGame::getTitleStoryModePos() const {
@@ -26,112 +44,112 @@ void KgtGame::initBasicScriptInfos() {
     auto ii = findNextWithFlag(begin, end, ScriptSpecialFlag::HIT_SYMBOL);
     this->comboHitScriptId = std::distance(begin, ii);
     for (int i = 0; i < 10; ++i) {
-        ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::COMBO_SYMBOL);
+        ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::COMBO_SYMBOL);
         this->comboNumberScriptIds[i] = std::distance(begin, ii);
     }
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->roundStartScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->roundEndScriptId = std::distance(begin, ii);
     for (int i = 1; i < 10; ++i) {
-        ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+        ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
         this->roundNumberScriptIds[i] = std::distance(begin, ii);
     }
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->finalRoundScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->fightScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->koScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->perfectGameScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->youWinScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->youLoseScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->player1WinScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->player2WinScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->drawGameScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::ROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::ROUND);
     this->doubleKillScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::TIME_NUMBER);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::TIME_NUMBER);
     this->timeNumberInfinityScriptId = std::distance(begin, ii);
     for (int i = 0; i < 10; ++i) {
-        ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::TIME_NUMBER);
+        ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::TIME_NUMBER);
         this->timeNumberScriptIds[i] = std::distance(begin, ii);
     }
     for (int i = 0; i < 10; ++i) {
-        ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::SKILL_POINT_NUMBER);
+        ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::SKILL_POINT_NUMBER);
         this->skillPointNumberScriptIds[i] = std::distance(begin, ii);
     }
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::VICTORY_FLAG);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::VICTORY_FLAG);
     this->victorySymbolFillScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::VICTORY_FLAG);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::VICTORY_FLAG);
     this->victorySymbolOutlineScriptId = std::distance(begin, ii);
 
     for (int i = 0; i < 10; ++i) {
-        ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::STAGE_MAIN_UI);
+        ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::STAGE_MAIN_UI);
         this->stageGuiScripts[i] = std::distance(begin, ii);
     }
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::STAGE_MAIN_UI);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::STAGE_MAIN_UI);
     this->player1HpBarScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::STAGE_MAIN_UI);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::STAGE_MAIN_UI);
     this->player2HpBarScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::STAGE_MAIN_UI);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::STAGE_MAIN_UI);
     this->player1SpBarScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::STAGE_MAIN_UI);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::STAGE_MAIN_UI);
     this->player2SpBarScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::TIMER_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::TIMER_POS);
     this->timerPositionScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::PLAYER_1_AVATAR_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::PLAYER_1_AVATAR_POS);
     this->player1AvatarPositionScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::PLAYER_2_AVATAR_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::PLAYER_2_AVATAR_POS);
     this->player2AvatarPositionScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::PLAYER_1_SKILL_POINT_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::PLAYER_1_SKILL_POINT_POS);
     this->player1SkillPointPositionScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::PLAYER_2_SKILL_POINT_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::PLAYER_2_SKILL_POINT_POS);
     this->player2SkillPointPositionScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::PLAYER_1_VICTORY_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::PLAYER_1_VICTORY_POS);
     this->player1VictoryFlagPositionScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::PLAYER_2_VICTORY_POS);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::PLAYER_2_VICTORY_POS);
     this->player2VictoryFlagPositionScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->titleCursorScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::SYSTEM);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::SYSTEM);
     this->storyModePositionScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::SYSTEM);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::SYSTEM);
     this->pvpModePositionScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->continueCursorScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::SYSTEM);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::SYSTEM);
     this->continuePositionScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::SYSTEM);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::SYSTEM);
     this->giveUpPositionScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->player1CharSelCursorScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->player2CharSelCursorScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->player1CharSelConfirmCursorScriptId = std::distance(begin, ii);
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->player2CharSelConfirmCursorScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::SYSTEM);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::SYSTEM);
     this->teamModePositionScriptId = std::distance(begin, ii);
 
-    ii = findNextWithFlag(ii + 1, end, ScriptSpecialFlag::BACKGROUND);
+    ii = findNextFlagSafe(ii, end, ScriptSpecialFlag::BACKGROUND);
     this->pauseScriptId = std::distance(begin, ii);
 }
 

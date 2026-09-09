@@ -19,9 +19,24 @@ bool OpenningScene::init() {
     }
 
     auto kgtGame = ResourcePool::getInstance().getKgtGame();
+    if (kgtGame == nullptr) {
+        AXLOGE("[OpenningScene] kgtGame is null, abort scene");
+        return false;
+    }
+
+    const int openingDemoNo = kgtGame->getOpeningDemoNo();
 
     this->objDemo = utils::createInstance<GameDemo>();
-    objDemo->load(kgtGame->getOpeningDemoNo());
+    if (objDemo == nullptr) {
+        AXLOGE("[OpenningScene] failed to create GameDemo");
+        return false;
+    }
+    objDemo->load(openingDemoNo);
+    if (!objDemo->isLoaded()) {
+        // 开场 DEMO 加载失败时不要切进空场景（会表现为黑屏），让调用方保留原界面
+        AXLOGE("[OpenningScene] opening demo {} failed to load, abort scene", openingDemoNo);
+        return false;
+    }
     addChild(objDemo);
 
     this->scheduleUpdate();

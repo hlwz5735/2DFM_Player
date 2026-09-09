@@ -12,6 +12,7 @@
 #include "game/PlayerNode.hpp"
 #include "game/PlayerScriptInterceptor.hpp"
 #include "game/ResourcePool.hpp"
+#include "SceneNavUtil.hpp"
 
 USING_NS_AX;
 
@@ -27,6 +28,7 @@ bool PlayerTestScene::init() {
     loadStageAndPlayer();
 
     this->scheduleUpdate();
+    addBackToMainSceneButton(this);  // 底部“返回菜单”按钮
     return true;
 }
 
