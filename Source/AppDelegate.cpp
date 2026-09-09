@@ -25,6 +25,7 @@
 
 #include "AppDelegate.h"
 
+#include "engine/ImeController.hpp"
 #include "engine/Input.hpp"
 #include "engine/KgtFileUtil.hpp"
 #include "game/GameBootstrap.hpp"
@@ -84,6 +85,10 @@ bool AppDelegate::applicationDidFinishLaunching() {
 #endif
         director->setRenderView(renderView);
     }
+
+    // 进入游戏即断开窗口与输入法的关联（默认英文直通），避免中文模式下按键弹出输入框；
+    // 非 Windows 桌面平台为空操作
+    ImeController::setWindowImeEnabled(renderView, false);
 
     FileUtils::getInstance()->setDelegate(KgtFileUtil::create());
 
