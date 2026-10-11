@@ -22,7 +22,12 @@ public:
     void setLogicPosition(const ax::Vec2 &pos);
 
     ax::Sprite *getSprite() const { return spriteComp; }
+    /// 主体精灵的直接父节点（残影等"跟随主体但独立绘制"的精灵挂在这里）
+    ax::Node *getSpriteContainer() const { return spritePNode; }
     class MoveComponent *getMoveComp() const { return moveComp; }
+
+    /// 残影组件（随节点一起创建，见 initWithVisibleHeight）
+    class AfterimageComponent *getAfterimageComp() const { return afterimageComp; }
 
     ScriptInterceptorComponent *getInterceptor() const { return interceptorComp; }
     void addInterceptor(ScriptInterceptorComponent *p);
@@ -33,6 +38,7 @@ protected:
     ax::Node *spritePNode = nullptr;
     class MoveComponent *moveComp = nullptr;
     class ScriptInterceptorComponent *interceptorComp = nullptr;
+    class AfterimageComponent *afterimageComp = nullptr;
 
     int visibleHeight = 0;
 };

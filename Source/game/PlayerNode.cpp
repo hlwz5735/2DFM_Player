@@ -3,6 +3,7 @@
 //
 
 #include "PlayerNode.hpp"
+#include "AfterimageComponent.hpp"
 #include "GameManager.hpp"
 #include "MoveComponent.hpp"
 #include "ScriptInterceptorComponent.hpp"
@@ -18,6 +19,11 @@ bool PlayerNode::initWithVisibleHeight(int visibleHeight) {
     moveComp = utils::createInstance<MoveComponent>();
     moveComp->setName("MoveComponent");
     this->addComponent(moveComp);
+
+    // 与 KgtNode::initWithVisibleHeight 一致：残影组件在创建阶段挂好，
+    // 不能在解释器执行“残”脚本项时才 addComponent（会破坏组件遍历）
+    afterimageComp = utils::createInstance<AfterimageComponent>();
+    this->addComponent(afterimageComp);
 
     spritePNode = utils::createInstance<Node>();
     this->addChild(spritePNode);

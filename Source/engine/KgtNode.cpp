@@ -2,6 +2,7 @@
 // Created by limen on 2024/11/23.
 //
 #include "KgtNode.hpp"
+#include "game/AfterimageComponent.hpp"
 #include "game/GameManager.hpp"
 #include "game/MoveComponent.hpp"
 #include "game/ScriptInterceptorComponent.hpp"
@@ -18,6 +19,11 @@ bool KgtNode::initWithVisibleHeight(int visibleHeight) {
     moveComp = utils::createInstance<MoveComponent>();
     moveComp->setName("MoveComponent");
     this->addComponent(moveComp);
+
+    // 残影组件必须在节点创建阶段就挂上：脚本解释器是在 ComponentContainer 遍历组件时
+    // 执行“残”脚本项的，此时再 addComponent 会破坏遍历中的迭代器
+    afterimageComp = utils::createInstance<AfterimageComponent>();
+    this->addComponent(afterimageComp);
 
     spritePNode = utils::createInstance<Node>();
     this->addChild(spritePNode);

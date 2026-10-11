@@ -18,6 +18,7 @@ namespace _2dfm {
     struct ColorSetCmd;
     struct MoveCmd;
     struct ObjectCmd;
+    struct AfterimageCmd;
 }
 
 struct ScriptRunningInfo {
@@ -56,6 +57,7 @@ protected:
     void interceptColorSetCmd(const _2dfm::ColorSetCmd *cmd);
     void interceptMoveCmd(const _2dfm::MoveCmd *cmd) const;
     virtual void interceptObjectCmd(const _2dfm::ObjectCmd *cmd) const;
+    void interceptAfterimageCmd(const _2dfm::AfterimageCmd *cmd);
 
     ax::Sprite *spriteComponent = nullptr;
     class MoveComponent *moveComponent = nullptr;

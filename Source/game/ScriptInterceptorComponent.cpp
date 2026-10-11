@@ -6,7 +6,9 @@
 
 #include "2dfm/2dfmScriptItem.hpp"
 #include "2dfm/CommonResource.hpp"
+#include "AfterimageComponent.hpp"
 #include "AudioEngine.h"
+#include "KgtColor.hpp"
 #include "MoveComponent.hpp"
 #include "engine/KgtNode.hpp"
 #include "engine/MathUtils.hpp"
@@ -15,16 +17,7 @@
 USING_NS_AX;
 
 namespace {
-float convertKgtRgbColorValue(byte rawByte) {
-    // 原范围[-32 - 32]
-    const int8_t val = *(reinterpret_cast<char *>(&rawByte));
-    return static_cast<float>(val) / 32.f;
-}
-
-uint8_t convertKgtOpacityColorValue(byte rawByte) {
-    const auto val = 32.f - static_cast<int>(rawByte);
-    return static_cast<uint8_t>((val / 32.f) * 255);
-}
+    // 颜色换算与混合方式解析见 KgtColor.hpp（与“残”共用）
 }
 
 bool ScriptInterceptorComponent::init() {
@@ -99,6 +92,10 @@ void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd
 void ScriptInterceptorComponent::stop() {
     this->timeWaiting = std::numeric_limits<float>::infinity();
     this->runningStack.clear();
+    // 停止解析执行时一并回收残影，避免角色节点消失后留下孤儿精灵
+    if (auto *owner = getOwner(); owner != nullptr && owner->getAfterimageComp() != nullptr) {
+        owner->getAfterimageComp()->clear();
+    }
 }
 
 bool ScriptInterceptorComponent::hasNoShowPicItem() const {
@@ -138,6 +135,14 @@ void ScriptInterceptorComponent::interceptMoveCmd(const _2dfm::MoveCmd *moveCmd)
 
 void ScriptInterceptorComponent::interceptObjectCmd(const _2dfm::ObjectCmd *cmd) const {
     // 暂时不做实现
+}
+
+void ScriptInterceptorComponent::interceptAfterimageCmd(const _2dfm::AfterimageCmd *cmd) {
+    auto *owner = getOwner();
+    if (owner == nullptr || owner->getAfterimageComp() == nullptr) {
+        return;
+    }
+    owner->getAfterimageComp()->applyCommand(cmd);
 }
 
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
@@ -185,6 +190,8 @@ processHead:
             }
         } else if (type == _2dfm::CommonScriptItemTypes::OBJECT) { // 物
             interceptObjectCmd(reinterpret_cast<_2dfm::ObjectCmd *>(item));
+        } else if (type == _2dfm::CommonScriptItemTypes::AFTERIMAGE) { // 残
+            interceptAfterimageCmd(reinterpret_cast<_2dfm::AfterimageCmd *>(item));
         }
 
         // 程序计数器向后+1
@@ -236,41 +243,17 @@ void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) 
 }
 
 void ScriptInterceptorComponent::interceptColorSetCmd(const _2dfm::ColorSetCmd *cmd) {
-    auto setType = cmd->getColorBlendType();
-    switch (setType) {
-    case _2dfm::ColorBlendType::ALPHA_BLEND: {
-        auto opacity = convertKgtOpacityColorValue(cmd->alpha);
-        if (opacity == 0) {
-            spriteComponent->setOpacity(0);
-            spriteComponent->setVisible(false);
-        } else {
-            spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
-            spriteComponent->setOpacity(opacity);
-            spriteComponent->setVisible(true);
-        }
-    }
-    break;
-    case _2dfm::ColorBlendType::TRANSPARENCY:
+    const auto setType = cmd->getColorBlendType();
+    const auto opacity = convertKgtOpacityColorValue(cmd->alpha);
+    const auto blend = resolveKgtColorBlend(setType, opacity);
+
+    if (setType == _2dfm::ColorBlendType::ALPHA_BLEND && opacity == 0) {
+        spriteComponent->setOpacity(0);
+        spriteComponent->setVisible(false);
+    } else {
         spriteComponent->setVisible(true);
-        spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
-        spriteComponent->setOpacity(128);
-        break;
-    case _2dfm::ColorBlendType::ADD_BLEND:
-        spriteComponent->setVisible(true);
-        spriteComponent->setBlendFunc(BlendFunc::ADDITIVE);
-        spriteComponent->setOpacity(255);
-        break;
-    case _2dfm::ColorBlendType::MINUS_BLEND:
-        spriteComponent->setVisible(true);
-        spriteComponent->setBlendFunc({backend::BlendFactor::ONE, backend::BlendFactor::ONE_MINUS_SRC_COLOR});
-        spriteComponent->setOpacity(255);
-        break;
-    case _2dfm::ColorBlendType::NORMAL:
-    default:
-        spriteComponent->setVisible(true);
-        spriteComponent->setBlendFunc(BlendFunc::ALPHA_NON_PREMULTIPLIED);
-        spriteComponent->setOpacity(255);
-        break;
+        spriteComponent->setBlendFunc(blend.blendFunc);
+        spriteComponent->setOpacity(blend.baseOpacity);
     }
 
     float colorArr[3] = {
