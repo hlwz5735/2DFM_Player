@@ -6,8 +6,6 @@
 
 class StageScriptInterceptor : public ScriptInterceptorComponent {
 public:
-    void update(float deltaTime) override;
-
     const CommonResource *getCommonResource() const override { return stageData.get(); }
 
     void setStageData(std::shared_ptr<KgtStage> stage);

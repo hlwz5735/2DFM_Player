@@ -4,9 +4,12 @@
 
 #include "PlayerTestScene.hpp"
 
+#include <string>
+
 #include "2dfm/CommonResource.hpp"
 #include "2dfm/KgtPlayer.hpp"
 #include "engine/Input.hpp"
+#include "game/CharacterController.hpp"
 #include "game/GameConfig.hpp"
 #include "game/GameStage.hpp"
 #include "game/PlayerNode.hpp"
@@ -45,145 +48,74 @@ void PlayerTestScene::loadStageAndPlayer() {
     createTexturesForCommonResource(playerData.get(), 0);
     playerData->initBasicScriptInfos();
 
+    // 地面：场景底部往上 64
+    groundY = GameConfig::stageHeight - 64.f;
+
     // 创建角色节点
     playerNode = utils::createInstance<PlayerNode>(&PlayerNode::initWithVisibleHeight, GameConfig::stageHeight);
     auto interceptor = utils::createInstance<PlayerScriptInterceptor>();
     interceptor->setPlayerData(playerData);
-    interceptor->initRunningScript(playerData->standScriptId);
     playerNode->addInterceptor(interceptor);
 
-    // 设置初始位置（场景中央偏下）
-    groundY = GameConfig::stageHeight - 64.f;
+    // 先摆好初始位置：控制器会以此时的高度作为地面线（随后又显式 setGroundY 了一遍）
     playerNode->setLogicPosition(Vec2(GameConfig::stageWidth / 6.f, groundY));
+    // 角色和背景层取同一个视口偏移，才会跟着摄像机一起滚动（见 PlayerNode::setViewCamera）
+    playerNode->setViewCamera(gameStage->getCameraNode());
     playerNode->scheduleUpdate();
 
     this->addChild(playerNode, 10);
 
-    currentState = PlayerState::STAND;
-    prevState = PlayerState::STAND;
+    // 角色控制器（状态机），默认就是“站立 + 通常”，并自动开始播放“站立”脚本
+    controller = utils::createInstance<CharacterController>();
+    controller->setPlayerData(playerData);
+    controller->setGroundY(groundY);
+    playerNode->addComponent(controller);
+
+    // 摄像机跟随角色（水平方向），并夹在场景范围内
+    gameStage->setCameraFollowTarget(playerNode);
+
+    // 左上角的状态显示
+    stateLabel = Label::createWithTTF(TTFConfig("fonts/msyh.ttc", 16), "状态");
+    stateLabel->setAnchorPoint(Vec2(0, 1));
+    stateLabel->setPosition(8.f, _director->getVisibleSize().height - 8.f);
+    this->addChild(stateLabel, 1000);
+    refreshStateLabel();
 }
 
 void PlayerTestScene::update(float delta) {
     Scene::update(delta);
 
-    if (!playerData || !playerNode) {
-        return;
-    }
+    refreshStateLabel();
 
-    auto &input = Input::getInstance();
-    input.update(delta);
-
-    handleInput();
-    updatePlayerState();
+    // 注意：这里不要调用 Input::update()。
+    // Input 自己以优先级 2 挂在调度器上（见 Input::init），而场景与节点是优先级 0，
+    // 所以每帧的次序是「节点先读输入 → Input 再翻页」，读到的“上一帧按键”才是真正的上一帧，
+    // 边沿判定（新按下）才成立；在这里再翻一次页，会把本帧状态写进“上一帧”，边沿判定永远为假。
 }
 
-void PlayerTestScene::handleInput() {
-    auto &input = Input::getInstance();
-    auto dpad = input.getDPad();
-
-    // 下蹲状态的处理
-    if (currentState == PlayerState::CROUCHING || currentState == PlayerState::CROUCH) {
-        if (dpad != Input::DPadDir::DOWN && dpad != Input::DPadDir::LEFT_DOWN && dpad != Input::DPadDir::RIGHT_DOWN) {
-            // 松开下方向，站起
-            currentState = PlayerState::STAND_UP;
-        }
+void PlayerTestScene::refreshStateLabel() {
+    if (stateLabel == nullptr || controller == nullptr) {
         return;
     }
-
-    // 站起中不处理输入
-    if (currentState == PlayerState::STAND_UP) {
+    const std::string text = std::string("位置：") + toString(controller->getPositionState())
+                             + "　姿势：" + toString(controller->getPoseState())
+                             + "　动作：" + toString(controller->getNormalAction());
+    // setString 会重建文字纹理，状态没变就不要每帧都刷
+    if (text == lastStateText) {
         return;
     }
-
-    // 跳跃
-    if (dpad == Input::DPadDir::UP || dpad == Input::DPadDir::LEFT_UP || dpad == Input::DPadDir::RIGHT_UP) {
-        if (dpad == Input::DPadDir::RIGHT_UP) {
-            currentState = PlayerState::JUMP_FORWARD;
-        } else if (dpad == Input::DPadDir::LEFT_UP) {
-            currentState = PlayerState::JUMP_BACKWARD;
-        } else {
-            currentState = PlayerState::JUMP_UP;
-        }
-        return;
-    }
-
-    // 下蹲
-    if (dpad == Input::DPadDir::DOWN || dpad == Input::DPadDir::LEFT_DOWN || dpad == Input::DPadDir::RIGHT_DOWN) {
-        currentState = PlayerState::CROUCH;
-        return;
-    }
-
-    // 行走
-    if (dpad == Input::DPadDir::RIGHT) {
-        currentState = PlayerState::WALK_FORWARD;
-        return;
-    }
-    if (dpad == Input::DPadDir::LEFT) {
-        currentState = PlayerState::WALK_BACKWARD;
-        return;
-    }
-
-    // 无输入，回到站立
-    currentState = PlayerState::STAND;
-}
-
-void PlayerTestScene::updatePlayerState() {
-    if (currentState == prevState) {
-        return;
-    }
-
-    int scriptId = playerData->standScriptId;
-
-    switch (currentState) {
-    case PlayerState::STAND:
-        scriptId = playerData->standScriptId;
-        break;
-    case PlayerState::WALK_FORWARD:
-        scriptId = playerData->forwardScriptId;
-        break;
-    case PlayerState::WALK_BACKWARD:
-        scriptId = playerData->backwardScriptId;
-        break;
-    case PlayerState::JUMP_UP:
-        scriptId = playerData->jumpUpScriptId;
-        break;
-    case PlayerState::JUMP_FORWARD:
-        scriptId = playerData->jumpForwardScriptId;
-        break;
-    case PlayerState::JUMP_BACKWARD:
-        scriptId = playerData->jumpBackwardScriptId;
-        break;
-    case PlayerState::FALLING:
-        scriptId = playerData->fallingScriptId;
-        break;
-    case PlayerState::CROUCH:
-        scriptId = playerData->crouchScriptId;
-        break;
-    case PlayerState::CROUCHING:
-        scriptId = playerData->crouchingScriptId;
-        break;
-    case PlayerState::STAND_UP:
-        scriptId = playerData->standUpScriptId;
-        break;
-    }
-
-    switchPlayerScript(scriptId);
-    prevState = currentState;
-}
-
-void PlayerTestScene::switchPlayerScript(int scriptId) {
-    if (!playerNode || !playerData) {
-        return;
-    }
-    auto interceptor = dynamic_cast<PlayerScriptInterceptor *>(playerNode->getInterceptor());
-    if (interceptor) {
-        interceptor->initRunningScript(scriptId);
-    }
+    lastStateText = text;
+    stateLabel->setString(text);
 }
 
 void PlayerTestScene::onExit() {
+    // 先解开互相持有的指针，避免拆除顺序造成的悬空访问
     if (gameStage) {
+        gameStage->setCameraFollowTarget(nullptr);
         gameStage->unload();
+    }
+    if (playerNode) {
+        playerNode->setViewCamera(nullptr);
     }
     playerData.reset();
     Scene::onExit();

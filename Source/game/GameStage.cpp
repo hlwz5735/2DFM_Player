@@ -98,3 +98,9 @@ void GameStage::unload() {
     }
     stage.reset();
 }
+
+void GameStage::setCameraFollowTarget(KgtNode *target) const {
+    if (cameraNode != nullptr) {
+        cameraNode->setFollowTarget(target);
+    }
+}

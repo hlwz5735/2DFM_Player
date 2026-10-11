@@ -17,6 +17,11 @@
 USING_NS_AX;
 
 namespace {
+/// 等待时间的浮点误差阈值（秒）：小于它的正余量直接当成 0，见 update()
+constexpr float kWaitEpsilon = 1e-4f;
+} // namespace
+
+namespace {
     // 颜色换算与混合方式解析见 KgtColor.hpp（与“残”共用）
 }
 
@@ -37,6 +42,59 @@ void ScriptInterceptorComponent::onAdd() {
     }
 }
 
+void ScriptInterceptorComponent::update(float deltaTime) {
+    Component::update(deltaTime);
+    if (!spriteComponent || getCommonResource() == nullptr) {
+        return;
+    }
+    // 已经终止（遇到“完”/走到末尾的隐形“完”），或者正阻塞在一张“停留时间为 0”的图上：
+    // 都不推进。注意后者是数据刻意安排的无限等待，与“等待时间减到 0 以下”完全是两回事。
+    if (timeWaiting == std::numeric_limits<float>::infinity() || runningStack.empty()
+        || runningScriptItemIdx == runningStack.back().scriptItemEndIdx) {
+        return;
+    }
+
+    if (timeWaiting > 0) {
+        timeWaiting -= deltaTime;
+        // 抹掉浮点误差：等待时间理论上“正好走完”时，减法可能残留一个极小的正数
+        // （例如 6 × 1/60 与 0.1f 的误差约 1e-8），不抹掉的话这张图会白多显示一帧，
+        // 短动画（几张图循环）就会被整体拖慢。阈值远小于一帧，不会造成“提前切换”。
+        if (timeWaiting > 0 && timeWaiting < kWaitEpsilon) {
+            timeWaiting = 0.f;
+        }
+    }
+    onAdvanceTick(deltaTime);
+
+    // ── 推进到“该显示哪张图” ──
+    // 这里同时承担了**跳帧补偿**：
+    //  · 每张图的等待时间用 “+=” 累加，所以本帧多走掉的时间会以负余量的形式带到下一张图上，
+    //    不会因为帧率波动而把整个脚本越拖越慢；
+    //  · 用 while（而不是 if）连续推进，所以余量还 ≤ 0 时，中间那些图**一帧都不显示**就被跳过，
+    //    期间遇到的“声 / 色 / 移 / 跳 / 调 / 循 / 随 / 物 / 残”等脚本项照常执行；
+    //  · 回头循环（没遇到“完”）、状态机接上的下一段脚本，也都在这同一个 while 里继续吃余量，
+    //    所以它们同样享受这套补偿。
+    const _2dfm::ShowPic *showPicScript = nullptr;
+    while (timeWaiting <= 0) {
+        showPicScript = interceptScriptUntilShowPic();
+        if (!showPicScript) {
+            timeWaiting = std::numeric_limits<float>::infinity();
+            runningScriptItemIdx = runningStack.back().scriptItemEndIdx;
+            return;
+        }
+        float keepTime = static_cast<float>(showPicScript->keepTime) / 100;
+        if (keepTime == 0) {
+            // “图”自身设定为 0：这张图无限等待，脚本执行就阻塞在这里
+            // （以后由“招”脚本按别的条件介入打断）
+            timeWaiting = std::numeric_limits<float>::infinity();
+        } else {
+            timeWaiting += keepTime;
+        }
+    }
+    if (showPicScript) {
+        this->interceptShowPicCmd(showPicScript);
+    }
+}
+
 void ScriptInterceptorComponent::initRunningScript(int scriptIdx, int offset) {
     if (!runningStack.empty()) {
         runningStack.clear();
@@ -46,6 +104,7 @@ void ScriptInterceptorComponent::initRunningScript(int scriptIdx, int offset) {
         .originalOffset = offset,
     });
     this->originalScriptIdx = scriptIdx;
+    this->scriptFinished = false;
     // 立即跳转
     this->timeWaiting = 0;
     jumpToScriptItem(scriptIdx, offset);
@@ -92,6 +151,8 @@ void ScriptInterceptorComponent::interceptPlaySoundCmd(const _2dfm::PlaySoundCmd
 void ScriptInterceptorComponent::stop() {
     this->timeWaiting = std::numeric_limits<float>::infinity();
     this->runningStack.clear();
+    // 停止后既没有脚本在播，也谈不上“播完”
+    this->scriptFinished = true;
     // 停止解析执行时一并回收残影，避免角色节点消失后留下孤儿精灵
     if (auto *owner = getOwner(); owner != nullptr && owner->getAfterimageComp() != nullptr) {
         owner->getAfterimageComp()->clear();
@@ -146,11 +207,16 @@ void ScriptInterceptorComponent::interceptAfterimageCmd(const _2dfm::AfterimageC
 }
 
 _2dfm::ShowPic *ScriptInterceptorComponent::interceptScriptUntilShowPic() {
+    // 进入解释执行就说明脚本还在播
+    this->scriptFinished = false;
     // 添加一个跳转计数，如果都跳转了255次还没遇到“图”或者“停”，那就别扯犊子了，退出解释执行
     unsigned jumpCount = 0;
+    // 同一个调用里只允许无缝接下一段脚本一次：
+    // 万一接上的是一段没有任何“图”的脚本（跑完就到底），双方会互相接力形成死循环
+    bool continued = false;
 processHead:
     ++runningScriptItemIdx;
-
+processItem:
     while (runningScriptItemIdx < runningStack.back().scriptItemEndIdx && jumpCount < 255) {
         const auto item = getCommonResource()->scriptItems[runningScriptItemIdx];
         const auto type = static_cast<_2dfm::CommonScriptItemTypes>(item->type);
@@ -158,8 +224,16 @@ processHead:
             return reinterpret_cast<_2dfm::ShowPic *>(item);
         }
         if (type == _2dfm::CommonScriptItemTypes::END) { // 完
-            spriteComponent->setTexture(nullptr);
-            spriteComponent->setVisible(false);
+            // “完”只代表这一段执行完了：先问上层（Player 的状态机）接下来播什么，
+            // 给了就同一帧无缝接上，没给才收尾。
+            this->scriptFinished = true;
+            if (!continued && continueWithNextScript()) {
+                continued = true;
+                jumpCount = 0;
+                goto processItem;
+            }
+            this->clearSpriteOnScriptEnd();
+            this->onScriptStopped();
             return nullptr;
         }
         if (type == _2dfm::CommonScriptItemTypes::SOUND) { // 声
@@ -212,15 +286,54 @@ processHead:
         goto processHead;
     }
 
-    // 如果走到了最后，发现从头到尾都没有图片指令，则退出播放
-    if (hasNoShowPicItem()) {
-        spriteComponent->setVisible(false);
-        return nullptr;
-    } else {
-        // 只要没遇到“完”，就会从头开始
+    // 走到这里说明最外层脚本已经播到末尾（没有遇到“完”）。
+    // 场景 / KGT / DEMO：回到开头继续循环；Player：末尾相当于有一个隐形的“完”。
+    if (shouldLoopAtScriptEnd()) {
+        // 整段脚本一个“图”都没有的话，回头循环只会在这次调用里空转，直接结束
+        if (hasNoShowPicItem()) {
+            this->scriptFinished = true;
+            this->clearSpriteOnScriptEnd();
+            this->onScriptStopped();
+            return nullptr;
+        }
         jumpToScriptItem(originalScriptIdx);
         goto processHead;
     }
+
+    // Player：这一段执行完了，同样先问上层接下来播什么，给了就同一帧无缝接上
+    this->scriptFinished = true;
+    if (!continued && continueWithNextScript()) {
+        continued = true;
+        jumpCount = 0;
+        goto processItem;
+    }
+    this->clearSpriteOnScriptEnd();
+    this->onScriptStopped();
+    return nullptr;
+}
+
+bool ScriptInterceptorComponent::continueWithNextScript() {
+    const int nextScriptId = pickNextScriptAfterFinish();
+    if (nextScriptId < 0) {
+        return false;
+    }
+    const auto *resource = getCommonResource();
+    if (resource == nullptr || nextScriptId >= static_cast<int>(resource->scripts.size())) {
+        AXLOGW("ScriptInterceptorComponent: 上层给出的下一段脚本 ID({}) 不合法", nextScriptId);
+        return false;
+    }
+    // 重置执行栈并从新脚本的第一项开始接着解释：同一个调用里就会返回它的“图”，
+    // 也就是下一段脚本当帧生效。
+    initRunningScript(nextScriptId);
+    return true;
+}
+
+void ScriptInterceptorComponent::clearSpriteOnScriptEnd() {
+    if (!shouldClearSpriteOnScriptEnd()) {
+        return;
+    }
+    spriteComponent->setTexture(nullptr);
+    spriteComponent->setVisible(false);
 }
 
 void ScriptInterceptorComponent::interceptShowPicCmd(const _2dfm::ShowPic *cmd) {

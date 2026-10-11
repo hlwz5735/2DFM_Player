@@ -3,44 +3,13 @@
 
 USING_NS_AX;
 
-void DemoScriptInterceptor::update(float deltaTime) {
-    ScriptInterceptorComponent::update(deltaTime);
-    if (!spriteComponent || !demoData) {
-        return;
-    }
-    if (timeWaiting == std::numeric_limits<float>::infinity()) {
-        return;
-    }
-    if (runningStack.empty()) {
-        return;
-    }
-    if (runningScriptItemIdx == runningStack.back().scriptItemEndIdx) {
-        return;
-    }
-    if (timeWaiting > 0) {
-        timeWaiting -= deltaTime;
-    }
+// 脚本推进（含跳帧补偿）统一在 ScriptInterceptorComponent::update 里做，
+// 这里只补上 DEMO 自己的播放计时
+void DemoScriptInterceptor::onAdvanceTick(float deltaTime) {
+    ScriptInterceptorComponent::onAdvanceTick(deltaTime);
     playTimer += deltaTime;
     if (demoData->config.totalTime != 0 && playTimer * 100 >= demoData->config.totalTime) {
         // TODO: 结束播放并向后跳转
-    }
-    const _2dfm::ShowPic *showPicScript = nullptr;
-    while (timeWaiting <= 0) {
-        showPicScript = interceptScriptUntilShowPic();
-        if (!showPicScript) {
-            timeWaiting = std::numeric_limits<float>::infinity();
-            runningScriptItemIdx = runningStack.back().scriptItemEndIdx;
-            return;
-        }
-        float keepTime = static_cast<float>(showPicScript->keepTime) / 100;
-        if (keepTime == 0) {
-            timeWaiting = std::numeric_limits<float>::infinity();
-        } else {
-            timeWaiting += keepTime;
-        }
-    }
-    if (showPicScript) {
-        this->interceptShowPicCmd(showPicScript);
     }
 }
 

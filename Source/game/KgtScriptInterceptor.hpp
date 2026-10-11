@@ -10,7 +10,6 @@
 
 class KgtScriptInterceptor : public ScriptInterceptorComponent {
 public:
-    void update(float delta) override;
     void setKgtGame(const KgtGame *game) { kgtGame = game; }
 
     const CommonResource *getCommonResource() const override { return kgtGame; }

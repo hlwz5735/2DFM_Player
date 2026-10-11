@@ -7,42 +7,7 @@
 
 USING_NS_AX;
 
-void StageScriptInterceptor::update(float deltaTime) {
-    ScriptInterceptorComponent::update(deltaTime);
-    if (!spriteComponent || !stageData) {
-        return;
-    }
-    if (timeWaiting == std::numeric_limits<float>::infinity()) {
-        return;
-    }
-    if (runningStack.empty()) {
-        return;
-    }
-    if (runningScriptItemIdx == runningStack.back().scriptItemEndIdx) {
-        return;
-    }
-    if (timeWaiting > 0) {
-        timeWaiting -= deltaTime;
-    }
-    const _2dfm::ShowPic *showPicScript = nullptr;
-    while (timeWaiting <= 0) {
-        showPicScript = interceptScriptUntilShowPic();
-        if (!showPicScript) {
-            timeWaiting = std::numeric_limits<float>::infinity();
-            runningScriptItemIdx = runningStack.back().scriptItemEndIdx;
-            return;
-        }
-        float keepTime = static_cast<float>(showPicScript->keepTime) / 100;
-        if (keepTime == 0) {
-            timeWaiting = std::numeric_limits<float>::infinity();
-        } else {
-            timeWaiting += keepTime;
-        }
-    }
-    if (showPicScript) {
-        this->interceptShowPicCmd(showPicScript);
-    }
-}
+// 脚本推进（含跳帧补偿）统一在 ScriptInterceptorComponent::update 里做
 
 void StageScriptInterceptor::setStageData(std::shared_ptr<KgtStage> stage) {
     this->stop();

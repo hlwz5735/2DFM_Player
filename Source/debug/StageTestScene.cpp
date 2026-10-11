@@ -30,12 +30,12 @@ void StageTestScene::update(float delta) {
 
     // 需要注意可能会遇到空场景
     const auto kgt = ResourcePool::getInstance().getKgtGame();
-    if (Input::getInstance().isButtonDown(Input::GameButton::F)) {
+    if (Input::getInstance().isAttackPressed(Input::AttackButton::F)) {
         unloadStage();
         stageNo = stageNo < kgt->stageNames.size() - 1 ? stageNo + 1 : 0;
         loadStage(stageNo);
     }
-    if (Input::getInstance().isButtonDown(Input::GameButton::E)) {
+    if (Input::getInstance().isAttackPressed(Input::AttackButton::E)) {
         unloadStage();
         stageNo = stageNo > 0 ? stageNo - 1 :  kgt->stageNames.size() - 1;
         loadStage(stageNo);

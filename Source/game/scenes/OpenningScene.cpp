@@ -46,7 +46,7 @@ bool OpenningScene::init() {
 
 void OpenningScene::update(float deltaTime) {
     Scene::update(deltaTime);
-    if (Input::getInstance().isAnyAttackButtonDown()) {
+    if (Input::getInstance().isAnyAttackPressed()) {
         const auto openDemoScene = utils::createInstance<TitleScene>();
         _director->replaceScene(openDemoScene);
     }

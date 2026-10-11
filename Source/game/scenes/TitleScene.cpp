@@ -48,9 +48,9 @@ bool TitleScene::init() {
 
 void TitleScene::update(float deltaTime) {
     Scene::update(deltaTime);
-    if (Input::getInstance().isButtonDown(Input::GameButton::D_RIGHT)) {
+    if (Input::getInstance().isDirPressed(Input::DPadAxis::Right)) {
         moveCursorNext();
-    } else if (Input::getInstance().isButtonDown(Input::GameButton::D_LEFT)) {
+    } else if (Input::getInstance().isDirPressed(Input::DPadAxis::Left)) {
         moveCursorPrev();
     }
     const auto kgtGame = ResourcePool::getInstance().getKgtGame();
@@ -68,7 +68,7 @@ void TitleScene::update(float deltaTime) {
         break;
     }
 
-    if (Input::getInstance().isAnyAttackButtonDown()) {
+    if (Input::getInstance().isAnyAttackPressed()) {
         Scene *nextScene = utils::createInstance<CharSelectionScene>();
         // switch (cursorIdx) {
         // case 0:

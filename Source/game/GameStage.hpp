@@ -18,6 +18,12 @@ public:
 
     void load(int stageNo);
     void unload();
+
+    /// 场景共用的虚拟摄像机（角色与背景层都从它取视口偏移）
+    class StageCameraNode *getCameraNode() const { return cameraNode; }
+
+    /// 让摄像机跟随某个节点（角色），并按场景范围夹住
+    void setCameraFollowTarget(class KgtNode *target) const;
 private:
     std::shared_ptr<KgtStage> stage;
     class StageCameraNode *cameraNode = nullptr;

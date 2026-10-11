@@ -31,13 +31,15 @@ private:
 
     std::shared_ptr<KgtPlayer> readPlayer(int playerId);
 
+    /// 取展示用的角色节点（没有状态机，脚本站本播完会自行回收，所以按名字现取）
+    PlayerNode *getP1Showcase();
+
     class GameDemo *objDemo = nullptr;
 
     int p1Idx = 0;
 
     KgtNode *objP1Cursor = nullptr;
     KgtNode *objP2Cursor = nullptr;
-    PlayerNode *objP1Showcase = nullptr;
 
     int rowCount = 0;
     int columnCount = 0;

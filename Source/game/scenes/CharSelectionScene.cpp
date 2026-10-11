@@ -47,13 +47,13 @@ bool CharSelectionScene::init() {
 void CharSelectionScene::update(float delta) {
     Scene::update(delta);
 
-    if (Input::getInstance().isButtonDown(Input::GameButton::D_RIGHT)) {
+    if (Input::getInstance().isDirPressed(Input::DPadAxis::Right)) {
         moveP1CursorRight();
-    } else if (Input::getInstance().isButtonDown(Input::GameButton::D_LEFT)) {
+    } else if (Input::getInstance().isDirPressed(Input::DPadAxis::Left)) {
         moveP1CursorLeft();
-    } else if (Input::getInstance().isButtonDown(Input::GameButton::D_DOWN)) {
+    } else if (Input::getInstance().isDirPressed(Input::DPadAxis::Down)) {
         moveP1CursorDown();
-    } else if (Input::getInstance().isButtonDown(Input::GameButton::D_UP)) {
+    } else if (Input::getInstance().isDirPressed(Input::DPadAxis::Up)) {
         moveP1CursorUp();
     }
 
@@ -62,7 +62,7 @@ void CharSelectionScene::update(float delta) {
 
     objP1Cursor->setLogicPosition(cursorInitialPos + Vec2(colNo * boxSize.width, rowNo * boxSize.height));
 
-    if (Input::getInstance().isAnyAttackButtonDown()) {
+    if (Input::getInstance().isAnyAttackPressed()) {
         auto kgtGame = ResourcePool::getInstance().getKgtGame();
         if (!kgtGame->isPlayerInStoryMode(p1Idx)) {
             return;
@@ -115,7 +115,9 @@ void CharSelectionScene::addPlayerShowcaseObj(int playerNo) {
     auto kgtGame = ResourcePool::getInstance().getKgtGame();
     if (playerNo == 1) {
         pNode->setLogicPosition(kgtGame->charSelectConfig.player1PortraitPos);
-        objP1Showcase = pNode;
+        // 展示用的角色没有状态机：段落脚本一播完（含末尾隐形的“完”）它就会自行回收，
+        // 所以这里只按名字标记，不保存裸指针（见 getP1Showcase）
+        pNode->setName("P1Showcase");
     }
 }
 
@@ -166,6 +168,10 @@ void CharSelectionScene::moveP1CursorDown() {
 void CharSelectionScene::afterCursorMove(int playerNo) {
     auto kgtGame = ResourcePool::getInstance().getKgtGame();
     if (playerNo == 1) {
+        const auto objP1Showcase = getP1Showcase();
+        if (objP1Showcase == nullptr) {
+            return;
+        }
         objP1Showcase->destroyManagedObjects();
         if (auto interceptor = dynamic_cast<PlayerScriptInterceptor *>(objP1Showcase->getInterceptor())) {
             if (kgtGame->isPlayerInStoryMode(p1Idx)) {
@@ -181,6 +187,12 @@ void CharSelectionScene::afterCursorMove(int playerNo) {
             }
         }
     }
+}
+
+PlayerNode *CharSelectionScene::getP1Showcase() {
+    // 展示节点没有状态机，段落脚本播完会自行回收，裸指针会悬空；
+    // 所以每次都按名字从场景里现取，取不到就是已经被回收了。
+    return dynamic_cast<PlayerNode *>(this->getChildByName("P1Showcase"));
 }
 
 std::shared_ptr<KgtPlayer> CharSelectionScene::readPlayer(int playerId) {

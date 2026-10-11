@@ -7,6 +7,7 @@
 #include "GameManager.hpp"
 #include "MoveComponent.hpp"
 #include "ScriptInterceptorComponent.hpp"
+#include "StageCameraNode.hpp"
 
 USING_NS_AX;
 
@@ -42,7 +43,47 @@ bool PlayerNode::initWithVisibleHeight(int visibleHeight) {
     return true;
 }
 
+void PlayerNode::update(float delta) {
+    // 延迟回收：“物”脚本结束的那一帧只做了标记，这里（下一帧、自己的 update 开头、
+    // 还没有任何组件遍历压在自己身上）才真正从父节点摘掉。
+    if (pendingRecycle) {
+        if (objectManager != nullptr) {
+            objectManager->removeObjectNode(this);
+            objectManager = nullptr;
+        }
+        destroy();
+        // destroy() 之后本对象可能已经被释放，不能再碰任何成员
+        return;
+    }
+
+    // 组件先更新：MoveComponent 在这里把加速度积分进速度
+    Node::update(delta);
+
+    // 与 KgtNode::update 的区别：角色自身的位移直接积分到 logicPosition 上。
+    // logicPosition 因此就是角色真正的世界坐标（浮空/触地判定都以它为准），
+    // 屏幕位置再一次性由它算出，效果与原来“积到 spritePNode 上”完全一致。
+    const auto &velocity = moveComp->getVelocity();
+    logicPosition.x += velocity.x * delta * 100.f;
+    logicPosition.y += velocity.y * delta * 100.f;
+
+    const float viewX = viewCamera != nullptr ? viewCamera->getPositionX() : 0.f;
+    const float viewY = viewCamera != nullptr ? viewCamera->getPositionY() : 0.f;
+    setPosition(logicPosition.x - viewX, visibleHeight - logicPosition.y - viewY);
+}
+
+void PlayerNode::destroy() {
+    // 先断开受管理物体指向自己的回指，避免它们在之后回收时访问已销毁的归属者
+    for (auto *object : managedObjects) {
+        if (object != nullptr && object->getObjectManager() == this) {
+            object->setObjectManager(nullptr);
+        }
+    }
+    KgtNode::destroy();
+}
+
 void PlayerNode::addObjectNode(PlayerNode *node, int manageNo) {
+    // 记下归属者：物体结束回收时要先把自己从这张表里摘掉，避免留下野指针
+    node->setObjectManager(this);
     // 如果物体是受管理号管理的
     if (manageNo != -1) {
         AXASSERT(manageNo >= 0 && manageNo < 10, "管理号超限！");
