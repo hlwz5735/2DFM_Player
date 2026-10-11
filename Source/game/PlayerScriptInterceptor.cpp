@@ -50,6 +50,13 @@ int PlayerScriptInterceptor::pickNextScriptAfterFinish() {
     return -1;
 }
 
+void PlayerScriptInterceptor::onScriptJumped() {
+    // 通常状态的脚本一旦跳转到别处，就当作进入攻击状态（详见基类注释）
+    if (auto *controller = findCharacterController()) {
+        controller->enterAttackByScriptJump();
+    }
+}
+
 void PlayerScriptInterceptor::onScriptStopped() {
     // 没有状态机接管：这个脚本执行器的终点就是销毁，先标记回收
     if (findCharacterController() != nullptr) {

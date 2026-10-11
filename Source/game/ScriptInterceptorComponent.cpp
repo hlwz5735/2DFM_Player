@@ -245,21 +245,25 @@ processItem:
         } else if (type == _2dfm::CommonScriptItemTypes::JUMP) { // 跳
             auto jumpCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             jumpToScriptItem(jumpCmd->jumpId, jumpCmd->jumpPos);
+            onScriptJumped();
             ++jumpCount;
             continue;
         } else if (type == _2dfm::CommonScriptItemTypes::CALL) { // 调
             auto callCmd = reinterpret_cast<_2dfm::JumpCmd *>(item);
             pushRunningScript(callCmd->jumpId, callCmd->jumpPos);
+            onScriptJumped();
             continue;
         } else if (type == _2dfm::CommonScriptItemTypes::LOOP) { // 循
             auto loopCmd = reinterpret_cast<_2dfm::LoopCmd *>(item);
             pushRunningScript(loopCmd->targetScriptId, loopCmd->targetPos, loopCmd->loopCount);
+            onScriptJumped();
             continue;
         } else if (type == _2dfm::CommonScriptItemTypes::RANDOM) { // 随
             auto randomCmd = reinterpret_cast<_2dfm::RandomCmd *>(item);
             auto hit = doRandom(randomCmd->randomMaxVal, randomCmd->moreThanVal);
             if (hit) {
                 jumpToScriptItem(randomCmd->targetScriptId, randomCmd->targetPos);
+                onScriptJumped();
                 continue;
             }
         } else if (type == _2dfm::CommonScriptItemTypes::OBJECT) { // 物

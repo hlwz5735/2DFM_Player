@@ -105,6 +105,15 @@ protected:
     /// 脚本结束、且上层没有再给出下一段脚本时调用（Player 的“物”用它标记回收）
     virtual void onScriptStopped() {}
 
+    /**
+     * 解释执行中发生了“跳到别的脚本”时调用（跳 / 调 / 循 / 随 命中）。
+     *
+     * 对 Player 来说：通常状态的脚本（站立、行走、下蹲……）一旦用了这类跳转，
+     * 就说明它把执行交给了别的脚本，此时要当作进入了「攻击」状态 ——
+     * 在脚本执行完之前不再响应输入，播完再由结束回调交还给通常状态。
+     */
+    virtual void onScriptJumped() {}
+
     /// 按 shouldClearSpriteOnScriptEnd() 的决定收尾（清空纹理并隐藏）
     void clearSpriteOnScriptEnd();
     /// 向 pickNextScriptAfterFinish() 要下一段脚本并接上，接上返回 true

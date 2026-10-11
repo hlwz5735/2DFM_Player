@@ -97,9 +97,21 @@ void PlayerTestScene::refreshStateLabel() {
     if (stateLabel == nullptr || controller == nullptr) {
         return;
     }
+    // 攻击姿势下“动作”显示的是招式（指令）名更有用
+    std::string actionText;
+    if (controller->getPoseState() == CharacterPoseState::Attack) {
+        const char *commandName = controller->getAttackCommandName();
+        actionText = "攻击";
+        if (commandName != nullptr && *commandName != '\0') {
+            actionText += std::string("（") + commandName + "）";
+        }
+    } else {
+        actionText = toString(controller->getNormalAction());
+    }
+
     const std::string text = std::string("位置：") + toString(controller->getPositionState())
                              + "　姿势：" + toString(controller->getPoseState())
-                             + "　动作：" + toString(controller->getNormalAction());
+                             + "　动作：" + actionText;
     // setString 会重建文字纹理，状态没变就不要每帧都刷
     if (text == lastStateText) {
         return;

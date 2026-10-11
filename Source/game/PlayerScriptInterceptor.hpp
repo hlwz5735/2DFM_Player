@@ -44,6 +44,9 @@ protected:
     /// 脚本结束且没有状态机接管：这个脚本执行器的终点就是销毁，先标记回收
     void onScriptStopped() override;
 
+    /// 脚本里发生了“跳 / 调 / 循”等跳转：交给状态机处理（通常状态 → 攻击状态）
+    void onScriptJumped() override;
+
     /// 同一个节点上的状态机；没有则为 nullptr（“物”、选人界面展示都属于没有）
     class CharacterController *findCharacterController() const;
 private:

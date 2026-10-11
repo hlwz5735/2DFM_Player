@@ -26,7 +26,7 @@ bool Input::init() {
     constexpr auto P1 = PlayerIndex::P1;
 
     // 1P 键位（见 InputRefactorPlan.md）：
-    //   上/下/左/右 = W/S/A/D，攻击 A~F = J/U/K/I/O/L，开始 = 数字 1，暂停 = ESC
+    //   上/下/左/右 = W/S/A/D，攻击 A~F = U/I/J/K/O/L，开始 = 数字 1，暂停 = ESC
     // 2P 以后在这里追加一份 player = P2 的绑定即可，状态格子已经留好。
     keyMapping = {
         {KeyCode::KEY_W, {Kind::Dir, P1, axisCode(DPadAxis::Up)}},
@@ -34,10 +34,10 @@ bool Input::init() {
         {KeyCode::KEY_A, {Kind::Dir, P1, axisCode(DPadAxis::Left)}},
         {KeyCode::KEY_D, {Kind::Dir, P1, axisCode(DPadAxis::Right)}},
 
-        {KeyCode::KEY_J, {Kind::Attack, P1, attackCode(AttackButton::A)}},
-        {KeyCode::KEY_U, {Kind::Attack, P1, attackCode(AttackButton::B)}},
-        {KeyCode::KEY_K, {Kind::Attack, P1, attackCode(AttackButton::C)}},
-        {KeyCode::KEY_I, {Kind::Attack, P1, attackCode(AttackButton::D)}},
+        {KeyCode::KEY_U, {Kind::Attack, P1, attackCode(AttackButton::A)}},
+        {KeyCode::KEY_I, {Kind::Attack, P1, attackCode(AttackButton::B)}},
+        {KeyCode::KEY_J, {Kind::Attack, P1, attackCode(AttackButton::C)}},
+        {KeyCode::KEY_K, {Kind::Attack, P1, attackCode(AttackButton::D)}},
         {KeyCode::KEY_O, {Kind::Attack, P1, attackCode(AttackButton::E)}},
         {KeyCode::KEY_L, {Kind::Attack, P1, attackCode(AttackButton::F)}},
 
