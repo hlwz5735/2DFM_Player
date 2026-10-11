@@ -1,6 +1,6 @@
 #include "TestPictureScene.hpp"
-#include "2dfm/2dfmFileReader.hpp"
 #include "2dfm/CommonResource.hpp"
+#include "2dfm/KgtStage.hpp"
 #include "game/GameConfig.hpp"
 #include <axmol.h>
 #include <format>

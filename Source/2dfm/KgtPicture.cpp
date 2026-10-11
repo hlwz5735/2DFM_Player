@@ -1,5 +1,4 @@
 #include "KgtPicture.hpp"
-#include "2dfmFileReader.hpp"
 #include "KgtPalette.hpp"
 #include <stdexcept>
 
@@ -134,10 +133,16 @@ byte *KgtPicture::extractPixelData(int paletteNo) {
 }
 
 ax::Texture2D *KgtPicture::createTexture(int paletteNo) {
-    if (this->width == 0 || this->height == 0) {
+    // 空槽位直接跳过：不提取像素、不分配纹理
+    if (isEmpty()) {
         return nullptr;
     }
+
     byte *imageData = this->extractPixelData(paletteNo);
+    if (imageData == nullptr) {
+        // 像素缓冲分配失败，交给调用方按"真失败"统计
+        return nullptr;
+    }
 
     auto tex = new ax::Texture2D();
     // 设置纹理过滤参数
@@ -146,10 +151,17 @@ ax::Texture2D *KgtPicture::createTexture(int paletteNo) {
                                        ax::backend::SamplerAddressMode::CLAMP_TO_EDGE, // 横向纹理环绕模式：边缘钳制
                                        ax::backend::SamplerAddressMode::CLAMP_TO_EDGE  // 纵向纹理环绕模式：边缘钳制
     );
-    tex->initWithData(imageData, width * height * sizeof(_2dfm::ColorBgra), ax::PixelFormat::BGRA8, width, height);
-    tex->setTexParameters(texParams);
+    const bool created = tex->initWithData(imageData, width * height * sizeof(_2dfm::ColorBgra),
+                                           ax::PixelFormat::BGRA8, width, height);
 
     free(imageData);
+
+    if (!created) {
+        // 不返回无法使用的纹理，避免占用显存/内存
+        delete tex;
+        return nullptr;
+    }
+    tex->setTexParameters(texParams);
 
     return tex;
 }
@@ -159,6 +171,22 @@ void KgtPicture::setFrom2dfmPicture(_2dfm::Picture *picture) {
     height = picture->header.height;
     compressed = picture->header.size != 0;
     hasPrivatePalette = picture->header.hasPrivatePalette;
+
+    if (isEmpty()) {
+        // 空槽位（实测：整块头部为 0）。这里必须提前返回：
+        // 否则下面的 malloc(0)/memcpy(0) 是无意义操作，而一旦这种槽位带上专用调色盘标记，
+        // 还会去读 content 的 1024 字节——那是越界读
+        if (rawData) {
+            free(rawData);
+            rawData = nullptr;
+        }
+        if (privatePalette) {
+            delete privatePalette;
+            privatePalette = nullptr;
+        }
+        return;
+    }
+
     auto size = get2dfmPictureSize(&picture->header);
     auto realSize = get2dfmPictureRealSize(&picture->header);
 
@@ -192,4 +220,35 @@ void KgtPicture::setFrom2dfmPicture(_2dfm::Picture *picture) {
 
 void KgtPicture::setSharedPalettes(const std::array<KgtPalette *, 8> &palettes) {
     sharedPalettes = palettes;
+}
+
+KgtPalette *createPalette(const _2dfm::ColorBgra *originPalette, bool isPrivate) {
+    auto palette = new KgtPalette();
+
+    for (int i = 0; i < 256; ++i) {
+        const auto &color = originPalette[i];
+        palette->colors[i] = color;
+
+        if (color.channel.red == 0 && color.channel.green == 0 && color.channel.blue == 0) {
+            palette->colors[i].channel.alpha = 0;
+        } else {
+            if (isPrivate) {
+                palette->colors[i].channel.alpha = 255;
+            } else {
+                palette->colors[i].channel.alpha = color.channel.alpha == 1 ? 255 : 0;
+            }
+        }
+    }
+    return palette;
+}
+
+int get2dfmPictureRealSize(const _2dfm::PictureHeader *sfh) {
+    return sfh->width * sfh->height + (sfh->hasPrivatePalette ? 1024 : 0);
+}
+
+int get2dfmPictureSize(const _2dfm::PictureHeader *sfh) {
+    if (sfh->size == 0) {
+        return get2dfmPictureRealSize(sfh);
+    }
+    return sfh->size;
 }

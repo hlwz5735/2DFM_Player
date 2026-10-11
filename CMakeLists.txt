@@ -90,10 +90,11 @@ if (NOT _AX_USE_PREBUILT)
 endif()
 
 # The common cross-platforms source files and header files
-file(GLOB_RECURSE GAME_HEADER
+# CONFIGURE_DEPENDS: 新增/删除 Source 下的文件后无需手动重新 configure
+file(GLOB_RECURSE GAME_HEADER CONFIGURE_DEPENDS
     Source/*.h Source/*.hpp
     )
-file(GLOB_RECURSE GAME_SOURCE
+file(GLOB_RECURSE GAME_SOURCE CONFIGURE_DEPENDS
     Source/*.cpp Source/*.c
     )
 

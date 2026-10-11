@@ -4,7 +4,7 @@
 
 #include "CharSelectionScene.hpp"
 
-#include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/CommonResource.hpp"
 #include "2dfm/KgtGame.hpp"
 #include "2dfm/KgtPlayer.hpp"
 #include "engine/Input.hpp"

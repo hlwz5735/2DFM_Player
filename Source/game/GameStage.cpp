@@ -4,7 +4,7 @@
 
 #include "GameStage.hpp"
 
-#include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/CommonResource.hpp"
 #include "2dfm/2dfmScriptItem.hpp"
 #include "AudioEngine.h"
 #include "GameConfig.hpp"

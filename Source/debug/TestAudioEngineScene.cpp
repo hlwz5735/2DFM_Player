@@ -1,7 +1,8 @@
 #include "TestAudioEngineScene.hpp"
-#include "2dfm/2dfmFileReader.hpp"
 #include "2dfm/CommonResource.hpp"
+#include "2dfm/KgtGame.hpp"
 #include "game/GameConfig.hpp"
+#include "game/ResourcePool.hpp"
 #include "engine/MyString.hpp"
 #include <axmol.h>
 #include <AudioEngine.h>
@@ -28,8 +29,13 @@ bool TestAudioEngineScene::init() {
     label->setPosition(startX, startY);
     layer->addChild(label);
 
-    auto kgt = readKgtFile();
-    this->cr = kgt;
+    auto &gameConfig = GameConfig::getInstance();
+    const auto kgtFilePath = std::format("{}/{}", gameConfig.getGameBasePath(), gameConfig.getKgtFileName());
+    this->cr = ResourcePool::getInstance().loadKgtGame(kgtFilePath);
+    if (!cr) {
+        AXLOGE("[TestAudioEngineScene] failed to load kgt: '{}'", kgtFilePath);
+        return false;
+    }
 
     auto keyboardListener = EventListenerKeyboard::create();
     keyboardListener->onKeyPressed = AX_CALLBACK_2(TestAudioEngineScene::onKeyPressed, this);
@@ -43,6 +49,9 @@ bool TestAudioEngineScene::init() {
 
 void TestAudioEngineScene::update(float delta) {
     Scene::update(delta);
+    if (!cr || cr->sounds.empty()) {
+        return;
+    }
     const auto s = cr->sounds.at(soundNo)->getRawSoundPtr();
 
     if (s == nullptr) {

@@ -1,6 +1,6 @@
 #include "EntryScene.hpp"
 #include "MainScene.hpp"
-#include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/CommonResource.hpp"
 #include "2dfm/KgtGame.hpp"
 #include "engine/NativeFileDialog.hpp"
 #include "game/GameConfig.hpp"

@@ -86,4 +86,7 @@ public:
     );
 };
 
+/// 为公共资源创建（或按新调色盘重建）全部纹理
+void createTexturesForCommonResource(CommonResource *cr, int paletteNo = 0);
+
 // void cleanCommonResource(CommonResource *res);

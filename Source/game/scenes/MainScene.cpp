@@ -1,6 +1,7 @@
 #include "MainScene.hpp"
 #include <axmol.h>
-#include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/CommonResource.hpp"
+#include "2dfm/KgtGame.hpp"
 #include "EntryScene.hpp"
 #include "OpenningScene.hpp"
 #include "debug/StageTestScene.hpp"

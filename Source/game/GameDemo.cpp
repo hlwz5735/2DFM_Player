@@ -4,7 +4,7 @@
 
 #include "GameDemo.hpp"
 
-#include "2dfm/2dfmFileReader.hpp"
+#include "2dfm/CommonResource.hpp"
 #include "2dfm/KgtGame.hpp"
 #include "AudioEngine.h"
 #include "DemoScriptInterceptor.hpp"
