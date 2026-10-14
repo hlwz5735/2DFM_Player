@@ -134,13 +134,23 @@ private:
      *
      * 注意：脚本的推进完全由解释器的“脚本结束”回调负责，这里**不做**“脚本是否播完”的轮询。
      * 另外，“图的停留时间为 0”表示这张图无限等待、脚本执行就阻塞在那里（数据本意如此，
-     * 以后由“招”脚本按别的条件介入打断），所以也**不能**把它当作“播完”去推进。
+     * 由“招”脚本介入打断；本版只实现了“着地后”，见 ScriptInterceptorComponent::notifyMoveBranch），
+     * 所以也**不能**把它当作“播完”去推进。
      */
     void updateNormalPose(float delta);
     /// 攻击姿势：不响应任何输入，只等脚本执行完由结束回调交还（见 TODO：动 / 令）
     void updateAttackPose(float delta);
-    /// 浮空的触地判定。与姿势无关，所以单独拿出来每帧跑
-    void updateAirborne(float delta);
+    /**
+     * 浮空 / 着陆的判定，**只看角色实际的 Y 轴位置**，与当前在播哪个动作无关。
+     *
+     *   · 站在地面（站立 / 下蹲）时，Y 真的升到地面线以上 → 转浮空；
+     *   · 浮空时，Y 回到地面线 → 贴地、转站立，并把“着地”作为事件通知解释器
+     *     （每帧不轮询，见 ScriptInterceptorComponent::notifyLanded）。
+     *
+     * 跳跃脚本、空中招式、挨打浮空共用这一套：不存在“某个动作才算空中”这回事，
+     * 所以任何原因把角色带到空中、任何原因让它落回地面，判定都是同一条。
+     */
+    void updateVerticalState();
 
     /// 通常姿势下“按当前输入与位置状态接下来该做什么动作”（含随动的位置状态迁移，不起脚本）
     CharacterNormalAction decideNormalActionFromInput();
@@ -167,17 +177,16 @@ private:
     /// 改状态并立刻起脚本（输入驱动用）
     void startNormalAction(CharacterNormalAction action);
 
-    /// 角色是否已经有向上的动向（逻辑坐标真的升高，或脚本给了向上的速度）
-    bool isLiftingOff() const;
-    int scriptIdForNormalAction(CharacterNormalAction action) const;
+    /// 当前动作是不是三种跳跃之一（只用来选脚本 / 决定指令是否受理，不代表浮空）
     static bool isJumpAction(CharacterNormalAction action);
+    int scriptIdForNormalAction(CharacterNormalAction action) const;
 
-    /// 从站立起跳后真正升空（只改位置状态，脚本由调用方决定）
+    /// 转浮空（只改位置状态；浮空与否本身由 Y 轴决定，见 updateVerticalState）
     void enterAirborne();
-    /// 落地的“只改状态”部分：贴地、清掉垂直速度与加速度、位置状态回站立
-    void resetAirborneOnLanding();
-    /// 落地并起“站立”脚本（通常姿势下由每帧的触地判定调用）
-    void land();
+    /// 落地的“只改状态”部分：贴地、位置状态回站立。
+    /// **不动速度与加速度** —— “移”的作用是继承的（换脚本不重置，只有脚本自己下的“移”才能改），
+    /// 而“已着陆仍在向下”正是解释器判定这段移动到头了的依据。
+    void snapToGround();
 
     std::shared_ptr<KgtPlayer> playerData;
     mutable class PlayerNode *playerNode = nullptr;
@@ -194,8 +203,6 @@ private:
     const PlayerCommand *attackCommand = nullptr;
 
     float groundY = std::numeric_limits<float>::quiet_NaN();
-    /// 浮空期间是否真的离开过地面（位置真的升高过），用于“触地”判定
-    bool leftGround = false;
     /// 第一帧才真正开始驱动状态机（那时节点已经挂到场景上、坐标也就位了）
     bool started = false;
 };

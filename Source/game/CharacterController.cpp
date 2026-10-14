@@ -170,7 +170,7 @@ void CharacterController::logNormalScriptJumps() const {
             case _2dfm::CommonScriptItemTypes::LOOP:
                 label = "循";
                 break;
-            case _2dfm::CommonScriptItemTypes::RANDOM:
+            case _2dfm::CommonScriptItemTypes::RANDOM_BRANCH:
                 label = "随";
                 break;
             default:
@@ -250,10 +250,10 @@ void CharacterController::update(float delta) {
         startNormalAction(CharacterNormalAction::Idle);
     }
 
-    // 浮空的触地判定与姿势无关：空中攻击 / 空中挨打一样会落地
-    if (positionState == CharacterPositionState::Airborne) {
-        updateAirborne(delta);
-    }
+    // 浮空与否只看 Y 轴，与“当前在播哪个动作”无关：
+    // 位置高于地面线就是在空中，回到地面线就是落地。跳跃 / 空中攻击 / 挨打浮空共用这一套，
+    // 落地也一定会在这一下通知解释器（见 updateVerticalState）。
+    updateVerticalState();
 
     switch (poseState) {
     case CharacterPoseState::Normal:
@@ -305,12 +305,11 @@ int CharacterController::pickNextNormalScriptAfterFinish() {
     case CharacterNormalAction::JumpUp:
     case CharacterNormalAction::JumpForward:
     case CharacterNormalAction::JumpBackward:
-        // 跳跃动作播完：角色确实起来了就转“空中落下”，没起来就当落地
-        if (isLiftingOff()) {
-            enterAirborne();
+        // 跳跃动作播完：人还在空中（Y 仍高于地面线，位置状态已经是浮空）就接着播“空中落下”，
+        // 已经贴地了就回站立。这里不重新判断浮空 —— 浮空只由 Y 轴决定（见 updateVerticalState）。
+        if (positionState == CharacterPositionState::Airborne) {
             return decideNormalAction(CharacterNormalAction::Falling);
         }
-        resetAirborneOnLanding();
         return decideNormalAction(CharacterNormalAction::Idle);
     }
     return -1;
@@ -344,15 +343,14 @@ void CharacterController::updateNormalPose(float delta) {
         return;
     }
 
-    // 浮空中：方向键一律不响应（触地判定上面已经做过）
+    // 浮空中：方向键一律不响应（升空 / 触地在 updateVerticalState 里按 Y 轴处理）
     if (positionState == CharacterPositionState::Airborne) {
         return;
     }
-    // 起跳阶段：等角色真的被脚本带起来（脚本播完的收尾在结束回调里）
-    if (normalAction == CharacterNormalAction::JumpUp) {
-        if (isLiftingOff()) {
-            enterAirborne();
-        }
+    // 起跳动作已经选定、但人还没离地（Y 还没升起来）：这段起跳准备期不再按输入改动作，
+    // 免得刚起跳就被改走、变成“点一下不跳”。
+    // 这里**只是锁输入**：浮空与否仍然由 Y 轴决定（见 updateVerticalState），与动作无关。
+    if (isJumpAction(normalAction)) {
         return;
     }
 
@@ -368,26 +366,33 @@ void CharacterController::updateAttackPose(float delta) {
     // TODO: 脚本里出现“动”“令”脚本项时，要按那两个脚本项的条件选择性放行输入。
 }
 
-void CharacterController::updateAirborne(float delta) {
+void CharacterController::updateVerticalState() {
     auto *node = getPlayerNode();
+    if (node == nullptr) {
+        return;
+    }
     const float y = node->getLogicPosition().y;
 
-    // leftGround 只看“位置真的升高过”，免得刚起跳（人还在原地、只有向上速度）就判成落地
-    if (y < getGroundY() - kLiftoffEpsilon) {
-        leftGround = true;
-    }
-    if (!leftGround || y < getGroundY()) {
+    if (positionState != CharacterPositionState::Airborne) {
+        // 站在地面（站立 / 下蹲）：Y 真的升到地面线以上才算升空。
+        // 与“在播哪个动作”无关 —— 跳跃脚本、空中招、挨打浮空都是同一个判据。
+        if (y < getGroundY() - kLiftoffEpsilon) {
+            enterAirborne();
+        }
         return;
     }
 
-    // 触地：位置状态无条件回站立
-    if (poseState == CharacterPoseState::Normal) {
-        // 通常姿势下落地就直接接“站立待机”
-        land();
-    } else {
-        // 攻击姿势下只是贴地回站立，脚本继续播（空中招落地不打断），
-        // 等它执行完由结束回调按“此刻是站立”来交还
-        resetAirborneOnLanding();
+    // 在空中：位置还高于地面线就继续飞
+    if (y < getGroundY()) {
+        return;
+    }
+
+    // 触地：贴地、位置状态回站立，然后把“着地”作为**事件**通知解释器（每帧不轮询）。
+    // 速度与加速度一律不动 —— “移”的作用是继承的，换脚本也不重置，只有脚本自己下的“移”才能改；
+    // 解释器就是靠“已经着地、实际速度却还朝下”判断这一段移动撞地到头了。
+    snapToGround();
+    if (auto *interceptor = getInterceptor()) {
+        interceptor->notifyLanded();
     }
 }
 
@@ -430,12 +435,13 @@ CharacterNormalAction CharacterController::decideNormalActionFromInput() {
 
     // 上类方向“按下或按住”都可以起跳：按住不放时每次回到站立都会再跳，这就是连跳。
     // 前跳 / 后跳脚本一开播就升空；上跳则要等角色真被脚本带起来（见 updateNormalPose）。
+    // 上类方向“按下或按住”都可以起跳：按住不放时每次回到站立都会再跳，这就是连跳。
+    // 这里只管选哪个起跳脚本 —— 升空与否由 Y 轴决定（见 updateVerticalState），
+    // 不在这里改位置状态，免得把“浮空”跟某个具体动作绑在一起。
     switch (dpad) {
     case Input::DPad::RightUp:
-        enterAirborne();
         return CharacterNormalAction::JumpForward;
     case Input::DPad::LeftUp:
-        enterAirborne();
         return CharacterNormalAction::JumpBackward;
     default:
         return CharacterNormalAction::JumpUp;
@@ -449,8 +455,9 @@ bool CharacterController::canStartAttackByCommand() const {
     if (isTransitionAction(normalAction)) {
         return false;
     }
-    // 起跳阶段（还站在地上的上跳）不接受指令，升空之后才接空中指令
-    if (positionState == CharacterPositionState::Stand && normalAction == CharacterNormalAction::JumpUp) {
+    // 起跳阶段（还站在地上、Y 还没升起来）不接受指令，升空之后才接空中指令。
+    // 三种跳跃都算：浮空由 Y 轴决定，这里判的是“起跳动作已经选了但人还没离地”。
+    if (positionState != CharacterPositionState::Airborne && isJumpAction(normalAction)) {
         return false;
     }
     return true;
@@ -559,46 +566,18 @@ bool CharacterController::isJumpAction(CharacterNormalAction action) {
            || action == CharacterNormalAction::JumpBackward;
 }
 
-bool CharacterController::isLiftingOff() const {
-    const auto *node = getPlayerNode();
-    if (node == nullptr) {
-        return false;
-    }
-    // 逻辑坐标 Y 轴向下为正：位置变小 = 人往上升；速度为负 = 脚本给了向上的速度。
-    // 两个都看：位置判定要等这一帧的位移积完，而速度判定在脚本刚下“移”指令时就成立。
-    if (node->getLogicPosition().y < getGroundY() - kLiftoffEpsilon) {
-        return true;
-    }
-    const auto *move = node->getMoveComp();
-    return move != nullptr && move->getVelocity().y < -kLiftoffEpsilon;
-}
-
 void CharacterController::enterAirborne() {
+    // 浮空只看 Y 轴（见 updateVerticalState）：这里只切位置状态
     positionState = CharacterPositionState::Airborne;
-    // 跳跃脚本继续播，“接下来播哪段”由调用方决定
-    leftGround = false;
 }
 
-void CharacterController::resetAirborneOnLanding() {
+void CharacterController::snapToGround() {
     auto *node = getPlayerNode();
     if (node == nullptr) {
         return;
     }
-    // 贴地，并清掉垂直方向的速度与加速度，避免落地后继续下沉或被再次带起来
+    // 贴地 + 位置状态回站立。速度/加速度不动，理由见头文件
     const auto &pos = node->getLogicPosition();
     node->setLogicPosition(Vec2(pos.x, getGroundY()));
-    if (auto *move = node->getMoveComp()) {
-        const auto &vel = move->getVelocity();
-        const auto &accel = move->getAcceleration();
-        move->setVelocity(Vec2(vel.x, 0.f));
-        move->setAcceleration(Vec2(accel.x, 0.f));
-    }
-    leftGround = false;
     positionState = CharacterPositionState::Stand;
-}
-
-void CharacterController::land() {
-    resetAirborneOnLanding();
-    // 每帧的触地判定不是脚本驱动的，这里要自己起“站立”脚本
-    startNormalAction(CharacterNormalAction::Idle);
 }
